@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
+        allow: ["/", "/api/products", "/api/products/*", "/api/auth/get-session"],
         disallow: [
           "/admin",
           "/admin/*",
@@ -15,7 +15,13 @@ export default function robots(): MetadataRoute.Robots {
           "/checkout",
           "/orders",
           "/wishlist",
-          "/api/*",
+          "/api/",
+          "/api/auth/*",
+          "/api/coupons/*",
+          "/api/orders/*",
+          "/api/razorpay/*",
+          "/api/upload/*",
+          "/api/bargain/*",
         ],
       },
       {
