@@ -1,18 +1,19 @@
 import type { Metadata } from "next"
 import { JsonLd, breadcrumbJsonLd } from "@/components/seo/structured-data"
-// import { ShopClient } from "@/components/features/shop-client"
+import { ShopClient } from "@/components/features/shop-client"
+import { collectionJsonLd } from "@/components/seo/structured-data"
 
 export const metadata: Metadata = {
     title: "Women's Streetwear",
     description:
-        "Shop women's streetwear essentials from XILAR. Clean lines, premium basics, bold fits — launching soon.",
+        "Shop women's streetwear essentials from XILAR. Clean lines, premium basics, and bold fits. Free shipping above ₹999.",
     alternates: {
         canonical: "/shop/women",
     },
     openGraph: {
         title: "Women's Streetwear | XILAR",
         description:
-            "Shop women's streetwear essentials from XILAR. Clean lines, premium basics, bold fits — launching soon.",
+            "Shop women's streetwear essentials from XILAR. Clean lines, premium basics, and bold fits.",
         url: "/shop/women",
     },
 }
@@ -20,7 +21,6 @@ export const metadata: Metadata = {
 export default function ShopWomenPage() {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
 
-    // return <ShopClient genderFilter="women" title="Women" subtitle="Streetwear essentials for her" />
     return (
         <>
             <JsonLd
@@ -30,18 +30,14 @@ export default function ShopWomenPage() {
                     { name: "Women", url: "/shop/women" },
                 ])}
             />
-            <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 text-center">
-                <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase mb-4">
-                    Coming Soon
-                </h1>
-                <p className="text-lg text-muted-foreground max-w-md">
-                    Women&apos;s streetwear essentials are on their way. Stay tuned for fresh drops.
-                </p>
-                <div className="mt-8 flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="w-2 h-2 bg-gold rounded-full animate-pulse" />
-                    <span>Launching soon</span>
-                </div>
-            </div>
+            <JsonLd
+                data={collectionJsonLd(baseUrl, {
+                    name: "Women's Streetwear - XILAR",
+                    description: "Streetwear essentials for her. Clean lines and bold fits.",
+                    url: "/shop/women",
+                })}
+            />
+            <ShopClient genderFilter="women" title="Women" subtitle="Streetwear essentials for her" />
         </>
     )
 }
