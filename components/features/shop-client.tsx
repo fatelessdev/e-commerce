@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -33,7 +33,9 @@ const CATEGORY_LABELS: Record<string, string> = {
     "shorts": "Shorts",
     "accessory": "Accessories",
 }
-const SIZES = ["XS", "S", "M", "L", "XL", "XXL"]
+const DEFAULT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"]
+const NUMBER_SIZES = ["26", "28", "30", "32", "34"]
+const NUMBER_SIZE_CATEGORIES = ["jogger", "jeans", "cargo"]
 const PRICE_RANGES = [
     { label: "All Prices", min: 0, max: Infinity },
     { label: "Under ₹1000", min: 0, max: 1000 },
@@ -109,6 +111,23 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
     const visibleProducts = filteredProducts.slice(0, visibleCount)
     const hasMore = visibleCount < filteredProducts.length
 
+    // Infinite scroll sentinel
+    const sentinelRef = useRef<HTMLDivElement>(null)
+    useEffect(() => {
+        if (!hasMore || loading) return
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    setVisibleCount((prev) => prev + 8)
+                }
+            },
+            { rootMargin: "200px" }
+        )
+        const el = sentinelRef.current
+        if (el) observer.observe(el)
+        return () => { if (el) observer.unobserve(el) }
+    }, [hasMore, loading, filteredProducts.length])
+
     const clearFilters = () => {
         setSearchQuery("")
         setSelectedCategory("All")
@@ -181,7 +200,10 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                                     variant={selectedCategory === cat ? "default" : "outline"}
                                     size="sm"
                                     className="rounded-none h-8 text-xs"
-                                    onClick={() => setSelectedCategory(cat)}
+                                    onClick={() => {
+                                        setSelectedCategory(cat)
+                                        setSelectedSize(null)
+                                    }}
                                 >
                                     {CATEGORY_LABELS[cat] || cat}
                                 </Button>
@@ -193,12 +215,12 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                     <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Size</label>
                         <div className="flex flex-wrap gap-2">
-                            {SIZES.map((size) => (
+                            {(NUMBER_SIZE_CATEGORIES.includes(selectedCategory) ? NUMBER_SIZES : selectedCategory === "All" ? [...DEFAULT_SIZES, ...NUMBER_SIZES] : DEFAULT_SIZES).map((size) => (
                                 <Button
                                     key={size}
                                     variant={selectedSize === size ? "default" : "outline"}
                                     size="sm"
-                                    className="rounded-none h-8 w-10 text-xs"
+                                    className="rounded-none h-8 text-xs"
                                     onClick={() => setSelectedSize(selectedSize === size ? null : size)}
                                 >
                                     {size}
@@ -237,7 +259,7 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                     <>
                         <p className="text-sm text-muted-foreground mb-6">{filteredProducts.length} products</p>
                         {visibleProducts.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                                 {visibleProducts.map((product) => (
                                     <Link href={`/product/${product.id}`} key={product.id} className="group">
                                         <Card className="rounded-none border-0 bg-transparent shadow-none hover-lift">
@@ -257,16 +279,16 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                                                     </span>
                                                 )}
                                             </CardContent>
-                                            <CardFooter className="flex flex-col items-start p-4 space-y-1">
-                                                <p className="text-xs text-muted-foreground uppercase tracking-wider">
+                                            <CardFooter className="flex flex-col items-start p-2 sm:p-4 space-y-1">
+                                                <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">
                                                     {CATEGORY_LABELS[product.category] || product.category}
                                                 </p>
-                                                <div className="flex w-full items-center justify-between">
-                                                    <h3 className="font-medium tracking-tight text-lg">{product.name}</h3>
-                                                    <div className="text-right">
-                                                        <span className="font-semibold">{formatPrice(product.sellingPrice)}</span>
+                                                <div className="flex w-full flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5">
+                                                    <h3 className="font-medium tracking-tight text-sm sm:text-lg line-clamp-1">{product.name}</h3>
+                                                    <div className="text-left sm:text-right">
+                                                        <span className="font-semibold text-sm sm:text-base">{formatPrice(product.sellingPrice)}</span>
                                                         {parseFloat(product.mrp) > parseFloat(product.sellingPrice) && (
-                                                            <span className="text-xs text-muted-foreground line-through ml-2">
+                                                            <span className="text-[10px] sm:text-xs text-muted-foreground line-through ml-1 sm:ml-2">
                                                                 {formatPrice(product.mrp)}
                                                             </span>
                                                         )}
@@ -289,16 +311,10 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                 )}
             </div>
 
-            {/* Load More */}
+            {/* Infinite scroll sentinel */}
             {hasMore && !loading && (
-                <div className="py-12 flex justify-center border-t border-white/10">
-                    <Button
-                        variant="outline"
-                        className="uppercase tracking-widest text-xs rounded-none h-12 px-8"
-                        onClick={() => setVisibleCount((prev) => prev + 8)}
-                    >
-                        Load More ({filteredProducts.length - visibleCount} remaining)
-                    </Button>
+                <div ref={sentinelRef} className="py-8 flex justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
             )}
         </div>

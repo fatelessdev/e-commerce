@@ -8,6 +8,7 @@ import { CartDrawer } from "@/components/features/cart-drawer";
 import { CartProvider } from "@/lib/cart-context";
 import { WishlistProvider } from "@/lib/wishlist-context";
 import { ThemeProvider } from "@/components/ui/theme-provider";
+import { Analytics } from "@vercel/analytics/next"
 
 const inter = Inter({
   variable: "--font-inter",
@@ -28,6 +29,7 @@ export const metadata: Metadata = {
     "Next-gen streetwear for the bold. Premium basics, oversized fits, and urban essentials. Shop Gen-Z fashion with free shipping above ₹999.",
   applicationName: "XILAR",
   keywords: [
+    "the future wear",
     "XILAR",
     "xilar.in",
     "streetwear",
@@ -63,7 +65,7 @@ export const metadata: Metadata = {
     url: "/",
     images: [
       {
-        url: "/logo.png",
+        url: "/logo.jpeg",
         width: 1200,
         height: 630,
         alt: "XILAR — The Future Wear | Premium Streetwear India",
@@ -75,14 +77,14 @@ export const metadata: Metadata = {
     title: "XILAR | The Future Wear",
     description:
       "Next-gen streetwear for the bold. Premium basics, oversized fits, and urban essentials.",
-    images: ["/logo.png"],
+    images: ["/logo.jpeg"],
   },
   icons: {
     icon: [
-      { url: "/logo.png" },
-      { url: "/logo.png", sizes: "32x32", type: "image/png" },
+      { url: "/logo.jpeg" },
+      { url: "/logo.jpeg", sizes: "32x32", type: "image/jpeg" },
     ],
-    apple: [{ url: "/logo.png", sizes: "180x180", type: "image/png" }],
+    apple: [{ url: "/logo.jpeg", sizes: "180x180", type: "image/jpeg" }],
   },
   robots: {
     index: true,
@@ -115,6 +117,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} font-sans antialiased bg-background text-foreground tracking-tight min-h-screen flex flex-col`}
       >
+        <Analytics />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <CartProvider>
             <WishlistProvider>

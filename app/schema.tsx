@@ -7,7 +7,7 @@ export default function Schema() {
         "@id": "https://xilar.in/#organization",
         "name": "XILAR",
         "url": "https://xilar.in",
-        "logo": "https://xilar.in/logo.png",
+        "logo": "https://xilar.in/logo.jpeg",
         "sameAs": [
           "https://www.instagram.com/xilar.in/" // <-- Brand social linked here
         ]
