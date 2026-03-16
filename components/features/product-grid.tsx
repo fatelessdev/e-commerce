@@ -133,7 +133,7 @@ export function ProductGrid({ title = "Featured Drops", gender }: { title?: stri
 
             {/* Product Grid */}
             {!loading && products.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                     {products.map((product) => (
                         <Link href={`/product/${product.id}`} key={product.id} className="group">
                             <Card className="rounded-none border-0 bg-transparent shadow-none hover-lift">

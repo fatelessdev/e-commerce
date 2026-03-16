@@ -26,6 +26,8 @@ const genders = [
 ];
 
 const defaultSizes = ["S", "M", "L", "XL", "XXL"];
+const numberSizes = ["26", "28", "30", "32", "34"];
+const NUMBER_SIZE_CATEGORIES = ["jogger", "jeans", "cargo"];
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -432,7 +434,7 @@ export default function NewProductPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Sizes</label>
               <div className="flex flex-wrap gap-2">
-                {defaultSizes.map((size) => (
+                {(NUMBER_SIZE_CATEGORIES.includes(formData.category) ? numberSizes : defaultSizes).map((size) => (
                   <button
                     key={size}
                     type="button"

@@ -41,7 +41,7 @@ export function Navbar() {
                 {/* Logo */}
                 <Link href="/" className="mr-6 flex items-center space-x-2">
                     {/* <span className="text-xl font-bold tracking-tighter">XILAR</span> */}
-                    <img src="/logo.png" alt="XILAR" className="h-8 md:h-10 w-auto object-contain dark:invert" />
+                    <img src="/logo.jpeg" alt="XILAR" className="h-8 md:h-10 w-auto object-contain dark:invert" />
                 </Link>
 
                 {/* Desktop Nav */}

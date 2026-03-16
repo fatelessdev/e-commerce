@@ -57,13 +57,13 @@ export async function generateMetadata(
                     height: 800,
                     alt: product.name,
                 }))
-                : [{ url: "/logo.png", width: 1200, height: 630, alt: "XILAR" }],
+                : [{ url: "/logo.jpeg", width: 1200, height: 630, alt: "XILAR" }],
         },
         twitter: {
             card: "summary_large_image",
             title: `${product.name} | XILAR`,
             description,
-            images: product.images?.length ? product.images : ["/logo.png"],
+            images: product.images?.length ? product.images : ["/logo.jpeg"],
         },
         other: {
             "product:price:amount": price.toString(),

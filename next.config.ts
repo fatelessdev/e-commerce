@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/logo.png",
+        source: "/logo.jpeg",
         headers: [
           {
             key: "Cache-Control",

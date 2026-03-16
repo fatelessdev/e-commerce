@@ -2,6 +2,10 @@
 
 CHECK IF YOU HAVE SKILLS FOR THE TECHNOLOGY YOU'RE TRYING TO IMPLEMENT. IF PRESENT, REFER TO THE SKILLS FIRST AND THEN PROCEED.
 
+No bandaid fixes. Fix root causes.
+No backward-compatibility shims (early-stage product).
+For each task map out the full scope where the changes are needed like db, api, frontend etc. and then implement all at once.
+
 ## Tech Stack
 
 - **Framework:** Next.js 16 (App Router), React 19, TypeScript 5
