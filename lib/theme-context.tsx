@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useState, useEffect } from "react"
 
 type Theme = "light" | "dark"
 
@@ -14,19 +14,14 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-    const [theme, setThemeState] = useState<Theme>("dark")
-    const [mounted, setMounted] = useState(false)
-
-    useEffect(() => {
-        setMounted(true)
-        // Check localStorage or system preference
+    const [theme, setThemeState] = useState<Theme>(() => {
+        if (typeof window === "undefined") return "dark"
         const stored = localStorage.getItem("xilar-theme") as Theme | null
-        if (stored) {
-            setThemeState(stored)
-        } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
-            setThemeState("light")
-        }
-    }, [])
+        if (stored) return stored
+        if (window.matchMedia("(prefers-color-scheme: light)").matches) return "light"
+        return "dark"
+    })
+    const [mounted] = useState(() => typeof window !== "undefined")
 
     useEffect(() => {
         if (!mounted) return

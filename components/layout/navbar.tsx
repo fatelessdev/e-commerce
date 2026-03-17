@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Search, ShoppingBag, Heart, Menu, X, User } from "lucide-react"
@@ -26,7 +27,7 @@ export function Navbar() {
     }
 
     return (
-        <header className="sticky top-0 z-50 w-full border-b border-white/10 glass bg-background/80">
+        <header className="sticky top-0 z-50 w-full border-b border-border bg-background">
             <div className="flex h-16 items-center px-4 md:px-6">
                 {/* Mobile Menu Toggle */}
                 <Button
@@ -41,7 +42,7 @@ export function Navbar() {
                 {/* Logo */}
                 <Link href="/" className="mr-6 flex items-center space-x-2">
                     {/* <span className="text-xl font-bold tracking-tighter">XILAR</span> */}
-                    <img src="/logo.png" alt="XILAR" className="h-8 md:h-10 w-auto object-contain dark:invert" />
+                    <Image src="/logo.png" alt="XILAR" width={120} height={40} className="h-8 md:h-10 w-auto object-contain dark:invert" />
                 </Link>
 
                 {/* Desktop Nav */}
@@ -120,7 +121,7 @@ export function Navbar() {
 
             {/* Mobile Menu */}
             {showMobileMenu && (
-                <div className="md:hidden border-t border-white/10 py-4 px-4 space-y-2 bg-background">
+                <div className="md:hidden border-t border-border py-4 px-4 space-y-2 bg-background">
                     <Link href="/shop" className="block py-2 text-sm font-medium" onClick={() => setShowMobileMenu(false)}>
                         Shop All
                     </Link>

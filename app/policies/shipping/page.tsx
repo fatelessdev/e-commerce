@@ -44,9 +44,9 @@ export default function ShippingPolicyPage() {
                 {/* Free Shipping */}
                 <section className="space-y-4">
                     <h2 className="text-xl font-bold uppercase tracking-tight flex items-center gap-2">
-                        <IndianRupee className="h-5 w-5 text-gold" /> Free Shipping
+                        <IndianRupee className="h-5 w-5 text-red-accent" /> Free Shipping
                     </h2>
-                    <div className="p-6 bg-gold/10 border border-gold/30 text-center">
+                    <div className="p-6 bg-red-accent/10 border border-red-accent/30 text-center">
                         <p className="text-3xl font-black">FREE SHIPPING</p>
                         <p className="text-lg mt-2">on orders above ₹999</p>
                         <p className="text-sm text-muted-foreground mt-3">
@@ -92,7 +92,7 @@ export default function ShippingPolicyPage() {
                 {/* Delivery Time */}
                 <section className="space-y-4">
                     <h2 className="text-xl font-bold uppercase tracking-tight flex items-center gap-2">
-                        <Clock className="h-5 w-5 text-gold" /> Delivery Time
+                        <Clock className="h-5 w-5 text-red-accent" /> Delivery Time
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="p-4 bg-secondary/20 border border-border">
@@ -114,7 +114,7 @@ export default function ShippingPolicyPage() {
                 {/* Serviceable Areas */}
                 <section className="space-y-4">
                     <h2 className="text-xl font-bold uppercase tracking-tight flex items-center gap-2">
-                        <MapPin className="h-5 w-5 text-gold" /> Serviceable Areas
+                        <MapPin className="h-5 w-5 text-red-accent" /> Serviceable Areas
                     </h2>
                     <div className="p-4 bg-secondary/20 border border-border">
                         <p className="font-medium">We deliver across India!</p>
@@ -133,15 +133,15 @@ export default function ShippingPolicyPage() {
                     <div className="p-4 bg-secondary/20 border border-border">
                         <ul className="space-y-2 text-sm">
                             <li className="flex items-start gap-2">
-                                <span className="text-gold font-bold">•</span>
+                                <span className="text-red-accent font-bold">•</span>
                                 <span>You&apos;ll receive a tracking ID via email/SMS once your order ships</span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-gold font-bold">•</span>
+                                <span className="text-red-accent font-bold">•</span>
                                 <span>Track your order anytime from the &quot;My Orders&quot; page</span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-gold font-bold">•</span>
+                                <span className="text-red-accent font-bold">•</span>
                                 <span>We partner with trusted couriers for safe and reliable delivery</span>
                             </li>
                         </ul>

@@ -5,112 +5,107 @@
 @plugin "tailwindcss-animate";
 
 :root {
-  /* Almost black for harsh contrast */
+  /* Warm off-white light mode */
+  --background: oklch(0.985 0.002 60);
+  --foreground: oklch(0.16 0.01 30);
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card: oklch(0.995 0.001 60);
+  --card-foreground: oklch(0.16 0.01 30);
 
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --popover: oklch(0.995 0.001 60);
+  --popover-foreground: oklch(0.16 0.01 30);
 
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.18 0.01 30);
+  --primary-foreground: oklch(0.985 0.002 60);
 
-  --secondary: oklch(0.97 0 0);
-  /* Zinc-100 */
-  --secondary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.955 0.005 50);
+  --secondary-foreground: oklch(0.18 0.01 30);
 
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  /* Zinc-500 */
+  --muted: oklch(0.955 0.005 50);
+  --muted-foreground: oklch(0.52 0.01 30);
 
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --accent: oklch(0.955 0.005 50);
+  --accent-foreground: oklch(0.18 0.01 30);
 
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: #fafafa;
 
-  --border: oklch(0.922 0 0);
-  /* Zinc-200 */
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: oklch(0.91 0.005 50);
+  --input: oklch(0.91 0.005 50);
+  --ring: oklch(0.68 0.01 30);
 
   --radius: 0.625rem;
 
-  /* YoungLA-inspired gold accent */
-  --gold: #c9a962;
-  --gold-foreground: #0a0a0a;
-  --gold-light: #d4b87a;
-  --gold-dark: #a88e4a;
+  /* Crimson red accent */
+  --red: #C62828;
+  --red-foreground: #ffffff;
+  --red-light: #E53935;
+  --red-dark: #8E0000;
 
   /* Glassmorphism utilities */
   --glass-border: rgba(255, 255, 255, 0.2);
   --glass-bg: rgba(255, 255, 255, 0.1);
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
+
+  --chart-1: oklch(0.55 0.22 25);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --chart-4: oklch(0.65 0.2 30);
+  --chart-5: oklch(0.5 0.18 15);
+  --sidebar: oklch(0.975 0.002 60);
+  --sidebar-foreground: oklch(0.16 0.01 30);
+  --sidebar-primary: oklch(0.18 0.01 30);
+  --sidebar-primary-foreground: oklch(0.985 0.002 60);
+  --sidebar-accent: oklch(0.955 0.005 50);
+  --sidebar-accent-foreground: oklch(0.18 0.01 30);
+  --sidebar-border: oklch(0.91 0.005 50);
+  --sidebar-ring: oklch(0.68 0.01 30);
 }
 
 /* Dark mode - class-based for manual toggle */
 .dark {
-  --background: oklch(0.145 0 0);
-  /* Pure black for Yeezy vibe */
-  --foreground: oklch(0.985 0 0);
+  --background: oklch(0.13 0.008 30);
+  --foreground: oklch(0.94 0.005 60);
 
-  --card: oklch(0.205 0 0);
-  /* Zinc-950 */
-  --card-foreground: oklch(0.985 0 0);
+  --card: oklch(0.18 0.008 30);
+  --card-foreground: oklch(0.94 0.005 60);
 
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.18 0.008 30);
+  --popover-foreground: oklch(0.94 0.005 60);
 
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: oklch(0.9 0.005 60);
+  --primary-foreground: oklch(0.18 0.008 30);
 
-  --secondary: oklch(0.269 0 0);
-  /* Zinc-800 */
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.24 0.008 30);
+  --secondary-foreground: oklch(0.94 0.005 60);
 
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --muted: oklch(0.24 0.008 30);
+  --muted-foreground: oklch(0.65 0.01 30);
 
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.24 0.008 30);
+  --accent-foreground: oklch(0.94 0.005 60);
 
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: #ffffff;
 
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: oklch(0.5 0.01 30);
 
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-bg: rgba(0, 0, 0, 0.4);
-  --chart-1: oklch(0.488 0.243 264.376);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(0, 0, 0, 0.5);
+  --chart-1: oklch(0.55 0.22 25);
   --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-3: oklch(0.65 0.2 30);
   --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --chart-5: oklch(0.5 0.18 15);
+  --sidebar: oklch(0.18 0.008 30);
+  --sidebar-foreground: oklch(0.94 0.005 60);
+  --sidebar-primary: oklch(0.55 0.22 25);
+  --sidebar-primary-foreground: oklch(0.94 0.005 60);
+  --sidebar-accent: oklch(0.24 0.008 30);
+  --sidebar-accent-foreground: oklch(0.94 0.005 60);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: oklch(0.5 0.01 30);
 }
 
 @theme inline {
@@ -137,7 +132,7 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
 
   --color-sidebar-ring: var(--sidebar-ring);
 
@@ -172,6 +167,11 @@
   --radius-3xl: calc(var(--radius) + 12px);
 
   --radius-4xl: calc(var(--radius) + 16px);
+
+  --color-red-accent: var(--red);
+  --color-red-accent-foreground: var(--red-foreground);
+  --color-red-accent-light: var(--red-light);
+  --color-red-accent-dark: var(--red-dark);
 }
 
 body {
@@ -194,17 +194,17 @@ body {
   transform: translateY(-2px);
 }
 
-/* YoungLA-inspired gold utilities */
-.text-gold {
-  color: var(--gold);
+/* Crimson red accent utilities */
+.text-red-accent {
+  color: var(--red);
 }
 
-.bg-gold {
-  background-color: var(--gold);
+.bg-red-accent {
+  background-color: var(--red);
 }
 
-.border-gold {
-  border-color: var(--gold);
+.border-red-accent {
+  border-color: var(--red);
 }
 
 /* Star rating */
@@ -235,5 +235,18 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Reduced motion: disable animations & transitions for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .hover-lift,
+  .hover-lift:hover {
+    transition: none;
+    transform: none;
+  }
+
+  .animate-bounce {
+    animation: none;
   }
 }

@@ -21,7 +21,7 @@ export default function WishlistPage() {
 
     return (
         <div className="min-h-screen">
-            <div className="px-6 py-12 border-b border-white/10">
+            <div className="px-6 py-12 border-b border-border">
                 <h1 className="text-4xl md:text-6xl font-black tracking-tighter uppercase flex items-center gap-4">
                     <Heart className="h-10 w-10" /> Wishlist
                 </h1>

@@ -41,12 +41,35 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
     const chatContainerRef = useRef<HTMLDivElement>(null)
 
     // Allow parent to programmatically open the bargain chat
-    useEffect(() => {
-        if (triggerOpen && !isOpen && !appliedCoupon) {
-            handleOpenBargain()
-            onTriggered?.()
+    const triggerOpenRef = useRef(triggerOpen)
+    triggerOpenRef.current = triggerOpen
+    const isOpenRef = useRef(isOpen)
+    isOpenRef.current = isOpen
+    const appliedCouponRef = useRef(appliedCoupon)
+    appliedCouponRef.current = appliedCoupon
+    const onTriggeredRef = useRef(onTriggered)
+    onTriggeredRef.current = onTriggered
+
+    const handleOpenBargain = useCallback(() => {
+        setShowPrompt(false)
+        setIsOpen(true)
+
+        // Send initial greeting message
+        if (messages.length === 0) {
+            setMessages([{
+                id: "system-greeting",
+                role: "assistant",
+                content: "Hey there! 👋 Looking for a deal on your cart? Tell me - kitna discount chahiye?"
+            }])
         }
-    }, [triggerOpen]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [messages.length])
+
+    useEffect(() => {
+        if (triggerOpenRef.current && !isOpenRef.current && !appliedCouponRef.current) {
+            handleOpenBargain()
+            onTriggeredRef.current?.()
+        }
+    }, [triggerOpen, handleOpenBargain])
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setInput(e.target.value)
@@ -167,20 +190,6 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
         }
     }, [messages])
 
-    const handleOpenBargain = () => {
-        setShowPrompt(false)
-        setIsOpen(true)
-
-        // Send initial greeting message
-        if (messages.length === 0) {
-            setMessages([{
-                id: "system-greeting",
-                role: "assistant",
-                content: "Hey there! 👋 Looking for a deal on your cart? Tell me - kitna discount chahiye?"
-            }])
-        }
-    }
-
     const handleCopyCode = async () => {
         if (couponGenerated && !couponExpired) {
             await navigator.clipboard.writeText(couponGenerated.code)
@@ -235,11 +244,11 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
         <>
             {/* Bargain Prompt */}
             {showPrompt && !appliedCoupon && (
-                <div className="mt-6 p-4 bg-gold/10 border border-gold/30 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div className="mt-6 p-4 bg-red-accent/10 border border-red-accent/30 animate-in fade-in slide-in-from-bottom-2 duration-500">
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center">
-                                <Sparkles className="h-5 w-5 text-gold" />
+                            <div className="w-10 h-10 rounded-full bg-red-accent/20 flex items-center justify-center">
+                                <Sparkles className="h-5 w-5 text-red-accent" />
                             </div>
                             <div>
                                 <p className="font-semibold text-sm">Want a bargain? 💰</p>
@@ -257,7 +266,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                             </Button>
                             <Button
                                 size="sm"
-                                className="text-xs rounded-none bg-gold text-black hover:bg-gold-dark"
+                                className="text-xs rounded-none bg-red-accent text-white hover:bg-[#8E0000]"
                                 onClick={handleOpenBargain}
                             >
                                 Yes! 🎉
@@ -272,7 +281,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
                     <div className="w-full max-w-md bg-background border border-border shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
                         {/* Header */}
-                        <div className="p-4 bg-gold text-black flex items-center justify-between">
+                        <div className="p-4 bg-red-accent text-white flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
                                 <span className="font-bold tracking-tight uppercase text-sm">Bargain AI</span>
@@ -280,7 +289,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-6 w-6 text-black hover:bg-black/10"
+                                className="h-6 w-6 text-white hover:bg-white/10"
                                 onClick={() => setIsOpen(false)}
                             >
                                 <X className="h-4 w-4" />
@@ -340,8 +349,8 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                 <div className={cn(
                                     "flex items-center gap-2 p-3 border",
                                     couponExpired 
-                                        ? "bg-red-500/10 border-red-500/30 opacity-60" 
-                                        : "bg-gold/10 border-gold/30"
+                                        ? "bg-red-500/10 border-red-500/30 opacity-60"
+                                        : "bg-red-accent/10 border-red-accent/30"
                                 )}>
                                     <code className={cn(
                                         "flex-1 font-mono font-bold text-lg text-center",
@@ -370,7 +379,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                     </Button>
                                 ) : !appliedCoupon ? (
                                     <Button
-                                        className="w-full h-12 rounded-none uppercase tracking-widest bg-gold text-black hover:bg-gold-dark"
+                                        className="w-full h-12 rounded-none uppercase tracking-widest bg-red-accent text-white hover:bg-[#8E0000]"
                                         onClick={handleApplyCoupon}
                                     >
                                         Apply ₹{couponGenerated.discount} Discount
@@ -400,13 +409,13 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                         value={input}
                                         onChange={handleInputChange}
                                         placeholder="Ask for a discount..."
-                                        className="flex-1 px-3 py-2 border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-gold"
+                                        className="flex-1 px-3 py-2 border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-red-accent"
                                         disabled={isLoading}
                                     />
                                     <Button
                                         type="submit"
                                         size="icon"
-                                        className="rounded-none bg-gold text-black hover:bg-gold-dark"
+                                        className="rounded-none bg-red-accent text-white hover:bg-[#8E0000]"
                                         disabled={isLoading || !input.trim()}
                                     >
                                         <Send className="h-4 w-4" />

@@ -9,7 +9,7 @@ import { Check, CreditCard, Truck, MapPin, Loader2, AlertCircle, Sparkles } from
 import { CheckoutBargain } from "@/components/features/checkout-bargain"
 import { useSession } from "@/lib/auth-client"
 import { getSavedShippingAddress } from "@/lib/actions/orders"
-import { FREE_SHIPPING_THRESHOLD, FREE_SHIPPING_THRESHOLD_DISPLAY, SHIPPING_FEE, COD_FEE } from "@/lib/constants"
+import { FREE_SHIPPING_THRESHOLD, FREE_SHIPPING_THRESHOLD_DISPLAY, SHIPPING_FEE /*, COD_FEE */ } from "@/lib/constants"
 import Script from "next/script"
 
 const CHECKOUT_STORAGE_KEY = "xilar-checkout"
@@ -24,7 +24,8 @@ interface ShippingAddress {
     pincode: string
 }
 
-type PaymentMethod = "upi" | "card" | "netbanking" | "cod"
+// COD temporarily disabled — re-add `| "cod"` to re-enable
+type PaymentMethod = "upi" | "card" | "netbanking" /* | "cod" */
 
 interface CheckoutState {
     step: number
@@ -201,32 +202,35 @@ export default function CheckoutPage() {
             shippingCost,
             discount: appliedCoupon?.discount || 0,
             couponCode: appliedCoupon?.code,
-            codFee: paymentMethod === "cod" ? 50 : 0,
+            codFee,
             total: finalTotal,
             shippingAddress,
             paymentMethod
         }
 
         try {
-            if (paymentMethod === "cod") {
-                // COD flow — create order directly
-                const response = await fetch("/api/orders", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(orderData)
-                })
-                const result = await response.json()
-                if (result.success) {
-                    setOrderId(result.orderId)
-                    setOrderPlaced(true)
-                    clearCart()
-                    sessionStorage.removeItem(CHECKOUT_STORAGE_KEY)
-                } else {
-                    alert(result.error || "Failed to place order. Please try again.")
-                }
-            } else {
-                // Online payment flow — Razorpay Checkout
-                // Step 1: Create Razorpay order on server (amount computed server-side)
+            // COD temporarily disabled — restore this block to re-enable COD payments:
+        // if (paymentMethod === "cod") {
+        //     const res = await fetch("/api/orders", {
+        //         method: "POST",
+        //         headers: { "Content-Type": "application/json" },
+        //         body: JSON.stringify(orderData)
+        //     })
+        //     const result = await res.json()
+        //     if (result.success) {
+        //         setOrderId(result.orderId)
+        //         setOrderPlaced(true)
+        //         clearCart()
+        //         sessionStorage.removeItem(CHECKOUT_STORAGE_KEY)
+        //     } else {
+        //         alert(result.error || "Failed to place order.")
+        //     }
+        //     setIsPlacingOrder(false)
+        //     return
+        // }
+
+        // Online payment flow — Razorpay Checkout
+            // Step 1: Create Razorpay order on server (amount computed server-side)
                 const rzpOrderRes = await fetch("/api/razorpay", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -289,7 +293,7 @@ export default function CheckoutPage() {
                         contact: shippingAddress.phone,
                     },
                     theme: {
-                        color: "#000000",
+                        color: "#C62828",
                     },
                     modal: {
                         ondismiss: () => {
@@ -307,13 +311,9 @@ export default function CheckoutPage() {
                 const rzp = new RazorpayClass(options)
                 rzp.open()
                 return // Don't set isPlacingOrder to false — handler/ondismiss will do it
-            }
         } catch {
             alert("Failed to place order. Please try again.")
-        } finally {
-            if (paymentMethod === "cod") {
-                setIsPlacingOrder(false)
-            }
+            setIsPlacingOrder(false)
         }
     }
 
@@ -330,9 +330,11 @@ export default function CheckoutPage() {
 
     // Calculate pricing: free shipping above threshold, otherwise standard fee
     const shippingCost = totalPrice >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE
-    const codFee = paymentMethod === "cod" ? COD_FEE : 0
     const discount = appliedCoupon?.discount || 0
-    const finalTotal = totalPrice + shippingCost + codFee - discount
+    // COD temporarily disabled — swap the two lines below to re-enable
+    // const codFee = paymentMethod === "cod" ? COD_FEE : 0
+    const codFee = 0
+    const finalTotal = totalPrice + shippingCost - discount + codFee
 
     // Show loading while checking auth
     if (isAuthPending || !session) {
@@ -370,19 +372,18 @@ export default function CheckoutPage() {
                         Thank you for shopping with XILAR. Your order has been placed and will be delivered soon.
                     </p>
                     {appliedCoupon && (
-                        <p className="text-sm text-gold">You saved ₹{appliedCoupon.discount} with coupon {appliedCoupon.code}!</p>
+                        <p className="text-sm text-red-accent">You saved ₹{appliedCoupon.discount} with coupon {appliedCoupon.code}!</p>
                     )}
                     {orderId && (
                         <p className="text-sm text-muted-foreground">Order ID: #{orderId.slice(0, 8).toUpperCase()}</p>
                     )}
-                    {paymentMethod === "cod" && (
-                        <div className="p-4 bg-orange-500/10 border border-orange-500/30 text-sm">
-                            <p className="font-medium text-orange-600 dark:text-orange-400">Cash on Delivery</p>
-                            <p className="text-muted-foreground mt-1">
-                                Please keep ₹{Math.max(0, finalTotal).toLocaleString("en-IN")} ready at delivery.
+                    {/* COD temporarily disabled — restore when re-enabling:
+                        {paymentMethod === "cod" && (
+                            <p className="text-sm text-muted-foreground">
+                                Please keep ₹{finalTotal.toLocaleString("en-IN")} ready at the time of delivery.
                             </p>
-                        </div>
-                    )}
+                        )}
+                    */}
                     <Link href="/orders">
                         <Button className="rounded-none h-12 px-8 uppercase tracking-widest">
                             View Orders
@@ -403,7 +404,7 @@ export default function CheckoutPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
                 {/* Form Section */}
-                <div className="p-6 lg:p-12 space-y-8 border-r border-border">
+                <div className="p-6 lg:p-12 space-y-8 lg:border-r border-border">
                     {/* Progress */}
                     <div className="flex items-center gap-4 text-sm">
                         <span className={step >= 1 ? "text-foreground" : "text-muted-foreground"}>1. Shipping</span>
@@ -488,10 +489,10 @@ export default function CheckoutPage() {
 
                             {/* Mobile Bargain Nudge */}
                             {showBargainNudge && (
-                                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 p-4 bg-gold/10 border border-gold/30 space-y-3">
+                                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 p-4 bg-red-accent/10 border border-red-accent/30 space-y-3">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0">
-                                            <Sparkles className="h-4 w-4 text-gold" />
+                                        <div className="w-8 h-8 rounded-full bg-red-accent/20 flex items-center justify-center flex-shrink-0">
+                                            <Sparkles className="h-4 w-4 text-red-accent" />
                                         </div>
                                         <div>
                                             <p className="font-semibold text-sm">You haven&apos;t bargained yet!</p>
@@ -511,7 +512,7 @@ export default function CheckoutPage() {
                                             Skip
                                         </Button>
                                         <Button
-                                            className="flex-1 h-10 rounded-none text-xs uppercase tracking-wide bg-gold text-black hover:bg-gold-dark"
+                                            className="flex-1 h-10 rounded-none text-xs uppercase tracking-wide bg-red-accent text-white hover:bg-[#8E0000]"
                                             onClick={() => {
                                                 setShowBargainNudge(false)
                                                 setBargainNudgeDismissed(true)
@@ -533,11 +534,13 @@ export default function CheckoutPage() {
                                 <h2 className="text-xl font-bold uppercase tracking-tight">Payment Method</h2>
                             </div>
                             <div className="space-y-3">
+                                {/* COD temporarily disabled — re-add to the array below to re-enable:
+                                    { value: "cod", label: "Cash on Delivery (+₹50 fee)" },
+                                */}
                                 {[
                                     { value: "upi", label: "UPI" },
                                     { value: "card", label: "Credit/Debit Card" },
-                                    { value: "netbanking", label: "Net Banking" },
-                                    { value: "cod", label: "Cash on Delivery (+₹50)" }
+                                    { value: "netbanking", label: "Net Banking" }
                                 ].map((method) => (
                                     <label
                                         key={method.value}
@@ -560,14 +563,13 @@ export default function CheckoutPage() {
                                 ))}
                             </div>
 
-                            {paymentMethod === "cod" && (
-                                <div className="p-4 bg-orange-500/10 border border-orange-500/30 text-sm">
-                                    <p className="font-medium text-orange-600 dark:text-orange-400">COD Fee: ₹50</p>
-                                    <p className="text-muted-foreground mt-1">
-                                        A ₹50 cash handling fee will be added to your order.
+                            {/* COD temporarily disabled — restore when re-enabling:
+                                {paymentMethod === "cod" && (
+                                    <p className="text-sm text-muted-foreground p-3 bg-secondary/30 border border-border">
+                                        A convenience fee of ₹{COD_FEE} will be added for Cash on Delivery orders.
                                     </p>
-                                </div>
-                            )}
+                                )}
+                            */}
 
                             {/* Coupon Code Input */}
                             <div className="space-y-3 pt-4 border-t border-border">
@@ -698,18 +700,20 @@ export default function CheckoutPage() {
                             <span>Shipping {totalPrice >= FREE_SHIPPING_THRESHOLD && <span className="text-green-600 dark:text-green-400">(Free above {FREE_SHIPPING_THRESHOLD_DISPLAY})</span>}</span>
                             <span>{shippingCost === 0 ? "FREE" : `₹${shippingCost}`}</span>
                         </div>
-                        {paymentMethod === "cod" && (
-                            <div className="flex justify-between text-sm text-orange-600 dark:text-orange-400">
-                                <span>COD Fee</span>
-                                <span>+₹{codFee}</span>
-                            </div>
-                        )}
                         {appliedCoupon && (
                             <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
                                 <span>Discount ({appliedCoupon.code})</span>
                                 <span>-₹{appliedCoupon.discount}</span>
                             </div>
                         )}
+                        {/* COD temporarily disabled — restore when re-enabling:
+                            {paymentMethod === "cod" && (
+                                <div className="flex justify-between text-sm">
+                                    <span>COD Fee</span>
+                                    <span>₹{COD_FEE}</span>
+                                </div>
+                            )}
+                        */}
                         <hr className="border-border" />
                         <div className="flex justify-between text-lg font-bold">
                             <span>Total</span>

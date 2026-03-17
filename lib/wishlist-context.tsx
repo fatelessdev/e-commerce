@@ -21,16 +21,12 @@ interface WishlistContextType {
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined)
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
-    const [items, setItems] = useState<WishlistItem[]>([])
-    const [isHydrated, setIsHydrated] = useState(false)
-
-    useEffect(() => {
+    const [items, setItems] = useState<WishlistItem[]>(() => {
+        if (typeof window === "undefined") return []
         const stored = localStorage.getItem("xilar-wishlist")
-        if (stored) {
-            setItems(JSON.parse(stored))
-        }
-        setIsHydrated(true)
-    }, [])
+        return stored ? JSON.parse(stored) : []
+    })
+    const [isHydrated] = useState(() => typeof window !== "undefined")
 
     useEffect(() => {
         if (isHydrated) {

@@ -57,10 +57,10 @@ export default function RefundPolicyPage() {
                 {/* Bonus */}
                 <section className="space-y-4">
                     <h2 className="text-xl font-bold uppercase tracking-tight flex items-center gap-2">
-                        <Gift className="h-5 w-5 text-gold" /> Bonus Credit
+                        <Gift className="h-5 w-5 text-red-accent" /> Bonus Credit
                     </h2>
-                    <div className="p-4 bg-gold/10 border border-gold/30">
-                        <p className="font-medium text-gold">
+                    <div className="p-4 bg-red-accent/10 border border-red-accent/30">
+                        <p className="font-medium text-red-accent">
                             We value your trust! Defective returns receive:
                         </p>
                         <div className="mt-4 text-center">
@@ -78,7 +78,7 @@ export default function RefundPolicyPage() {
                 {/* Validity */}
                 <section className="space-y-4">
                     <h2 className="text-xl font-bold uppercase tracking-tight flex items-center gap-2">
-                        <Calendar className="h-5 w-5 text-gold" /> Credit Validity
+                        <Calendar className="h-5 w-5 text-red-accent" /> Credit Validity
                     </h2>
                     <div className="p-4 bg-secondary/20 border border-border">
                         <p className="font-medium">
@@ -97,21 +97,21 @@ export default function RefundPolicyPage() {
                     <h2 className="text-xl font-bold uppercase tracking-tight">How It Works</h2>
                     <div className="space-y-3">
                         <div className="flex gap-4 p-4 border border-border">
-                            <span className="w-8 h-8 bg-gold text-black flex items-center justify-center font-bold flex-shrink-0">1</span>
+                            <span className="w-8 h-8 bg-red-accent text-white flex items-center justify-center font-bold flex-shrink-0">1</span>
                             <div>
                                 <p className="font-medium">Return Approved</p>
                                 <p className="text-sm text-muted-foreground">After we verify your defect claim with unboxing video</p>
                             </div>
                         </div>
                         <div className="flex gap-4 p-4 border border-border">
-                            <span className="w-8 h-8 bg-gold text-black flex items-center justify-center font-bold flex-shrink-0">2</span>
+                            <span className="w-8 h-8 bg-red-accent text-white flex items-center justify-center font-bold flex-shrink-0">2</span>
                             <div>
                                 <p className="font-medium">Credit Issued</p>
                                 <p className="text-sm text-muted-foreground">You&apos;ll receive a unique coupon code via email within 24-48 hours</p>
                             </div>
                         </div>
                         <div className="flex gap-4 p-4 border border-border">
-                            <span className="w-8 h-8 bg-gold text-black flex items-center justify-center font-bold flex-shrink-0">3</span>
+                            <span className="w-8 h-8 bg-red-accent text-white flex items-center justify-center font-bold flex-shrink-0">3</span>
                             <div>
                                 <p className="font-medium">Use at Checkout</p>
                                 <p className="text-sm text-muted-foreground">Apply the code at checkout on your next order</p>
@@ -128,19 +128,19 @@ export default function RefundPolicyPage() {
                     <div className="p-4 bg-secondary/20 border border-border">
                         <ul className="space-y-2 text-sm">
                             <li className="flex items-start gap-2">
-                                <span className="text-gold font-bold">•</span>
+                                <span className="text-red-accent font-bold">•</span>
                                 <span>Store credit is <strong>non-transferable</strong> and linked to your account</span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-gold font-bold">•</span>
+                                <span className="text-red-accent font-bold">•</span>
                                 <span>Credit cannot be combined with bargain discounts</span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-gold font-bold">•</span>
+                                <span className="text-red-accent font-bold">•</span>
                                 <span>If order total is less than credit amount, remaining balance is forfeited</span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-gold font-bold">•</span>
+                                <span className="text-red-accent font-bold">•</span>
                                 <span>Credit applies to product value only (shipping charges calculated separately)</span>
                             </li>
                         </ul>

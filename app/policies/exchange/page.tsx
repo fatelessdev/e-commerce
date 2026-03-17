@@ -44,7 +44,7 @@ export default function ExchangePolicyPage() {
                 {/* Eligibility */}
                 <section className="space-y-4">
                     <h2 className="text-xl font-bold uppercase tracking-tight flex items-center gap-2">
-                        <Tag className="h-5 w-5 text-gold" /> Eligibility
+                        <Tag className="h-5 w-5 text-red-accent" /> Eligibility
                     </h2>
                     <div className="p-4 bg-secondary/20 border border-border">
                         <p className="font-medium">
@@ -59,7 +59,7 @@ export default function ExchangePolicyPage() {
                 {/* Timeframe */}
                 <section className="space-y-4">
                     <h2 className="text-xl font-bold uppercase tracking-tight flex items-center gap-2">
-                        <Clock className="h-5 w-5 text-gold" /> Timeframe
+                        <Clock className="h-5 w-5 text-red-accent" /> Timeframe
                     </h2>
                     <div className="p-4 bg-secondary/20 border border-border">
                         <p className="font-medium">
@@ -77,15 +77,15 @@ export default function ExchangePolicyPage() {
                     <div className="p-4 bg-secondary/20 border border-border">
                         <ul className="space-y-2">
                             <li className="flex items-start gap-2">
-                                <span className="text-gold font-bold">•</span>
+                                <span className="text-red-accent font-bold">•</span>
                                 <span>Product must be <strong>unused</strong> and <strong>unwashed</strong></span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-gold font-bold">•</span>
+                                <span className="text-red-accent font-bold">•</span>
                                 <span>Original tags must be <strong>intact</strong></span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-gold font-bold">•</span>
+                                <span className="text-red-accent font-bold">•</span>
                                 <span>Product must be in original packaging</span>
                             </li>
                         </ul>
@@ -112,28 +112,28 @@ export default function ExchangePolicyPage() {
                     <h2 className="text-xl font-bold uppercase tracking-tight">How to Request an Exchange</h2>
                     <div className="space-y-3">
                         <div className="flex gap-4 p-4 border border-border">
-                            <span className="w-8 h-8 bg-gold text-black flex items-center justify-center font-bold flex-shrink-0">1</span>
+                            <span className="w-8 h-8 bg-red-accent text-white flex items-center justify-center font-bold flex-shrink-0">1</span>
                             <div>
                                 <p className="font-medium">Contact Support</p>
                                 <p className="text-sm text-muted-foreground">Email us at support@xilar.in within 48 hours of delivery</p>
                             </div>
                         </div>
                         <div className="flex gap-4 p-4 border border-border">
-                            <span className="w-8 h-8 bg-gold text-black flex items-center justify-center font-bold flex-shrink-0">2</span>
+                            <span className="w-8 h-8 bg-red-accent text-white flex items-center justify-center font-bold flex-shrink-0">2</span>
                             <div>
                                 <p className="font-medium">Share Order Details</p>
                                 <p className="text-sm text-muted-foreground">Include your order ID and reason for exchange (size/color)</p>
                             </div>
                         </div>
                         <div className="flex gap-4 p-4 border border-border">
-                            <span className="w-8 h-8 bg-gold text-black flex items-center justify-center font-bold flex-shrink-0">3</span>
+                            <span className="w-8 h-8 bg-red-accent text-white flex items-center justify-center font-bold flex-shrink-0">3</span>
                             <div>
                                 <p className="font-medium">Ship the Product</p>
                                 <p className="text-sm text-muted-foreground">Pack it safely with tags intact. We&apos;ll provide pickup or shipping instructions.</p>
                             </div>
                         </div>
                         <div className="flex gap-4 p-4 border border-border">
-                            <span className="w-8 h-8 bg-gold text-black flex items-center justify-center font-bold flex-shrink-0">4</span>
+                            <span className="w-8 h-8 bg-red-accent text-white flex items-center justify-center font-bold flex-shrink-0">4</span>
                             <div>
                                 <p className="font-medium">Receive New Product</p>
                                 <p className="text-sm text-muted-foreground">We&apos;ll ship the correct size/color once we receive the original.</p>

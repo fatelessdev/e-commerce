@@ -36,8 +36,8 @@ export function Hero() {
       </div>
 
       <div className="relative z-40 text-center space-y-8 max-w-5xl px-6">
-        {/* Brand Name - YoungLA Style */}
-        <p className="text-gold text-lg md:text-xl tracking-[0.5em] uppercase font-medium">
+        {/* Brand Name */}
+        <p className="text-red-accent text-lg md:text-xl tracking-[0.5em] uppercase font-medium">
           XILAR
         </p>
 
@@ -57,7 +57,7 @@ export function Hero() {
           <Link href="/shop/men">
             <Button
               size="lg"
-              className="h-14 px-10 text-sm tracking-[0.2em] uppercase rounded-none bg-white text-black hover:bg-gold hover:text-black transition-all font-medium"
+              className="h-14 px-10 text-sm tracking-[0.2em] uppercase rounded-none bg-white text-black hover:bg-red-accent hover:text-white transition-all font-medium"
             >
               Shop Men
             </Button>
@@ -66,7 +66,7 @@ export function Hero() {
             <Button
               size="lg"
               variant="outline"
-              className="h-14 px-10 text-sm tracking-[0.2em] uppercase rounded-none border-white/40 hover:border-gold bg-transparent text-white hover:text-gold transition-all font-medium"
+              className="h-14 px-10 text-sm tracking-[0.2em] uppercase rounded-none border-white/40 hover:border-red-accent bg-transparent text-white hover:text-red-accent transition-all font-medium"
             >
               Shop Women
             </Button>

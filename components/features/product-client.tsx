@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ProductGrid } from "@/components/features/product-grid"
 import { Button } from "@/components/ui/button"
@@ -34,6 +34,8 @@ interface Product {
     stock: number
     variants?: ProductVariant[]
 }
+
+const NUMBER_SIZE_CATEGORIES = ["jogger", "jeans", "cargo", "shorts"]
 
 export function ProductClient({ id }: { id: string }) {
     const [product, setProduct] = useState<Product | null>(null)
@@ -252,7 +254,7 @@ export function ProductClient({ id }: { id: string }) {
                                     type="button"
                                     className={`rounded-full transition-all duration-200 ${
                                         selectedImage === i
-                                            ? "w-6 h-2 bg-gold"
+                                            ? "w-6 h-2 bg-red-accent"
                                             : "w-2 h-2 bg-neutral-400 hover:bg-neutral-300"
                                     }`}
                                     onClick={() => setSelectedImage(i)}
@@ -299,7 +301,10 @@ export function ProductClient({ id }: { id: string }) {
                                 {!selectedSize && <span className="text-destructive font-normal normal-case">Required</span>}
                             </label>
                             <div className="flex gap-2 flex-wrap">
-                                {product.sizes.map((size) => {
+                                {(NUMBER_SIZE_CATEGORIES.includes(product.category)
+                                    ? product.sizes.filter((s) => /^\d+$/.test(s))
+                                    : product.sizes
+                                ).map((size) => {
                                     const available = isSizeAvailable(size)
                                     return (
                                         <Button
@@ -431,7 +436,7 @@ export function ProductClient({ id }: { id: string }) {
             </div>
 
             {/* Related Products */}
-            <div className="border-t border-white/10 mt-20">
+            <div className="border-t border-border mt-20">
                 <ProductGrid title="You May Also Like" />
             </div>
         </div>

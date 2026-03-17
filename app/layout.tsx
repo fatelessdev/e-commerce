@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/app/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
 // import { BargainAI } from "@/components/features/bargain-ai";
 import { CartDrawer } from "@/components/features/cart-drawer";
+import { Footer } from "@/components/layout/footer";
 import { CartProvider } from "@/lib/cart-context";
 import { WishlistProvider } from "@/lib/wishlist-context";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { Analytics } from "@vercel/analytics/next"
 
-const inter = Inter({
-  variable: "--font-inter",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -115,7 +116,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body
-        className={`${inter.variable} font-sans antialiased bg-background text-foreground tracking-tight min-h-screen flex flex-col`}
+        className={`${spaceGrotesk.variable} font-sans antialiased bg-background text-foreground tracking-tight min-h-screen flex flex-col`}
       >
         <Analytics />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
@@ -129,6 +130,7 @@ export default function RootLayout({
                   {/* <BargainAI /> */}
                 </main>
               </div>
+              <Footer />
               <CartDrawer />
             </WishlistProvider>
           </CartProvider>

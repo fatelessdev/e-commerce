@@ -63,6 +63,7 @@ export const user = pgTable("user", {
   totalSpent: decimal("total_spent", { precision: 10, scale: 2 }).notNull().default("0"),
   // Saved shipping address (auto-filled on next checkout)
   shippingAddress: json("shipping_address").$type<{
+    name: string;
     phone: string;
     address: string;
     city: string;

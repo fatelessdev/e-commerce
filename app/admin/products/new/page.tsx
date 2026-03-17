@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createProduct, type ProductInput } from "@/lib/actions/admin";
 import { Loader2, Plus, X, Upload } from "lucide-react";
+import Image from "next/image";
 
 const categories = [
   { value: "tshirt", label: "T-Shirt" },
@@ -27,7 +28,7 @@ const genders = [
 
 const defaultSizes = ["S", "M", "L", "XL", "XXL"];
 const numberSizes = ["26", "28", "30", "32", "34"];
-const NUMBER_SIZE_CATEGORIES = ["jogger", "jeans", "cargo"];
+const NUMBER_SIZE_CATEGORIES = ["jogger", "jeans", "cargo", "shorts"];
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -62,8 +63,7 @@ export default function NewProductPage() {
   const [newFeature, setNewFeature] = useState("");
   const [colors, setColors] = useState<{ name: string; hex: string }[]>([]);
   const [newColor, setNewColor] = useState({ name: "", hex: "#000000" });
-  const [tags, setTags] = useState<string[]>([]);
-  const [newTag, setNewTag] = useState("");
+  const [tags] = useState<string[]>([]);
   // Variant stock: keyed by "size|color" (color can be empty string for no-color products)
   const [variantStock, setVariantStock] = useState<Record<string, number>>({});
 
@@ -373,10 +373,13 @@ export default function NewProductPage() {
                 <div className="flex flex-wrap gap-3">
                   {images.map((img, idx) => (
                     <div key={idx} className="relative group">
-                      <img
+                      <Image
                         src={img}
                         alt={`Product ${idx + 1}`}
+                        width={96}
+                        height={96}
                         className="w-24 h-24 object-cover rounded border"
+                        unoptimized
                       />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <button

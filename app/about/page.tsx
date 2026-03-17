@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import { Button } from "@/components/ui/button"
 import { JsonLd, breadcrumbJsonLd } from "@/components/seo/structured-data"
 
 export const metadata: Metadata = {
@@ -51,7 +50,7 @@ export default function AboutPage() {
                     </p>
                 </div>
 
-                <div className="mt-16 pt-8 border-t border-white/10">
+                <div className="mt-16 pt-8 border-t border-border">
                     <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">Get in touch</h2>
                     <p className="text-foreground">amansomvanshi29112003@gmail.com</p>
                     <p className="text-muted-foreground">+91 8090644991</p>

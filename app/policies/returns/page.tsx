@@ -57,23 +57,23 @@ export default function ReturnPolicyPage() {
                 {/* Mandatory Requirement */}
                 <section className="space-y-4">
                     <h2 className="text-xl font-bold uppercase tracking-tight flex items-center gap-2">
-                        <Video className="h-5 w-5 text-gold" /> Mandatory Requirement
+                        <Video className="h-5 w-5 text-red-accent" /> Mandatory Requirement
                     </h2>
-                    <div className="p-4 bg-gold/10 border border-gold/30">
-                        <p className="font-medium text-gold">
+                    <div className="p-4 bg-red-accent/10 border border-red-accent/30">
+                        <p className="font-medium text-red-accent">
                             You MUST provide a continuous, uncut Unboxing Video.
                         </p>
                         <ul className="text-sm mt-3 space-y-2">
                             <li className="flex items-start gap-2">
-                                <span className="text-gold font-bold">•</span>
+                                <span className="text-red-accent font-bold">•</span>
                                 <span>Video must clearly show the <strong>shipping label</strong> on the package</span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-gold font-bold">•</span>
+                                <span className="text-red-accent font-bold">•</span>
                                 <span>Video must be <strong>continuous</strong> (no cuts or edits)</span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-gold font-bold">•</span>
+                                <span className="text-red-accent font-bold">•</span>
                                 <span>Video must clearly show the <strong>defect or damage</strong></span>
                             </li>
                         </ul>
@@ -137,28 +137,28 @@ export default function ReturnPolicyPage() {
                     <h2 className="text-xl font-bold uppercase tracking-tight">Return Process</h2>
                     <div className="space-y-3">
                         <div className="flex gap-4 p-4 border border-border">
-                            <span className="w-8 h-8 bg-gold text-black flex items-center justify-center font-bold flex-shrink-0">1</span>
+                            <span className="w-8 h-8 bg-red-accent text-white flex items-center justify-center font-bold flex-shrink-0">1</span>
                             <div>
                                 <p className="font-medium">Record Unboxing</p>
                                 <p className="text-sm text-muted-foreground">Start recording before you open the package. Show the shipping label and unbox completely.</p>
                             </div>
                         </div>
                         <div className="flex gap-4 p-4 border border-border">
-                            <span className="w-8 h-8 bg-gold text-black flex items-center justify-center font-bold flex-shrink-0">2</span>
+                            <span className="w-8 h-8 bg-red-accent text-white flex items-center justify-center font-bold flex-shrink-0">2</span>
                             <div>
                                 <p className="font-medium">Contact Support</p>
                                 <p className="text-sm text-muted-foreground">Email support@xilar.in with your order ID, video, and description of the defect.</p>
                             </div>
                         </div>
                         <div className="flex gap-4 p-4 border border-border">
-                            <span className="w-8 h-8 bg-gold text-black flex items-center justify-center font-bold flex-shrink-0">3</span>
+                            <span className="w-8 h-8 bg-red-accent text-white flex items-center justify-center font-bold flex-shrink-0">3</span>
                             <div>
                                 <p className="font-medium">Verification</p>
                                 <p className="text-sm text-muted-foreground">Our team will review your video and respond within 24-48 hours.</p>
                             </div>
                         </div>
                         <div className="flex gap-4 p-4 border border-border">
-                            <span className="w-8 h-8 bg-gold text-black flex items-center justify-center font-bold flex-shrink-0">4</span>
+                            <span className="w-8 h-8 bg-red-accent text-white flex items-center justify-center font-bold flex-shrink-0">4</span>
                             <div>
                                 <p className="font-medium">Refund Processed</p>
                                 <p className="text-sm text-muted-foreground">If approved, you&apos;ll receive store credit (full value + 5% bonus). See our Refund Policy.</p>

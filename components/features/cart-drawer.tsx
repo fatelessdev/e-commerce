@@ -23,9 +23,9 @@ export function CartDrawer() {
             />
 
             {/* Drawer */}
-            <div className="fixed right-0 top-0 h-full w-full max-w-md bg-background border-l border-white/10 z-50 flex flex-col animate-in slide-in-from-right duration-300">
+            <div className="fixed right-0 top-0 h-full w-full max-w-md bg-background border-l border-border z-50 flex flex-col animate-in slide-in-from-right duration-300">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-white/10">
+                <div className="flex items-center justify-between p-6 border-b border-border">
                     <div className="flex items-center gap-2">
                         <ShoppingBag className="h-5 w-5" />
                         <h2 className="text-lg font-bold uppercase tracking-tight">Your Cart ({totalItems})</h2>
@@ -47,7 +47,7 @@ export function CartDrawer() {
                         </div>
                     ) : (
                         items.map((item) => (
-                            <div key={`${item.id}-${item.size}-${item.color || ''}`} className="flex gap-4 border-b border-white/10 pb-4">
+                            <div key={`${item.id}-${item.size}-${item.color || ''}`} className="flex gap-4 border-b border-border pb-4">
                                 <div
                                     className="w-20 h-24 bg-cover bg-center bg-neutral-900 flex-shrink-0"
                                     style={{ backgroundImage: `url(${item.image})` }}
@@ -93,7 +93,7 @@ export function CartDrawer() {
 
                 {/* Footer */}
                 {items.length > 0 && (
-                    <div className="p-6 border-t border-white/10 space-y-4">
+                    <div className="p-6 border-t border-border space-y-4">
                         <div className="flex justify-between text-lg font-bold">
                             <span>Total</span>
                             <span>₹{totalPrice.toLocaleString("en-IN")}</span>
