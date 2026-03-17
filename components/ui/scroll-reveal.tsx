@@ -55,7 +55,7 @@ export function ScrollReveal({
             transition={{
                 duration,
                 delay,
-                ease: EASE_OUT_EXPO as unknown as number[],
+                ease: EASE_OUT_EXPO,
             }}
             className={className}
         >
@@ -122,7 +122,7 @@ export function StaggerItem({
                     filter: "blur(0px)",
                     transition: {
                         duration: 0.6,
-                        ease: EASE_OUT_EXPO as unknown as number[],
+                        ease: EASE_OUT_EXPO,
                     },
                 },
             }}

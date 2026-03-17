@@ -170,7 +170,7 @@ export function Navbar() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.4, ease: EASE_OUT_EXPO as unknown as number[] }}
+              transition={{ duration: 0.4, ease: EASE_OUT_EXPO }}
               className="md:hidden border-t border-border overflow-hidden bg-background absolute top-full left-0 w-full z-50"
             >
               <div className="py-4 px-4 space-y-0">
@@ -183,7 +183,7 @@ export function Navbar() {
                     transition={{
                       duration: 0.35,
                       delay: i * 0.04,
-                      ease: EASE_OUT_EXPO as unknown as number[],
+                      ease: EASE_OUT_EXPO,
                     }}
                   >
                     <Link

@@ -44,7 +44,7 @@ export function Hero() {
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2, ease: EASE_OUT_EXPO as unknown as number[] }}
+            transition={{ duration: 0.8, delay: 0.2, ease: EASE_OUT_EXPO }}
             className="text-red-accent text-[10px] md:text-xs tracking-[0.3em] uppercase font-medium inline-block rounded-full border border-white/10 bg-white/5 px-4 py-1.5 backdrop-blur-sm"
           >
             XILAR &mdash; The future wear
@@ -54,7 +54,7 @@ export function Hero() {
           <motion.h1
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.4, ease: EASE_OUT_EXPO as unknown as number[] }}
+            transition={{ duration: 0.9, delay: 0.4, ease: EASE_OUT_EXPO }}
             className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white uppercase leading-[0.88]"
           >
             Built for<br />
@@ -65,7 +65,7 @@ export function Hero() {
           <motion.p
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6, ease: EASE_OUT_EXPO as unknown as number[] }}
+            transition={{ duration: 0.8, delay: 0.6, ease: EASE_OUT_EXPO }}
             className="text-base md:text-lg text-white/60 max-w-md font-light leading-relaxed"
           >
             Premium streetwear, oversized fits, and urban essentials for the next generation. Designed in Lucknow.
@@ -75,7 +75,7 @@ export function Hero() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8, ease: EASE_OUT_EXPO as unknown as number[] }}
+            transition={{ duration: 0.8, delay: 0.8, ease: EASE_OUT_EXPO }}
             className="flex flex-wrap items-center gap-4 pt-2"
           >
             <Link href="/shop/men">
