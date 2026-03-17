@@ -34,8 +34,8 @@ export default function Home() {
         }}
       />
       <Hero />
-      <ProductGrid title="Best Sellers" />
-      <ProductGrid title="New Arrivals" />
+      <ProductGrid title="Best Sellers" isFeatured />
+      <ProductGrid title="New Arrivals" isNew />
     </div>
   );
 }

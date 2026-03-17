@@ -23,9 +23,11 @@ interface CheckoutBargainProps {
     totalPrice: number
     onApplyCoupon: (discount: number, code: string) => void
     appliedCoupon: { code: string; discount: number } | null
+    triggerOpen?: boolean
+    onTriggered?: () => void
 }
 
-export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedCoupon }: CheckoutBargainProps) {
+export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedCoupon, triggerOpen, onTriggered }: CheckoutBargainProps) {
     const [isOpen, setIsOpen] = useState(false)
     const [showPrompt, setShowPrompt] = useState(true)
     const [couponGenerated, setCouponGenerated] = useState<{ code: string; discount: number; expiresAt: number } | null>(null)
@@ -37,6 +39,14 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
     const [isLoading, setIsLoading] = useState(false)
     const [negotiationRound, setNegotiationRound] = useState(0)
     const chatContainerRef = useRef<HTMLDivElement>(null)
+
+    // Allow parent to programmatically open the bargain chat
+    useEffect(() => {
+        if (triggerOpen && !isOpen && !appliedCoupon) {
+            handleOpenBargain()
+            onTriggered?.()
+        }
+    }, [triggerOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setInput(e.target.value)

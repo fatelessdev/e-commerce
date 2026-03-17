@@ -50,7 +50,7 @@ function ColorSwatches({ colors }: { colors: { name: string; hex: string }[] }) 
     )
 }
 
-export function ProductGrid({ title = "Featured Drops", gender }: { title?: string; gender?: "men" | "women" | "unisex" }) {
+export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNew }: { title?: string; gender?: "men" | "women" | "unisex"; isFeatured?: boolean; isNew?: boolean }) {
     const [activeTab, setActiveTab] = useState<"men" | "women">(gender === "women" ? "women" : "men")
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
@@ -66,7 +66,9 @@ export function ProductGrid({ title = "Featured Drops", gender }: { title?: stri
                 } else {
                     params.set("gender", "women")
                 }
-                
+                if (isFeatured) params.set("isFeatured", "true")
+                if (isNew) params.set("isNew", "true")
+
                 const res = await fetch(`/api/products?${params.toString()}`)
                 if (res.ok) {
                     const data = await res.json()
