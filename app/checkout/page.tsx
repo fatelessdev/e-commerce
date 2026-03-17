@@ -348,11 +348,11 @@ export default function CheckoutPage() {
     if (items.length === 0 && !orderPlaced) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center space-y-4">
-                    <p className="text-muted-foreground">Your cart is empty</p>
+                <div className="text-center space-y-5">
+                    <p className="text-sm text-muted-foreground">Your cart is empty</p>
                     <Link href="/shop">
-                        <Button variant="outline" className="rounded-none">
-                            Continue Shopping
+                        <Button variant="outline" className="rounded-none h-11 text-[10px] uppercase tracking-[0.2em]">
+                            Continue shopping
                         </Button>
                     </Link>
                 </div>
@@ -364,18 +364,21 @@ export default function CheckoutPage() {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center space-y-6 max-w-md px-6">
-                    <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto">
-                        <Check className="h-10 w-10 text-green-500" />
+                    <div className="w-16 h-16 rounded-full bg-green-500/15 flex items-center justify-center mx-auto">
+                        <Check className="h-7 w-7 text-green-500" />
                     </div>
-                    <h1 className="text-3xl font-black tracking-tighter uppercase">Order Confirmed!</h1>
-                    <p className="text-muted-foreground">
+                    <div className="space-y-2">
+                        <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium">Confirmation</p>
+                        <h1 className="text-3xl font-black tracking-tighter uppercase">Order confirmed</h1>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
                         Thank you for shopping with XILAR. Your order has been placed and will be delivered soon.
                     </p>
                     {appliedCoupon && (
-                        <p className="text-sm text-red-accent">You saved ₹{appliedCoupon.discount} with coupon {appliedCoupon.code}!</p>
+                        <p className="text-xs text-red-accent tabular-nums">You saved ₹{appliedCoupon.discount} with coupon {appliedCoupon.code}</p>
                     )}
                     {orderId && (
-                        <p className="text-sm text-muted-foreground">Order ID: #{orderId.slice(0, 8).toUpperCase()}</p>
+                        <p className="text-xs text-muted-foreground tabular-nums">Order ID: #{orderId.slice(0, 8).toUpperCase()}</p>
                     )}
                     {/* COD temporarily disabled — restore when re-enabling:
                         {paymentMethod === "cod" && (
@@ -385,8 +388,8 @@ export default function CheckoutPage() {
                         )}
                     */}
                     <Link href="/orders">
-                        <Button className="rounded-none h-12 px-8 uppercase tracking-widest">
-                            View Orders
+                        <Button className="rounded-none h-11 px-8 text-[10px] uppercase tracking-[0.2em]">
+                            View orders
                         </Button>
                     </Link>
                 </div>
@@ -398,83 +401,98 @@ export default function CheckoutPage() {
         <>
         <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
         <div className="min-h-screen">
-            <div className="px-6 py-8 border-b border-border">
-                <h1 className="text-3xl font-black tracking-tighter uppercase">Checkout</h1>
+            <div className="px-6 md:px-12 py-14 md:py-20 border-b border-border/60">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium mb-3">Secure checkout</p>
+                <h1 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">Checkout</h1>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
                 {/* Form Section */}
-                <div className="p-6 lg:p-12 space-y-8 lg:border-r border-border">
+                <div className="p-6 lg:p-12 space-y-8 lg:border-r border-border/60">
                     {/* Progress */}
-                    <div className="flex items-center gap-4 text-sm">
-                        <span className={step >= 1 ? "text-foreground" : "text-muted-foreground"}>1. Shipping</span>
-                        <span className="text-muted-foreground">→</span>
-                        <span className={step >= 2 ? "text-foreground" : "text-muted-foreground"}>2. Payment</span>
-                        <span className="text-muted-foreground">→</span>
-                        <span className={step >= 3 ? "text-foreground" : "text-muted-foreground"}>3. Review</span>
+                    <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.15em]">
+                        <span className={`transition-colors duration-300 ${step >= 1 ? "text-foreground font-semibold" : "text-muted-foreground"}`}>1. Shipping</span>
+                        <span className="text-border">—</span>
+                        <span className={`transition-colors duration-300 ${step >= 2 ? "text-foreground font-semibold" : "text-muted-foreground"}`}>2. Payment</span>
+                        <span className="text-border">—</span>
+                        <span className={`transition-colors duration-300 ${step >= 3 ? "text-foreground font-semibold" : "text-muted-foreground"}`}>3. Review</span>
                     </div>
 
                     {step === 1 && (
                         <div className="space-y-6">
                             <div className="flex items-center gap-3">
-                                <MapPin className="h-5 w-5" />
-                                <h2 className="text-xl font-bold uppercase tracking-tight">Shipping Address</h2>
+                                <MapPin className="h-4 w-4 text-muted-foreground" />
+                                <h2 className="text-sm font-semibold uppercase tracking-[0.15em]">Shipping address</h2>
                             </div>
-                            <div className="space-y-4">
-                                <input
-                                    type="text"
-                                    placeholder="Full Name *"
-                                    value={shippingAddress.name}
-                                    onChange={(e) => setShippingAddress(prev => ({ ...prev, name: e.target.value }))}
-                                    className="w-full h-12 px-4 bg-secondary/50 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                                />
-                                <input
-                                    type="email"
-                                    placeholder="Email *"
-                                    value={shippingAddress.email}
-                                    onChange={(e) => setShippingAddress(prev => ({ ...prev, email: e.target.value }))}
-                                    className="w-full h-12 px-4 bg-secondary/50 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                                />
-                                <input
-                                    type="tel"
-                                    placeholder="Phone Number *"
-                                    value={shippingAddress.phone}
-                                    onChange={(e) => setShippingAddress(prev => ({ ...prev, phone: e.target.value }))}
-                                    className="w-full h-12 px-4 bg-secondary/50 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                                />
-                                <textarea
-                                    placeholder="Address *"
-                                    rows={3}
-                                    value={shippingAddress.address}
-                                    onChange={(e) => setShippingAddress(prev => ({ ...prev, address: e.target.value }))}
-                                    className="w-full px-4 py-3 bg-secondary/50 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring resize-none"
-                                />
+                            <div className="space-y-5">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">Full name *</label>
+                                    <input
+                                        type="text"
+                                        value={shippingAddress.name}
+                                        onChange={(e) => setShippingAddress(prev => ({ ...prev, name: e.target.value }))}
+                                        className="w-full h-11 px-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">Email *</label>
+                                    <input
+                                        type="email"
+                                        value={shippingAddress.email}
+                                        onChange={(e) => setShippingAddress(prev => ({ ...prev, email: e.target.value }))}
+                                        className="w-full h-11 px-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">Phone number *</label>
+                                    <input
+                                        type="tel"
+                                        value={shippingAddress.phone}
+                                        onChange={(e) => setShippingAddress(prev => ({ ...prev, phone: e.target.value }))}
+                                        className="w-full h-11 px-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">Address *</label>
+                                    <textarea
+                                        rows={3}
+                                        value={shippingAddress.address}
+                                        onChange={(e) => setShippingAddress(prev => ({ ...prev, address: e.target.value }))}
+                                        className="w-full px-4 py-3 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring resize-none transition-all duration-300"
+                                    />
+                                </div>
                                 <div className="grid grid-cols-3 gap-4">
-                                    <input
-                                        type="text"
-                                        placeholder="City *"
-                                        value={shippingAddress.city}
-                                        onChange={(e) => setShippingAddress(prev => ({ ...prev, city: e.target.value }))}
-                                        className="w-full h-12 px-4 bg-secondary/50 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="State"
-                                        value={shippingAddress.state}
-                                        onChange={(e) => setShippingAddress(prev => ({ ...prev, state: e.target.value }))}
-                                        className="w-full h-12 px-4 bg-secondary/50 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="PIN Code *"
-                                        value={shippingAddress.pincode}
-                                        onChange={(e) => setShippingAddress(prev => ({ ...prev, pincode: e.target.value }))}
-                                        className="w-full h-12 px-4 bg-secondary/50 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                                    />
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">City *</label>
+                                        <input
+                                            type="text"
+                                            value={shippingAddress.city}
+                                            onChange={(e) => setShippingAddress(prev => ({ ...prev, city: e.target.value }))}
+                                            className="w-full h-11 px-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">State</label>
+                                        <input
+                                            type="text"
+                                            value={shippingAddress.state}
+                                            onChange={(e) => setShippingAddress(prev => ({ ...prev, state: e.target.value }))}
+                                            className="w-full h-11 px-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">PIN code *</label>
+                                        <input
+                                            type="text"
+                                            value={shippingAddress.pincode}
+                                            onChange={(e) => setShippingAddress(prev => ({ ...prev, pincode: e.target.value }))}
+                                            className="w-full h-11 px-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                             <Button
-                                className="w-full h-14 rounded-none uppercase tracking-widest"
+                                className="w-full h-13 rounded-none text-[10px] uppercase tracking-[0.2em] font-semibold"
                                 onClick={() => {
                                     if (!appliedCoupon && !bargainNudgeDismissed && window.innerWidth < 1024) {
                                         setShowBargainNudge(true)
@@ -530,10 +548,10 @@ export default function CheckoutPage() {
                     {step === 2 && (
                         <div className="space-y-6">
                             <div className="flex items-center gap-3">
-                                <CreditCard className="h-5 w-5" />
-                                <h2 className="text-xl font-bold uppercase tracking-tight">Payment Method</h2>
+                                <CreditCard className="h-4 w-4 text-muted-foreground" />
+                                <h2 className="text-sm font-semibold uppercase tracking-[0.15em]">Payment method</h2>
                             </div>
-                            <div className="space-y-3">
+                            <div className="space-y-2">
                                 {/* COD temporarily disabled — re-add to the array below to re-enable:
                                     { value: "cod", label: "Cash on Delivery (+₹50 fee)" },
                                 */}
@@ -544,10 +562,10 @@ export default function CheckoutPage() {
                                 ].map((method) => (
                                     <label
                                         key={method.value}
-                                        className={`flex items-center gap-3 p-4 border cursor-pointer transition-colors ${
+                                        className={`flex items-center gap-3 p-4 border cursor-pointer transition-all duration-300 ${
                                             paymentMethod === method.value
-                                                ? "border-foreground bg-secondary/30"
-                                                : "border-input hover:border-foreground"
+                                                ? "border-foreground bg-secondary/20"
+                                                : "border-input hover:border-foreground/50"
                                         }`}
                                     >
                                         <input
@@ -558,7 +576,7 @@ export default function CheckoutPage() {
                                             onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
                                             className="accent-foreground"
                                         />
-                                        <span>{method.label}</span>
+                                        <span className="text-sm">{method.label}</span>
                                     </label>
                                 ))}
                             </div>
@@ -572,20 +590,20 @@ export default function CheckoutPage() {
                             */}
 
                             {/* Coupon Code Input */}
-                            <div className="space-y-3 pt-4 border-t border-border">
-                                <h3 className="text-sm font-bold uppercase tracking-wide">Have a coupon code?</h3>
+                            <div className="space-y-3 pt-5 border-t border-border/60">
+                                <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em]">Have a coupon code?</h3>
                                 <div className="flex gap-2">
                                     <input
                                         type="text"
                                         value={couponInput}
                                         onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                                         placeholder="Enter coupon code"
-                                        className="flex-1 h-12 px-4 bg-secondary/50 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring uppercase"
+                                        className="flex-1 h-11 px-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring uppercase transition-all duration-300"
                                         disabled={!!appliedCoupon || isValidatingCoupon}
                                     />
                                     <Button
                                         variant="outline"
-                                        className="h-12 px-6 rounded-none uppercase tracking-wide"
+                                        className="h-11 px-6 rounded-none text-[10px] uppercase tracking-[0.15em]"
                                         onClick={handleValidateCoupon}
                                         disabled={!!appliedCoupon || isValidatingCoupon || !couponInput.trim()}
                                     >
@@ -593,20 +611,20 @@ export default function CheckoutPage() {
                                     </Button>
                                 </div>
                                 {couponError && (
-                                    <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 text-sm text-red-600 dark:text-red-400">
-                                        <AlertCircle className="h-4 w-4" />
+                                    <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400">
+                                        <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
                                         {couponError}
                                     </div>
                                 )}
                                 {appliedCoupon && (
-                                    <div className="flex items-center justify-between p-3 bg-green-500/10 border border-green-500/30">
-                                        <span className="text-sm text-green-600 dark:text-green-400">
-                                            ✓ Coupon {appliedCoupon.code} applied! You save ₹{appliedCoupon.discount}
+                                    <div className="flex items-center justify-between p-3 bg-green-500/10 border border-green-500/20">
+                                        <span className="text-xs text-green-600 dark:text-green-400 tabular-nums">
+                                            ✓ Coupon {appliedCoupon.code} applied — you save ₹{appliedCoupon.discount}
                                         </span>
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="text-xs text-muted-foreground hover:text-foreground"
+                                            className="text-[10px] text-muted-foreground hover:text-foreground"
                                             onClick={() => setAppliedCoupon(null)}
                                         >
                                             Remove
@@ -615,12 +633,12 @@ export default function CheckoutPage() {
                                 )}
                             </div>
 
-                            <div className="flex gap-4">
-                                <Button variant="outline" className="flex-1 h-14 rounded-none uppercase" onClick={() => setStep(1)}>
+                            <div className="flex gap-3">
+                                <Button variant="outline" className="flex-1 h-13 rounded-none text-[10px] uppercase tracking-[0.15em]" onClick={() => setStep(1)}>
                                     Back
                                 </Button>
-                                <Button className="flex-1 h-14 rounded-none uppercase tracking-widest" onClick={() => setStep(3)}>
-                                    Review Order
+                                <Button className="flex-1 h-13 rounded-none text-[10px] uppercase tracking-[0.2em] font-semibold" onClick={() => setStep(3)}>
+                                    Review order
                                 </Button>
                             </div>
                         </div>
@@ -629,51 +647,51 @@ export default function CheckoutPage() {
                     {step === 3 && (
                         <div className="space-y-6">
                             <div className="flex items-center gap-3">
-                                <Truck className="h-5 w-5" />
-                                <h2 className="text-xl font-bold uppercase tracking-tight">Review Order</h2>
+                                <Truck className="h-4 w-4 text-muted-foreground" />
+                                <h2 className="text-sm font-semibold uppercase tracking-[0.15em]">Review order</h2>
                             </div>
                             
                             {/* Shipping Address Summary */}
-                            <div className="p-4 bg-secondary/20 border border-border space-y-1">
-                                <p className="font-medium">{shippingAddress.name}</p>
-                                <p className="text-sm text-muted-foreground">{shippingAddress.address}</p>
-                                <p className="text-sm text-muted-foreground">
+                            <div className="p-4 bg-secondary/10 border border-border/60 space-y-1">
+                                <p className="font-medium text-sm">{shippingAddress.name}</p>
+                                <p className="text-xs text-muted-foreground">{shippingAddress.address}</p>
+                                <p className="text-xs text-muted-foreground">
                                     {shippingAddress.city}{shippingAddress.state ? `, ${shippingAddress.state}` : ""} - {shippingAddress.pincode}
                                 </p>
-                                <p className="text-sm text-muted-foreground">{shippingAddress.phone}</p>
+                                <p className="text-xs text-muted-foreground tabular-nums">{shippingAddress.phone}</p>
                             </div>
 
                             <div className="space-y-4">
                                 {items.map((item) => (
-                                    <div key={`${item.id}-${item.size}`} className="flex gap-4 border-b border-border pb-4">
+                                    <div key={`${item.id}-${item.size}`} className="flex gap-4 border-b border-border/60 pb-4">
                                         <div
-                                            className="w-16 h-20 bg-cover bg-center bg-neutral-900 flex-shrink-0"
+                                            className="w-14 h-18 bg-cover bg-center bg-muted/30 flex-shrink-0"
                                             style={{ backgroundImage: `url(${item.image})` }}
                                         />
-                                        <div className="flex-1">
-                                            <h3 className="font-medium">{item.name}</h3>
-                                            <p className="text-sm text-muted-foreground">Size: {item.size} × {item.quantity}</p>
-                                            <p className="font-semibold">{item.displayPrice}</p>
+                                        <div className="flex-1 space-y-0.5">
+                                            <h3 className="font-medium text-sm">{item.name}</h3>
+                                            <p className="text-xs text-muted-foreground">Size: {item.size} × {item.quantity}</p>
+                                            <p className="font-semibold text-sm tabular-nums">{item.displayPrice}</p>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                            <div className="flex gap-4">
-                                <Button variant="outline" className="flex-1 h-14 rounded-none uppercase" onClick={() => setStep(2)}>
+                            <div className="flex gap-3">
+                                <Button variant="outline" className="flex-1 h-13 rounded-none text-[10px] uppercase tracking-[0.15em]" onClick={() => setStep(2)}>
                                     Back
                                 </Button>
                                 <Button 
-                                    className="flex-1 h-14 rounded-none uppercase tracking-widest" 
+                                    className="flex-1 h-13 rounded-none text-[10px] uppercase tracking-[0.2em] font-semibold" 
                                     onClick={handlePlaceOrder}
                                     disabled={isPlacingOrder}
                                 >
                                     {isPlacingOrder ? (
                                         <>
-                                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                            Placing Order...
+                                            <Loader2 className="h-3.5 w-3.5 animate-spin mr-2" />
+                                            Processing...
                                         </>
                                     ) : (
-                                        "Place Order"
+                                        "Place order"
                                     )}
                                 </Button>
                             </div>
@@ -682,42 +700,42 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Order Summary */}
-                <div className="p-6 lg:p-12 bg-secondary/20">
-                    <h2 className="text-xl font-bold uppercase tracking-tight mb-6">Order Summary</h2>
-                    <div className="space-y-4">
+                <div className="p-6 lg:p-12 bg-secondary/10">
+                    <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-6">Order summary</h2>
+                    <div className="space-y-3">
                         {items.map((item) => (
-                            <div key={`${item.id}-${item.size}`} className="flex justify-between text-sm">
-                                <span>{item.name} ({item.size}) × {item.quantity}</span>
-                                <span>₹{(item.price * item.quantity).toLocaleString("en-IN")}</span>
+                            <div key={`${item.id}-${item.size}`} className="flex justify-between text-xs">
+                                <span className="text-muted-foreground">{item.name} ({item.size}) × {item.quantity}</span>
+                                <span className="tabular-nums">₹{(item.price * item.quantity).toLocaleString("en-IN")}</span>
                             </div>
                         ))}
-                        <hr className="border-border" />
-                        <div className="flex justify-between text-sm">
-                            <span>Subtotal</span>
-                            <span>₹{totalPrice.toLocaleString("en-IN")}</span>
+                        <hr className="border-border/60" />
+                        <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Subtotal</span>
+                            <span className="tabular-nums">₹{totalPrice.toLocaleString("en-IN")}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                            <span>Shipping {totalPrice >= FREE_SHIPPING_THRESHOLD && <span className="text-green-600 dark:text-green-400">(Free above {FREE_SHIPPING_THRESHOLD_DISPLAY})</span>}</span>
-                            <span>{shippingCost === 0 ? "FREE" : `₹${shippingCost}`}</span>
+                        <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Shipping {totalPrice >= FREE_SHIPPING_THRESHOLD && <span className="text-green-600 dark:text-green-400">(Free above {FREE_SHIPPING_THRESHOLD_DISPLAY})</span>}</span>
+                            <span className="tabular-nums">{shippingCost === 0 ? "FREE" : `₹${shippingCost}`}</span>
                         </div>
                         {appliedCoupon && (
-                            <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                            <div className="flex justify-between text-xs text-green-600 dark:text-green-400">
                                 <span>Discount ({appliedCoupon.code})</span>
-                                <span>-₹{appliedCoupon.discount}</span>
+                                <span className="tabular-nums">-₹{appliedCoupon.discount}</span>
                             </div>
                         )}
                         {/* COD temporarily disabled — restore when re-enabling:
                             {paymentMethod === "cod" && (
-                                <div className="flex justify-between text-sm">
+                                <div className="flex justify-between text-xs">
                                     <span>COD Fee</span>
-                                    <span>₹{COD_FEE}</span>
+                                    <span className="tabular-nums">₹{COD_FEE}</span>
                                 </div>
                             )}
                         */}
-                        <hr className="border-border" />
-                        <div className="flex justify-between text-lg font-bold">
+                        <hr className="border-border/60" />
+                        <div className="flex justify-between text-sm font-semibold pt-1">
                             <span>Total</span>
-                            <span>₹{Math.max(0, finalTotal).toLocaleString("en-IN")}</span>
+                            <span className="tabular-nums">₹{Math.max(0, finalTotal).toLocaleString("en-IN")}</span>
                         </div>
                     </div>
 

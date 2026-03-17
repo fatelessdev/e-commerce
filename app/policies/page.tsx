@@ -76,30 +76,31 @@ export default function PoliciesPage() {
                     },
                 ])}
             />
-            <div className="px-6 py-12 border-b border-border">
-                <h1 className="text-4xl font-black tracking-tighter uppercase">Store Policies</h1>
-                <p className="text-muted-foreground mt-2">
+            <div className="px-6 md:px-12 py-14 md:py-20 border-b border-border/60">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium mb-3">Legal</p>
+                <h1 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">Store policies</h1>
+                <p className="text-sm text-muted-foreground mt-2">
                     Everything you need to know about exchanges, returns, refunds, and shipping.
                 </p>
             </div>
 
-            <div className="p-6 max-w-4xl">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-6 md:px-12 max-w-4xl">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {policies.map((policy) => (
                         <Link
                             key={policy.href}
                             href={policy.href}
-                            className="group p-6 border border-border hover:border-foreground transition-colors"
+                            className="group p-6 border border-border/60 hover:border-foreground/40 transition-all duration-300"
                         >
                             <div className="flex items-start gap-4">
-                                <div className="w-12 h-12 bg-secondary flex items-center justify-center flex-shrink-0">
-                                    <policy.icon className="h-6 w-6" />
+                                <div className="w-10 h-10 bg-secondary/50 flex items-center justify-center flex-shrink-0">
+                                    <policy.icon className="h-4 w-4 text-muted-foreground" />
                                 </div>
                                 <div>
-                                    <h2 className="font-bold text-lg uppercase tracking-tight group-hover:text-red-accent transition-colors">
+                                    <h2 className="text-sm font-semibold uppercase tracking-[0.05em] group-hover:text-red-accent transition-colors duration-300">
                                         {policy.title}
                                     </h2>
-                                    <p className="text-sm text-muted-foreground mt-1">
+                                    <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
                                         {policy.description}
                                     </p>
                                 </div>
@@ -109,24 +110,24 @@ export default function PoliciesPage() {
                 </div>
 
                 {/* Quick Summary */}
-                <div className="mt-12 p-6 bg-secondary/20 border border-border">
-                    <h2 className="font-bold text-lg uppercase tracking-tight mb-4">Quick Summary</h2>
-                    <ul className="space-y-3 text-sm">
+                <div className="mt-12 p-6 bg-secondary/10 border border-border/60">
+                    <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-5">Quick summary</h2>
+                    <ul className="space-y-3 text-xs">
                         <li className="flex items-start gap-2">
-                            <span className="text-red-accent">•</span>
-                            <span><strong>Exchanges:</strong> Within 48 hours for size/color only. Product must be unused with tags.</span>
+                            <span className="text-red-accent mt-0.5">·</span>
+                            <span><strong className="text-foreground">Exchanges:</strong> <span className="text-muted-foreground">Within 48 hours for size/color only. Product must be unused with tags.</span></span>
                         </li>
                         <li className="flex items-start gap-2">
-                            <span className="text-red-accent">•</span>
-                            <span><strong>Returns:</strong> Only for defective items. Unboxing video required as proof.</span>
+                            <span className="text-red-accent mt-0.5">·</span>
+                            <span><strong className="text-foreground">Returns:</strong> <span className="text-muted-foreground">Only for defective items. Unboxing video required as proof.</span></span>
                         </li>
                         <li className="flex items-start gap-2">
-                            <span className="text-red-accent">•</span>
-                            <span><strong>Refunds:</strong> Issued as store credit (not cash) with +5% bonus.</span>
+                            <span className="text-red-accent mt-0.5">·</span>
+                            <span><strong className="text-foreground">Refunds:</strong> <span className="text-muted-foreground">Issued as store credit (not cash) with +5% bonus.</span></span>
                         </li>
                         <li className="flex items-start gap-2">
-                            <span className="text-red-accent">•</span>
-                            <span><strong>Shipping:</strong> Free above ₹999, otherwise ₹99. COD available (+₹50 fee).</span>
+                            <span className="text-red-accent mt-0.5">·</span>
+                            <span><strong className="text-foreground">Shipping:</strong> <span className="text-muted-foreground">Free above ₹999, otherwise ₹99. COD available (+₹50 fee).</span></span>
                         </li>
                     </ul>
                 </div>
