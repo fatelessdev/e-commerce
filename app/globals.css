@@ -6,41 +6,41 @@
 
 :root {
   /* Warm off-white light mode */
-  --background: oklch(0.985 0.002 60);
-  --foreground: oklch(0.16 0.01 30);
+  --background: oklch(0.985 0.003 60);
+  --foreground: oklch(0.14 0.012 30);
 
-  --card: oklch(0.995 0.001 60);
-  --card-foreground: oklch(0.16 0.01 30);
+  --card: oklch(0.99 0.002 60);
+  --card-foreground: oklch(0.14 0.012 30);
 
-  --popover: oklch(0.995 0.001 60);
-  --popover-foreground: oklch(0.16 0.01 30);
+  --popover: oklch(0.99 0.002 60);
+  --popover-foreground: oklch(0.14 0.012 30);
 
-  --primary: oklch(0.18 0.01 30);
-  --primary-foreground: oklch(0.985 0.002 60);
+  --primary: oklch(0.16 0.012 30);
+  --primary-foreground: oklch(0.985 0.003 60);
 
-  --secondary: oklch(0.955 0.005 50);
-  --secondary-foreground: oklch(0.18 0.01 30);
+  --secondary: oklch(0.95 0.005 50);
+  --secondary-foreground: oklch(0.16 0.012 30);
 
-  --muted: oklch(0.955 0.005 50);
-  --muted-foreground: oklch(0.52 0.01 30);
+  --muted: oklch(0.95 0.005 50);
+  --muted-foreground: oklch(0.48 0.012 30);
 
-  --accent: oklch(0.955 0.005 50);
-  --accent-foreground: oklch(0.18 0.01 30);
+  --accent: oklch(0.95 0.005 50);
+  --accent-foreground: oklch(0.16 0.012 30);
 
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: #fafafa;
 
-  --border: oklch(0.91 0.005 50);
-  --input: oklch(0.91 0.005 50);
-  --ring: oklch(0.68 0.01 30);
+  --border: oklch(0.905 0.006 50);
+  --input: oklch(0.905 0.006 50);
+  --ring: oklch(0.65 0.012 30);
 
   --radius: 0.625rem;
 
-  /* Crimson red accent */
-  --red: #C62828;
+  /* Deep crimson accent — desaturated for premium feel */
+  --red: oklch(0.45 0.18 25);
   --red-foreground: #ffffff;
-  --red-light: #E53935;
-  --red-dark: #8E0000;
+  --red-light: oklch(0.52 0.19 25);
+  --red-dark: oklch(0.32 0.14 25);
 
   /* Glassmorphism utilities */
   --glass-border: rgba(255, 255, 255, 0.2);
@@ -51,61 +51,65 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.65 0.2 30);
   --chart-5: oklch(0.5 0.18 15);
-  --sidebar: oklch(0.975 0.002 60);
-  --sidebar-foreground: oklch(0.16 0.01 30);
-  --sidebar-primary: oklch(0.18 0.01 30);
-  --sidebar-primary-foreground: oklch(0.985 0.002 60);
-  --sidebar-accent: oklch(0.955 0.005 50);
-  --sidebar-accent-foreground: oklch(0.18 0.01 30);
-  --sidebar-border: oklch(0.91 0.005 50);
-  --sidebar-ring: oklch(0.68 0.01 30);
+  --sidebar: oklch(0.975 0.003 60);
+  --sidebar-foreground: oklch(0.14 0.012 30);
+  --sidebar-primary: oklch(0.16 0.012 30);
+  --sidebar-primary-foreground: oklch(0.985 0.003 60);
+  --sidebar-accent: oklch(0.95 0.005 50);
+  --sidebar-accent-foreground: oklch(0.16 0.012 30);
+  --sidebar-border: oklch(0.905 0.006 50);
+  --sidebar-ring: oklch(0.65 0.012 30);
 }
 
-/* Dark mode - class-based for manual toggle */
+/* Dark mode */
 .dark {
-  --background: oklch(0.13 0.008 30);
-  --foreground: oklch(0.94 0.005 60);
+  --background: oklch(0.115 0.01 30);
+  --foreground: oklch(0.93 0.006 60);
 
-  --card: oklch(0.18 0.008 30);
-  --card-foreground: oklch(0.94 0.005 60);
+  --card: oklch(0.155 0.01 30);
+  --card-foreground: oklch(0.93 0.006 60);
 
-  --popover: oklch(0.18 0.008 30);
-  --popover-foreground: oklch(0.94 0.005 60);
+  --popover: oklch(0.155 0.01 30);
+  --popover-foreground: oklch(0.93 0.006 60);
 
-  --primary: oklch(0.9 0.005 60);
-  --primary-foreground: oklch(0.18 0.008 30);
+  --primary: oklch(0.92 0.006 60);
+  --primary-foreground: oklch(0.155 0.01 30);
 
-  --secondary: oklch(0.24 0.008 30);
-  --secondary-foreground: oklch(0.94 0.005 60);
+  --secondary: oklch(0.2 0.01 30);
+  --secondary-foreground: oklch(0.93 0.006 60);
 
-  --muted: oklch(0.24 0.008 30);
-  --muted-foreground: oklch(0.65 0.01 30);
+  --muted: oklch(0.2 0.01 30);
+  --muted-foreground: oklch(0.58 0.012 30);
 
-  --accent: oklch(0.24 0.008 30);
-  --accent-foreground: oklch(0.94 0.005 60);
+  --accent: oklch(0.2 0.01 30);
+  --accent-foreground: oklch(0.93 0.006 60);
 
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: #ffffff;
 
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.5 0.01 30);
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.45 0.012 30);
 
-  --glass-border: rgba(255, 255, 255, 0.08);
+  --red: oklch(0.55 0.2 25);
+  --red-light: oklch(0.6 0.21 25);
+  --red-dark: oklch(0.4 0.16 25);
+
+  --glass-border: rgba(255, 255, 255, 0.06);
   --glass-bg: rgba(0, 0, 0, 0.5);
   --chart-1: oklch(0.55 0.22 25);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.65 0.2 30);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.5 0.18 15);
-  --sidebar: oklch(0.18 0.008 30);
-  --sidebar-foreground: oklch(0.94 0.005 60);
-  --sidebar-primary: oklch(0.55 0.22 25);
-  --sidebar-primary-foreground: oklch(0.94 0.005 60);
-  --sidebar-accent: oklch(0.24 0.008 30);
-  --sidebar-accent-foreground: oklch(0.94 0.005 60);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.5 0.01 30);
+  --sidebar: oklch(0.155 0.01 30);
+  --sidebar-foreground: oklch(0.93 0.006 60);
+  --sidebar-primary: oklch(0.55 0.2 25);
+  --sidebar-primary-foreground: oklch(0.93 0.006 60);
+  --sidebar-accent: oklch(0.2 0.01 30);
+  --sidebar-accent-foreground: oklch(0.93 0.006 60);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.45 0.012 30);
 }
 
 @theme inline {
@@ -132,66 +136,48 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
 
-  --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
 
   --color-sidebar-ring: var(--sidebar-ring);
-
   --color-sidebar-border: var(--sidebar-border);
-
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-
   --color-sidebar-accent: var(--sidebar-accent);
-
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-
   --color-sidebar-primary: var(--sidebar-primary);
-
   --color-sidebar-foreground: var(--sidebar-foreground);
-
   --color-sidebar: var(--sidebar);
-
   --color-chart-5: var(--chart-5);
-
   --color-chart-4: var(--chart-4);
-
   --color-chart-3: var(--chart-3);
-
   --color-chart-2: var(--chart-2);
-
   --color-chart-1: var(--chart-1);
 
   --radius-xl: calc(var(--radius) + 4px);
-
   --radius-2xl: calc(var(--radius) + 8px);
-
   --radius-3xl: calc(var(--radius) + 12px);
-
   --radius-4xl: calc(var(--radius) + 16px);
 
   --color-red-accent: var(--red);
   --color-red-accent-foreground: var(--red-foreground);
   --color-red-accent-light: var(--red-light);
   --color-red-accent-dark: var(--red-dark);
+
+  /* Premium easing tokens */
+  --ease-out-expo: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 body {
   background-color: var(--background);
 }
 
-/* Custom Utilities for XILAR Vibe */
-.glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-}
-
+/* Premium transition utility */
 .hover-lift {
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.5s var(--ease-spring), box-shadow 0.5s var(--ease-spring);
 }
 
 .hover-lift:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
 }
 
 /* Crimson red accent utilities */
@@ -220,13 +206,22 @@ body {
 
 /* Sold out badge */
 .badge-sold-out {
-  background-color: #000000;
+  background-color: oklch(0.12 0.01 30);
   color: #ffffff;
   padding: 0.25rem 0.5rem;
   font-size: 0.625rem;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 500;
+}
+
+/* Glass surface with inner refraction */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 @layer base {
@@ -238,7 +233,7 @@ body {
   }
 }
 
-/* Reduced motion: disable animations & transitions for users who prefer it */
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .hover-lift,
   .hover-lift:hover {

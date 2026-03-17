@@ -27,10 +27,11 @@ export default function AboutPage() {
                     { name: "About", url: "/about" },
                 ])}
             />
-            <div className="px-6 py-16 md:py-24 max-w-4xl">
-                <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase mb-8">About XILAR</h1>
+            <div className="px-6 md:px-12 lg:px-16 py-20 md:py-32 max-w-3xl">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium mb-6">Our story</p>
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter uppercase mb-12 leading-[0.9]">About XILAR</h1>
 
-                <div className="space-y-8 text-lg leading-relaxed text-muted-foreground">
+                <div className="space-y-8 text-base md:text-lg leading-relaxed text-muted-foreground max-w-[60ch]">
                     <p>
                         <span className="text-foreground font-medium">XILAR</span> is a Gen-Z focused streetwear brand built on the philosophy of <span className="text-foreground">Streetwise Minimalism</span>. We believe in bold design without the noise — luxury you can actually afford.
                     </p>
@@ -39,8 +40,8 @@ export default function AboutPage() {
                         Founded by <span className="text-foreground font-medium">Aman Singh</span> in Lucknow, XILAR delivers versatile, unisex pieces focused on comfort and movement. From oversized cargos to essential tees, every piece is designed to be stacked, styled, and worn your way.
                     </p>
 
-                    <div className="border-l-2 border-foreground pl-6 py-2 my-12">
-                        <p className="text-2xl font-medium text-foreground italic">
+                    <div className="border-l-2 border-red-accent pl-6 py-3 my-16">
+                        <p className="text-xl md:text-2xl font-semibold text-foreground leading-snug">
                             &quot;Bold. Luxury. Affordable.&quot;
                         </p>
                     </div>
@@ -50,10 +51,10 @@ export default function AboutPage() {
                     </p>
                 </div>
 
-                <div className="mt-16 pt-8 border-t border-border">
-                    <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">Get in touch</h2>
-                    <p className="text-foreground">amansomvanshi29112003@gmail.com</p>
-                    <p className="text-muted-foreground">+91 8090644991</p>
+                <div className="mt-20 pt-8 border-t border-border/60">
+                    <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-4">Get in touch</h2>
+                    <p className="text-foreground font-medium">amansomvanshi29112003@gmail.com</p>
+                    <p className="text-muted-foreground mt-1">+91 8090644991</p>
                 </div>
             </div>
         </div>

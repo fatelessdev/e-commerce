@@ -30,117 +30,119 @@ export default function RefundPolicyPage() {
                     { name: "Refund Policy", url: "/policies/refunds" },
                 ])}
             />
-            <div className="px-6 py-12 border-b border-border">
-                <Link href="/policies" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2 mb-4">
-                    <ArrowLeft className="h-4 w-4" /> Back to Policies
+            <div className="px-6 md:px-12 py-14 md:py-20 border-b border-border/60">
+                <Link href="/policies" className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1.5 mb-4 uppercase tracking-[0.15em] transition-colors duration-300">
+                    <ArrowLeft className="h-3 w-3" /> Back to policies
                 </Link>
-                <h1 className="text-4xl font-black tracking-tighter uppercase flex items-center gap-4">
-                    <CreditCard className="h-8 w-8" /> Refund Policy
-                </h1>
-                <p className="text-muted-foreground mt-2">Store Credit System</p>
+                <div className="flex items-center gap-3 mb-2">
+                    <CreditCard className="h-5 w-5 text-red-accent" />
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium">Policy</p>
+                </div>
+                <h1 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">Refund policy</h1>
+                <p className="text-sm text-muted-foreground mt-2">Store credit system</p>
             </div>
 
-            <div className="p-6 max-w-3xl space-y-8">
+            <div className="p-6 md:px-12 max-w-3xl space-y-8">
                 {/* No Cash Refunds */}
-                <section className="space-y-4">
-                    <h2 className="text-xl font-bold uppercase tracking-tight">No Cash Refunds</h2>
-                    <div className="p-4 bg-secondary/20 border border-border">
-                        <p className="font-medium">
-                            All refunds for defective items are processed as <strong>Store Credit (Coupons)</strong>.
+                <section className="space-y-3">
+                    <h2 className="text-sm font-semibold uppercase tracking-[0.1em]">No cash refunds</h2>
+                    <div className="p-4 bg-secondary/10 border border-border/60">
+                        <p className="font-medium text-sm">
+                            All refunds for defective items are processed as <strong>store credit (coupons)</strong>.
                         </p>
-                        <p className="text-sm text-muted-foreground mt-2">
+                        <p className="text-xs text-muted-foreground mt-2">
                             We do not offer cash refunds, bank transfers, or payment reversals. Store credit can be used on any future purchase.
                         </p>
                     </div>
                 </section>
 
                 {/* Bonus */}
-                <section className="space-y-4">
-                    <h2 className="text-xl font-bold uppercase tracking-tight flex items-center gap-2">
-                        <Gift className="h-5 w-5 text-red-accent" /> Bonus Credit
+                <section className="space-y-3">
+                    <h2 className="text-sm font-semibold uppercase tracking-[0.1em] flex items-center gap-2">
+                        <Gift className="h-4 w-4 text-red-accent" /> Bonus credit
                     </h2>
-                    <div className="p-4 bg-red-accent/10 border border-red-accent/30">
-                        <p className="font-medium text-red-accent">
-                            We value your trust! Defective returns receive:
+                    <div className="p-4 bg-red-accent/5 border border-red-accent/20">
+                        <p className="font-medium text-sm text-red-accent">
+                            We value your trust. Defective returns receive:
                         </p>
                         <div className="mt-4 text-center">
-                            <div className="text-4xl font-black">Product Value + 5%</div>
-                            <p className="text-sm text-muted-foreground mt-2">
+                            <div className="text-3xl font-black tracking-tight">Product value + 5%</div>
+                            <p className="text-xs text-muted-foreground mt-2">
                                 As store credit
                             </p>
                         </div>
-                        <p className="text-sm mt-4">
+                        <p className="text-xs mt-4 text-muted-foreground tabular-nums">
                             Example: If you paid ₹1,999 for a defective item, you&apos;ll receive ₹2,099 as store credit.
                         </p>
                     </div>
                 </section>
 
                 {/* Validity */}
-                <section className="space-y-4">
-                    <h2 className="text-xl font-bold uppercase tracking-tight flex items-center gap-2">
-                        <Calendar className="h-5 w-5 text-red-accent" /> Credit Validity
+                <section className="space-y-3">
+                    <h2 className="text-sm font-semibold uppercase tracking-[0.1em] flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-red-accent" /> Credit validity
                     </h2>
-                    <div className="p-4 bg-secondary/20 border border-border">
-                        <p className="font-medium">
-                            Store credit coupons are valid for <strong>30-60 days</strong>.
+                    <div className="p-4 bg-secondary/10 border border-border/60">
+                        <p className="font-medium text-sm">
+                            Store credit coupons are valid for <strong>30–60 days</strong>.
                         </p>
-                        <ul className="text-sm text-muted-foreground mt-3 space-y-1">
-                            <li>• Standard defects: 30 days validity</li>
-                            <li>• Severe defects / delays: 60 days validity</li>
-                            <li>• Credit cannot be extended after expiry</li>
+                        <ul className="text-xs text-muted-foreground mt-3 space-y-1">
+                            <li className="flex items-start gap-2"><span className="text-red-accent mt-0.5">·</span> Standard defects: 30 days validity</li>
+                            <li className="flex items-start gap-2"><span className="text-red-accent mt-0.5">·</span> Severe defects / delays: 60 days validity</li>
+                            <li className="flex items-start gap-2"><span className="text-red-accent mt-0.5">·</span> Credit cannot be extended after expiry</li>
                         </ul>
                     </div>
                 </section>
 
                 {/* How It Works */}
-                <section className="space-y-4">
-                    <h2 className="text-xl font-bold uppercase tracking-tight">How It Works</h2>
-                    <div className="space-y-3">
-                        <div className="flex gap-4 p-4 border border-border">
-                            <span className="w-8 h-8 bg-red-accent text-white flex items-center justify-center font-bold flex-shrink-0">1</span>
+                <section className="space-y-3">
+                    <h2 className="text-sm font-semibold uppercase tracking-[0.1em]">How it works</h2>
+                    <div className="space-y-2">
+                        <div className="flex gap-4 p-4 border border-border/60">
+                            <span className="w-7 h-7 bg-red-accent text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">1</span>
                             <div>
-                                <p className="font-medium">Return Approved</p>
-                                <p className="text-sm text-muted-foreground">After we verify your defect claim with unboxing video</p>
+                                <p className="font-medium text-sm">Return approved</p>
+                                <p className="text-xs text-muted-foreground">After we verify your defect claim with unboxing video</p>
                             </div>
                         </div>
-                        <div className="flex gap-4 p-4 border border-border">
-                            <span className="w-8 h-8 bg-red-accent text-white flex items-center justify-center font-bold flex-shrink-0">2</span>
+                        <div className="flex gap-4 p-4 border border-border/60">
+                            <span className="w-7 h-7 bg-red-accent text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">2</span>
                             <div>
-                                <p className="font-medium">Credit Issued</p>
-                                <p className="text-sm text-muted-foreground">You&apos;ll receive a unique coupon code via email within 24-48 hours</p>
+                                <p className="font-medium text-sm">Credit issued</p>
+                                <p className="text-xs text-muted-foreground">You&apos;ll receive a unique coupon code via email within 24–48 hours</p>
                             </div>
                         </div>
-                        <div className="flex gap-4 p-4 border border-border">
-                            <span className="w-8 h-8 bg-red-accent text-white flex items-center justify-center font-bold flex-shrink-0">3</span>
+                        <div className="flex gap-4 p-4 border border-border/60">
+                            <span className="w-7 h-7 bg-red-accent text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">3</span>
                             <div>
-                                <p className="font-medium">Use at Checkout</p>
-                                <p className="text-sm text-muted-foreground">Apply the code at checkout on your next order</p>
+                                <p className="font-medium text-sm">Use at checkout</p>
+                                <p className="text-xs text-muted-foreground">Apply the code at checkout on your next order</p>
                             </div>
                         </div>
                     </div>
                 </section>
 
                 {/* Important Notes */}
-                <section className="space-y-4">
-                    <h2 className="text-xl font-bold uppercase tracking-tight flex items-center gap-2">
-                        <Info className="h-5 w-5" /> Important Notes
+                <section className="space-y-3">
+                    <h2 className="text-sm font-semibold uppercase tracking-[0.1em] flex items-center gap-2">
+                        <Info className="h-4 w-4" /> Important notes
                     </h2>
-                    <div className="p-4 bg-secondary/20 border border-border">
-                        <ul className="space-y-2 text-sm">
+                    <div className="p-4 bg-secondary/10 border border-border/60">
+                        <ul className="space-y-2 text-xs">
                             <li className="flex items-start gap-2">
-                                <span className="text-red-accent font-bold">•</span>
+                                <span className="text-red-accent mt-0.5">·</span>
                                 <span>Store credit is <strong>non-transferable</strong> and linked to your account</span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-red-accent font-bold">•</span>
+                                <span className="text-red-accent mt-0.5">·</span>
                                 <span>Credit cannot be combined with bargain discounts</span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-red-accent font-bold">•</span>
+                                <span className="text-red-accent mt-0.5">·</span>
                                 <span>If order total is less than credit amount, remaining balance is forfeited</span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-red-accent font-bold">•</span>
+                                <span className="text-red-accent mt-0.5">·</span>
                                 <span>Credit applies to product value only (shipping charges calculated separately)</span>
                             </li>
                         </ul>
@@ -148,10 +150,10 @@ export default function RefundPolicyPage() {
                 </section>
 
                 {/* Why Store Credit */}
-                <section className="space-y-4">
-                    <div className="p-4 bg-secondary/20 border border-border">
-                        <p className="font-medium">Why Store Credit Instead of Cash?</p>
-                        <p className="text-sm text-muted-foreground mt-2">
+                <section className="space-y-3">
+                    <div className="p-4 bg-secondary/10 border border-border/60">
+                        <p className="font-medium text-sm">Why store credit instead of cash?</p>
+                        <p className="text-xs text-muted-foreground mt-2">
                             Store credit allows us to keep prices affordable for everyone. Processing cash refunds involves 
                             payment gateway fees, bank charges, and administrative overhead. By offering store credit with 
                             a bonus, you actually get more value while we maintain competitive pricing.

@@ -77,80 +77,92 @@ function AccountContent() {
         return (
             <div className="min-h-screen flex items-center justify-center p-6">
                 <div className="w-full max-w-md space-y-8">
-                    <div className="text-center">
-                        <h1 className="text-3xl font-black tracking-tighter uppercase">
-                            {showLogin ? "Welcome Back" : "Join XILAR"}
+                    <div className="text-center space-y-2">
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tighter uppercase">
+                            {showLogin ? "Welcome back" : "Join XILAR"}
                         </h1>
-                        <p className="text-muted-foreground mt-2">
+                        <p className="text-sm text-muted-foreground">
                             {showLogin ? "Sign in to your account" : "Create an account to get started"}
                         </p>
                     </div>
 
                     {error && (
-                        <div className="p-4 bg-destructive/10 text-destructive rounded text-sm text-center">
+                        <div className="p-4 bg-destructive/10 text-destructive text-sm text-center">
                             {error}
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleSubmit} className="space-y-3">
                         {!showLogin && (
-                            <input
-                                type="text"
-                                placeholder="Full Name"
-                                required={!showLogin}
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                className="w-full h-12 px-4 bg-secondary/50 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                            />
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Full name</label>
+                                <input
+                                    type="text"
+                                    placeholder="Your name"
+                                    required={!showLogin}
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    className="w-full h-12 px-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
+                                />
+                            </div>
                         )}
-                        <input
-                            type="email"
-                            placeholder="Email"
-                            required
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            className="w-full h-12 px-4 bg-secondary/50 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                        />
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            required
-                            minLength={8}
-                            value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            className="w-full h-12 px-4 bg-secondary/50 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                        />
-                        {!showLogin && (
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Email</label>
                             <input
-                                type="tel"
-                                placeholder="Phone Number (optional)"
-                                value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                className="w-full h-12 px-4 bg-secondary/50 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                type="email"
+                                placeholder="you@example.com"
+                                required
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                className="w-full h-12 px-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
                             />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Password</label>
+                            <input
+                                type="password"
+                                placeholder="Min. 8 characters"
+                                required
+                                minLength={8}
+                                value={formData.password}
+                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                className="w-full h-12 px-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
+                            />
+                        </div>
+                        {!showLogin && (
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Phone (optional)</label>
+                                <input
+                                    type="tel"
+                                    placeholder="+91 XXXXXXXXXX"
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                    className="w-full h-12 px-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
+                                />
+                            </div>
                         )}
                         <Button
                             type="submit"
-                            className="w-full h-14 rounded-none uppercase tracking-widest"
+                            className="w-full h-13 rounded-none uppercase tracking-[0.2em] text-xs font-semibold mt-2"
                             disabled={isLoading}
                         >
                             {isLoading ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
-                                showLogin ? "Sign In" : "Create Account"
+                                showLogin ? "Sign in" : "Create account"
                             )}
                         </Button>
                     </form>
 
                     <div className="text-center">
                         <button
-                            className="text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+                            className="text-xs text-muted-foreground hover:text-foreground underline-offset-4 hover:underline transition-colors duration-300"
                             onClick={() => {
                                 setShowLogin(!showLogin)
                                 setError("")
                             }}
                         >
-                            {showLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+                            {showLogin ? "No account yet? Sign up" : "Already have an account? Sign in"}
                         </button>
                     </div>
                 </div>
@@ -162,59 +174,60 @@ function AccountContent() {
 
     return (
         <div className="min-h-screen">
-            <div className="px-6 py-12 border-b border-border">
-                <h1 className="text-4xl md:text-6xl font-black tracking-tighter uppercase flex items-center gap-4">
-                    <User className="h-10 w-10" /> My Account
+            <div className="px-6 md:px-12 py-14 md:py-20 border-b border-border/60">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium mb-3">Account</p>
+                <h1 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">
+                    My account
                 </h1>
-                <p className="text-muted-foreground mt-2">
-                    Welcome back, {session.user.name}!
+                <p className="text-muted-foreground mt-2 text-sm">
+                    Welcome back, {session.user.name}
                 </p>
             </div>
 
-            <div className="p-6 max-w-2xl">
-                <div className="space-y-4">
+            <div className="p-6 md:px-12 max-w-2xl">
+                <div className="space-y-3">
                     {isAdmin && (
-                        <Link href="/admin" className="flex items-center gap-4 p-4 border border-primary/50 bg-primary/5 hover:border-primary transition-colors">
-                            <Shield className="h-6 w-6 text-primary" />
+                        <Link href="/admin" className="flex items-center gap-4 p-5 border border-red-accent/20 bg-red-accent/5 hover:border-red-accent/40 transition-all duration-300">
+                            <Shield className="h-5 w-5 text-red-accent" />
                             <div>
-                                <h3 className="font-medium">Admin Dashboard</h3>
-                                <p className="text-sm text-muted-foreground">Manage products, orders, and coupons</p>
+                                <h3 className="font-medium text-sm">Admin dashboard</h3>
+                                <p className="text-xs text-muted-foreground mt-0.5">Manage products, orders, and coupons</p>
                             </div>
                         </Link>
                     )}
 
-                    <Link href="/orders" className="flex items-center gap-4 p-4 border border-border hover:border-foreground transition-colors">
-                        <Package className="h-6 w-6" />
+                    <Link href="/orders" className="flex items-center gap-4 p-5 border border-border/60 hover:border-foreground/20 transition-all duration-300">
+                        <Package className="h-5 w-5 text-muted-foreground" />
                         <div>
-                            <h3 className="font-medium">My Orders</h3>
-                            <p className="text-sm text-muted-foreground">Track, return, or buy things again</p>
+                            <h3 className="font-medium text-sm">My orders</h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">Track, return, or buy things again</p>
                         </div>
                     </Link>
 
-                    <Link href="/wishlist" className="flex items-center gap-4 p-4 border border-border hover:border-foreground transition-colors">
-                        <Heart className="h-6 w-6" />
+                    <Link href="/wishlist" className="flex items-center gap-4 p-5 border border-border/60 hover:border-foreground/20 transition-all duration-300">
+                        <Heart className="h-5 w-5 text-muted-foreground" />
                         <div>
-                            <h3 className="font-medium">Wishlist</h3>
-                            <p className="text-sm text-muted-foreground">Your saved items</p>
+                            <h3 className="font-medium text-sm">Wishlist</h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">Your saved items</p>
                         </div>
                     </Link>
 
                     <button
-                        className="flex items-center gap-4 p-4 border border-border hover:border-destructive transition-colors w-full text-left"
+                        className="flex items-center gap-4 p-5 border border-border/60 hover:border-destructive/30 transition-all duration-300 w-full text-left"
                         onClick={handleSignOut}
                     >
-                        <LogOut className="h-6 w-6" />
+                        <LogOut className="h-5 w-5 text-muted-foreground" />
                         <div>
-                            <h3 className="font-medium">Sign Out</h3>
-                            <p className="text-sm text-muted-foreground">Sign out of your account</p>
+                            <h3 className="font-medium text-sm">Sign out</h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">Sign out of your account</p>
                         </div>
                     </button>
                 </div>
 
                 {/* Account Info */}
-                <div className="mt-8 p-4 border border-border">
-                    <h3 className="font-medium mb-4">Account Information</h3>
-                    <div className="space-y-2 text-sm">
+                <div className="mt-10 p-5 border border-border/60">
+                    <h3 className="font-medium text-sm mb-4">Account information</h3>
+                    <div className="space-y-3 text-sm">
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Name</span>
                             <span>{session.user.name}</span>
@@ -225,7 +238,7 @@ function AccountContent() {
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Member since</span>
-                            <span>{new Date(session.user.createdAt).toLocaleDateString()}</span>
+                            <span className="tabular-nums">{new Date(session.user.createdAt).toLocaleDateString()}</span>
                         </div>
                     </div>
                 </div>

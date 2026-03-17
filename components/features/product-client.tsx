@@ -182,7 +182,7 @@ export function ProductClient({ id }: { id: string }) {
     }
 
     return (
-        <div className="min-h-screen bg-background pb-20">
+        <div className="min-h-screen bg-background pb-24">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
                 {/* Gallery Section — Horizontal Slider */}
                 <div className="relative bg-white/5 overflow-hidden group">
@@ -196,7 +196,7 @@ export function ProductClient({ id }: { id: string }) {
                                 initial={{ opacity: 0.4 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0.4 }}
-                                transition={{ duration: 0.25 }}
+                                transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
                                 draggable={false}
                             />
                         </AnimatePresence>
@@ -225,21 +225,21 @@ export function ProductClient({ id }: { id: string }) {
                             <>
                                 <button
                                     type="button"
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
+                                    className="absolute left-4 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-500 disabled:opacity-0"
                                     onClick={() => setSelectedImage((prev) => Math.max(prev - 1, 0))}
                                     disabled={selectedImage === 0}
                                     aria-label="Previous image"
                                 >
-                                    <ChevronLeft className="h-5 w-5" />
+                                    <ChevronLeft className="h-4 w-4" />
                                 </button>
                                 <button
                                     type="button"
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-500 disabled:opacity-0"
                                     onClick={() => setSelectedImage((prev) => Math.min(prev + 1, images.length - 1))}
                                     disabled={selectedImage === images.length - 1}
                                     aria-label="Next image"
                                 >
-                                    <ChevronRight className="h-5 w-5" />
+                                    <ChevronRight className="h-4 w-4" />
                                 </button>
                             </>
                         )}
@@ -247,15 +247,15 @@ export function ProductClient({ id }: { id: string }) {
 
                     {/* Dot indicators */}
                     {images.length > 1 && (
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+                        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
                             {images.map((_, i) => (
                                 <button
                                     key={i}
                                     type="button"
-                                    className={`rounded-full transition-all duration-200 ${
+                                    className={`rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                                         selectedImage === i
-                                            ? "w-6 h-2 bg-red-accent"
-                                            : "w-2 h-2 bg-neutral-400 hover:bg-neutral-300"
+                                            ? "w-6 h-1.5 bg-red-accent"
+                                            : "w-1.5 h-1.5 bg-neutral-400 hover:bg-neutral-300"
                                     }`}
                                     onClick={() => setSelectedImage(i)}
                                     aria-label={`Go to image ${i + 1}`}
@@ -266,29 +266,29 @@ export function ProductClient({ id }: { id: string }) {
                 </div>
 
                 {/* Product Info Section */}
-                <div className="lg:h-[calc(100vh-4rem)] lg:sticky lg:top-16 p-8 lg:p-12 flex flex-col justify-center space-y-8">
-                    <div className="space-y-4">
-                        <div className="space-y-1">
-                            <h3 className="text-sm font-medium tracking-widest text-muted-foreground uppercase">{product.category} • {product.gender}</h3>
-                            <h1 className="text-4xl md:text-6xl font-black tracking-tighter uppercase">{product.name}</h1>
+                <div className="lg:h-[calc(100vh-4rem)] lg:sticky lg:top-16 p-8 lg:p-14 flex flex-col justify-center space-y-8">
+                    <div className="space-y-5">
+                        <div className="space-y-2">
+                            <p className="text-[10px] font-medium tracking-[0.2em] text-muted-foreground uppercase">{product.category} · {product.gender}</p>
+                            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tighter uppercase leading-[0.9]">{product.name}</h1>
                         </div>
                         <div className="flex items-baseline gap-3">
-                            <p className="text-2xl font-medium">{displayPrice}</p>
+                            <p className="text-xl font-semibold tabular-nums">{displayPrice}</p>
                             {hasDiscount && (
                                 <>
-                                    <p className="text-lg text-muted-foreground line-through">{displayMrp}</p>
-                                    <span className="text-sm text-green-600 font-medium">
-                                        {Math.round(((mrp - price) / mrp) * 100)}% OFF
+                                    <p className="text-base text-muted-foreground line-through tabular-nums">{displayMrp}</p>
+                                    <span className="text-xs text-green-600 dark:text-green-400 font-medium tabular-nums">
+                                        {Math.round(((mrp - price) / mrp) * 100)}% off
                                     </span>
                                 </>
                             )}
                         </div>
                         {product.description && (
-                            <p className="text-muted-foreground leading-relaxed max-w-md">{product.description}</p>
+                            <p className="text-sm text-muted-foreground leading-relaxed max-w-md">{product.description}</p>
                         )}
                         {product.fabric && (
-                            <p className="text-sm text-muted-foreground">
-                                <span className="font-medium">Fabric:</span> {product.fabric} {product.gsm && `(${product.gsm} GSM)`}
+                            <p className="text-xs text-muted-foreground">
+                                <span className="font-medium text-foreground">Fabric:</span> {product.fabric} {product.gsm && `(${product.gsm} GSM)`}
                             </p>
                         )}
                     </div>
@@ -296,9 +296,9 @@ export function ProductClient({ id }: { id: string }) {
                     <div className="space-y-6">
                         {/* Size Selection */}
                         <div className="space-y-3">
-                            <label className="text-xs font-bold uppercase tracking-widest flex items-center justify-between">
-                                <span>Select Size</span>
-                                {!selectedSize && <span className="text-destructive font-normal normal-case">Required</span>}
+                            <label className="text-[10px] font-semibold uppercase tracking-[0.2em] flex items-center justify-between">
+                                <span>Select size</span>
+                                {!selectedSize && <span className="text-destructive font-normal normal-case text-[10px]">Required</span>}
                             </label>
                             <div className="flex gap-2 flex-wrap">
                                 {(NUMBER_SIZE_CATEGORIES.includes(product.category)
@@ -310,16 +310,16 @@ export function ProductClient({ id }: { id: string }) {
                                         <Button
                                             key={size}
                                             variant={selectedSize === size ? "default" : "outline"}
-                                            className={`w-12 h-12 rounded-none border-input transition-colors relative ${
+                                            className={`w-12 h-12 rounded-none border-input transition-all duration-300 relative text-xs ${
                                                 !available
-                                                    ? "opacity-40 cursor-not-allowed line-through"
+                                                    ? "opacity-30 cursor-not-allowed line-through"
                                                     : "hover:border-foreground"
                                             }`}
                                             onClick={() => {
                                                 if (available) setSelectedSize(size)
                                             }}
                                             disabled={!available}
-                                            title={available ? size : `${size} — Out of Stock`}
+                                            title={available ? size : `${size} — Out of stock`}
                                         >
                                             {size}
                                             {!available && (
@@ -336,9 +336,9 @@ export function ProductClient({ id }: { id: string }) {
                         {/* Color Selection */}
                         {product.colors && product.colors.length > 0 && (
                             <div className="space-y-3">
-                                <label className="text-xs font-bold uppercase tracking-widest flex items-center justify-between">
-                                    <span>Select Color</span>
-                                    {selectedColor && <span className="text-muted-foreground font-normal normal-case">{selectedColor}</span>}
+                                <label className="text-[10px] font-semibold uppercase tracking-[0.2em] flex items-center justify-between">
+                                    <span>Select color</span>
+                                    {selectedColor && <span className="text-muted-foreground font-normal normal-case text-[10px]">{selectedColor}</span>}
                                 </label>
                                 <div className="flex gap-3 flex-wrap">
                                     {product.colors.map((color) => {
@@ -347,23 +347,23 @@ export function ProductClient({ id }: { id: string }) {
                                             <button
                                                 key={color.name}
                                                 type="button"
-                                                className={`w-10 h-10 rounded-full border-2 transition-all relative ${
+                                                className={`w-9 h-9 rounded-full border-2 transition-all duration-300 relative ${
                                                     selectedColor === color.name 
                                                         ? "ring-2 ring-offset-2 ring-foreground ring-offset-background border-foreground" 
                                                         : available
                                                             ? "border-border hover:border-foreground"
-                                                            : "border-border opacity-30 cursor-not-allowed"
+                                                            : "border-border opacity-25 cursor-not-allowed"
                                                 }`}
                                                 style={{ backgroundColor: color.hex }}
                                                 onClick={() => {
                                                     if (available) setSelectedColor(color.name)
                                                 }}
                                                 disabled={!available}
-                                                title={available ? color.name : `${color.name} — Out of Stock`}
+                                                title={available ? color.name : `${color.name} — Out of stock`}
                                             >
                                                 {!available && (
                                                     <span className="absolute inset-0 flex items-center justify-center">
-                                                        <X className="h-5 w-5 text-white drop-shadow-md" />
+                                                        <X className="h-4 w-4 text-white drop-shadow-md" />
                                                     </span>
                                                 )}
                                             </button>
@@ -375,58 +375,60 @@ export function ProductClient({ id }: { id: string }) {
 
                         {/* Stock indicator */}
                         {currentStock !== null && currentStock <= 5 && currentStock > 0 && (
-                            <p className="text-sm text-orange-500 font-medium">Only {currentStock} left in stock for this variant!</p>
+                            <p className="text-xs text-orange-500 font-medium">Only {currentStock} left for this variant</p>
                         )}
                         {currentStock !== null && currentStock === 0 && (
-                            <p className="text-sm text-red-500 font-medium">Out of stock for selected variant</p>
+                            <p className="text-xs text-red-500 font-medium">Out of stock for selected variant</p>
                         )}
                         {currentStock === null && product.stock === 0 && (
-                            <p className="text-sm text-red-500 font-medium">Out of stock</p>
+                            <p className="text-xs text-red-500 font-medium">Out of stock</p>
                         )}
                         {currentStock === null && product.stock > 0 && (
-                            <p className="text-sm text-muted-foreground">Select a size to check availability</p>
+                            <p className="text-xs text-muted-foreground">Select a size to check availability</p>
                         )}
 
                         {/* Actions */}
-                        <div className="pt-4 flex flex-col gap-3">
+                        <div className="pt-2 flex flex-col gap-3">
                             <div className="flex gap-3">
                                 <Button
                                     size="lg"
-                                    className="flex-1 h-14 rounded-none text-lg uppercase tracking-widest font-bold disabled:opacity-50"
+                                    className="flex-1 h-13 rounded-none text-xs uppercase tracking-[0.2em] font-semibold disabled:opacity-40"
                                     onClick={handleAddToCart}
                                     disabled={!selectedSize || (product.colors.length > 0 && !selectedColor) || product.stock === 0 || (currentStock !== null && currentStock === 0)}
                                 >
                                     {product.stock === 0 ? (
-                                        "Out of Stock"
+                                        "Out of stock"
                                     ) : currentStock !== null && currentStock === 0 ? (
-                                        "Out of Stock"
+                                        "Out of stock"
                                     ) : added ? (
                                         <>
-                                            <Check className="h-5 w-5 mr-2" /> Added
+                                            <Check className="h-4 w-4 mr-2" /> Added
                                         </>
                                     ) : (
-                                        "Add to Cart"
+                                        "Add to cart"
                                     )}
                                 </Button>
                                 <Button
                                     variant="outline"
                                     size="lg"
-                                    className="h-14 w-14 rounded-none"
+                                    className="h-13 w-13 rounded-none"
                                     onClick={handleWishlist}
                                 >
-                                    <Heart className={`h-5 w-5 ${inWishlist ? "fill-current" : ""}`} />
+                                    <Heart className={`h-4 w-4 ${inWishlist ? "fill-current" : ""}`} />
                                 </Button>
                             </div>
-                            <p className="text-xs text-center text-muted-foreground uppercase">Free shipping on orders above ₹999</p>
+                            <p className="text-[10px] text-center text-muted-foreground uppercase tracking-[0.15em]">Free shipping on orders above ₹999</p>
                         </div>
 
                         {/* Features */}
                         {product.features.length > 0 && (
-                            <div className="pt-4 border-t border-border space-y-2">
-                                <h4 className="text-xs font-bold uppercase tracking-widest">Features</h4>
-                                <ul className="space-y-1">
+                            <div className="pt-6 border-t border-border/60 space-y-3">
+                                <h4 className="text-[10px] font-semibold uppercase tracking-[0.2em]">Features</h4>
+                                <ul className="space-y-1.5">
                                     {product.features.map((feature, i) => (
-                                        <li key={i} className="text-sm text-muted-foreground">• {feature}</li>
+                                        <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
+                                            <span className="text-red-accent mt-0.5">·</span> {feature}
+                                        </li>
                                     ))}
                                 </ul>
                             </div>
@@ -436,8 +438,8 @@ export function ProductClient({ id }: { id: string }) {
             </div>
 
             {/* Related Products */}
-            <div className="border-t border-border mt-20">
-                <ProductGrid title="You May Also Like" />
+            <div className="border-t border-border/60 mt-24">
+                <ProductGrid title="You may also like" />
             </div>
         </div>
     )

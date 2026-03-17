@@ -159,7 +159,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
             setMessages(prev => [...prev, {
                 id: crypto.randomUUID(),
                 role: "assistant",
-                content: "Oops, something went wrong! Let's try again 😅"
+                content: "Something went wrong on our end. Let's try that again 😅"
             }])
         } finally {
             setIsLoading(false)
@@ -244,32 +244,32 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
         <>
             {/* Bargain Prompt */}
             {showPrompt && !appliedCoupon && (
-                <div className="mt-6 p-4 bg-red-accent/10 border border-red-accent/30 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div className="mt-6 p-4 bg-red-accent/5 border border-red-accent/20 animate-in fade-in slide-in-from-bottom-2 duration-500">
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-red-accent/20 flex items-center justify-center">
-                                <Sparkles className="h-5 w-5 text-red-accent" />
+                            <div className="w-9 h-9 rounded-full bg-red-accent/15 flex items-center justify-center">
+                                <Sparkles className="h-4 w-4 text-red-accent" />
                             </div>
                             <div>
-                                <p className="font-semibold text-sm">Want a bargain? 💰</p>
-                                <p className="text-xs text-muted-foreground">Negotiate with our AI for an exclusive discount!</p>
+                                <p className="font-semibold text-xs">Want a bargain? 💰</p>
+                                <p className="text-[10px] text-muted-foreground">Negotiate with our AI for an exclusive discount</p>
                             </div>
                         </div>
                         <div className="flex gap-2">
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className="text-xs rounded-none"
+                                className="text-[10px] rounded-none uppercase tracking-[0.1em]"
                                 onClick={handleSkip}
                             >
                                 Skip
                             </Button>
                             <Button
                                 size="sm"
-                                className="text-xs rounded-none bg-red-accent text-white hover:bg-[#8E0000]"
+                                className="text-[10px] rounded-none bg-red-accent text-white hover:bg-[#8E0000] uppercase tracking-[0.1em]"
                                 onClick={handleOpenBargain}
                             >
-                                Yes! 🎉
+                                Bargain
                             </Button>
                         </div>
                     </div>
@@ -278,13 +278,13 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
 
             {/* Bargain Chatbot Modal */}
             {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
-                    <div className="w-full max-w-md bg-background border border-border shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="w-full max-w-md bg-background border border-border/60 shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
                         {/* Header */}
                         <div className="p-4 bg-red-accent text-white flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
-                                <span className="font-bold tracking-tight uppercase text-sm">Bargain AI</span>
+                                <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+                                <span className="font-semibold tracking-[0.1em] uppercase text-[10px]">Bargain AI</span>
                             </div>
                             <Button
                                 variant="ghost"
@@ -292,12 +292,12 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                 className="h-6 w-6 text-white hover:bg-white/10"
                                 onClick={() => setIsOpen(false)}
                             >
-                                <X className="h-4 w-4" />
+                                <X className="h-3.5 w-3.5" />
                             </Button>
                         </div>
 
                         {/* Chat Area */}
-                        <div ref={chatContainerRef} className="h-72 p-4 overflow-y-auto space-y-4 bg-secondary/20">
+                        <div ref={chatContainerRef} className="h-72 p-4 overflow-y-auto space-y-3 bg-secondary/10">
                             {messages.map((msg) => (
                                 <div key={msg.id} className={cn("flex w-full", msg.role === 'user' ? "justify-end" : "justify-start")}>
                                     <div className={cn(
@@ -372,30 +372,30 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                 {/* Apply Button or Re-negotiate */}
                                 {couponExpired ? (
                                     <Button
-                                        className="w-full h-12 rounded-none uppercase tracking-widest"
+                                        className="w-full h-11 rounded-none text-[10px] uppercase tracking-[0.15em]"
                                         onClick={handleReNegotiate}
                                     >
-                                        Try Again 🔄
+                                        Try again 🔄
                                     </Button>
                                 ) : !appliedCoupon ? (
                                     <Button
-                                        className="w-full h-12 rounded-none uppercase tracking-widest bg-red-accent text-white hover:bg-[#8E0000]"
+                                        className="w-full h-11 rounded-none text-[10px] uppercase tracking-[0.15em] bg-red-accent text-white hover:bg-[#8E0000]"
                                         onClick={handleApplyCoupon}
                                     >
-                                        Apply ₹{couponGenerated.discount} Discount
+                                        Apply ₹{couponGenerated.discount} discount
                                     </Button>
                                 ) : (
-                                    <div className="text-center text-sm text-green-600 dark:text-green-400 font-medium py-2">
-                                        ✅ Coupon Applied Successfully!
+                                    <div className="text-center text-xs text-green-600 dark:text-green-400 font-medium py-2">
+                                        ✓ Coupon applied
                                     </div>
                                 )}
 
                                 <Button
                                     variant="ghost"
-                                    className="w-full text-xs text-muted-foreground"
+                                    className="w-full text-[10px] text-muted-foreground uppercase tracking-[0.1em]"
                                     onClick={() => setIsOpen(false)}
                                 >
-                                    Continue to Checkout
+                                    Continue to checkout
                                 </Button>
                             </div>
                         )}

@@ -4,11 +4,25 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { ShoppingBag, Heart, Menu, X, User, Package, Truck } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
 import ThemeToggleButton from "@/components/ui/theme-toggle-button";
 import { FREE_SHIPPING_THRESHOLD_DISPLAY } from "@/lib/constants";
+
+const EASE_OUT_EXPO = [0.32, 0.72, 0, 1] as const;
+
+const mobileLinks = [
+  { href: "/shop", label: "Shop All" },
+  { href: "/shop/men", label: "For Him" },
+  { href: "/shop/women", label: "For Her" },
+  { href: "/new", label: "New Drop" },
+  { href: "/collections/essentials", label: "Collections" },
+  { href: "/account", label: "Account" },
+  { href: "/orders", label: "Orders" },
+  { href: "/about", label: "About" },
+];
 
 export function Navbar() {
   const { totalItems, setIsOpen } = useCart();
@@ -18,15 +32,15 @@ export function Navbar() {
   return (
     <>
       {/* Free Delivery Banner */}
-      <div className="w-full bg-red-accent/10 border-b border-red-accent/20 py-1.5">
-        <div className="flex items-center justify-center gap-2 text-xs tracking-wide text-red-accent">
-          <Truck className="h-3.5 w-3.5" />
+      <div className="w-full bg-red-accent/8 border-b border-red-accent/10 py-1.5">
+        <div className="flex items-center justify-center gap-2 text-[10px] tracking-[0.15em] uppercase text-red-accent font-medium">
+          <Truck className="h-3 w-3" />
           <span>Free delivery on orders above {FREE_SHIPPING_THRESHOLD_DISPLAY}</span>
         </div>
       </div>
 
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background">
-        <div className="flex h-14 md:h-16 items-center px-4 md:px-6">
+      <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-xl">
+        <div className="flex h-14 md:h-16 items-center px-4 md:px-6 lg:px-8">
           {/* Mobile Menu Toggle */}
           <Button
             variant="ghost"
@@ -34,11 +48,33 @@ export function Navbar() {
             className="md:hidden mr-2"
             onClick={() => setShowMobileMenu(!showMobileMenu)}
           >
-            {showMobileMenu ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
+            <div className="relative h-5 w-5">
+              <AnimatePresence mode="wait" initial={false}>
+                {showMobileMenu ? (
+                  <motion.div
+                    key="close"
+                    className="absolute inset-0 flex items-center justify-center"
+                    initial={{ rotate: -90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: 90, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <X className="h-5 w-5" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="menu"
+                    className="absolute inset-0 flex items-center justify-center"
+                    initial={{ rotate: 90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: -90, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Menu className="h-5 w-5" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </Button>
 
           {/* Logo */}
@@ -48,75 +84,61 @@ export function Navbar() {
               alt="XILAR"
               width={160}
               height={40}
-              className="h-8 md:h-10 w-auto object-contain dark:invert"
+              className="h-7 md:h-9 w-auto object-contain dark:invert"
             />
           </Link>
 
           {/* Questions - Desktop */}
-          <div className="hidden lg:flex items-center text-xs tracking-wide text-muted-foreground">
-            QUESTIONS?{" "}
-            <span className="ml-2 text-foreground">+91 8090644991</span>
+          <div className="hidden lg:flex items-center text-[10px] tracking-[0.1em] uppercase text-muted-foreground">
+            Questions?{" "}
+            <span className="ml-2 text-foreground font-medium">+91 8090644991</span>
           </div>
 
           {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center space-x-6 xl:space-x-8 text-sm font-medium ml-auto mr-8 xl:mr-16">
-            <Link
-              href="/shop/men"
-              className="tracking-wider uppercase text-xs hover:text-red-accent transition-colors"
-            >
-              For Him
-            </Link>
-            <Link
-              href="/shop/women"
-              className="tracking-wider uppercase text-xs hover:text-red-accent transition-colors"
-            >
-              For Her
-            </Link>
-            <Link
-              href="/new"
-              className="tracking-wider uppercase text-xs hover:text-red-accent transition-colors"
-            >
-              New Drop
-            </Link>
-            <Link
-              href="/collections/essentials"
-              className="tracking-wider uppercase text-xs hover:text-red-accent transition-colors"
-            >
-              Collections
-            </Link>
+          <nav className="hidden lg:flex items-center space-x-8 xl:space-x-10 text-sm font-medium ml-auto mr-8 xl:mr-16">
+            {[
+              { href: "/shop/men", label: "For Him" },
+              { href: "/shop/women", label: "For Her" },
+              { href: "/new", label: "New Drop" },
+              { href: "/collections/essentials", label: "Collections" },
+            ].map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="relative tracking-[0.15em] uppercase text-[11px] text-muted-foreground hover:text-foreground transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] after:absolute after:bottom-0 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-red-accent after:transition-all after:duration-500 after:ease-[cubic-bezier(0.32,0.72,0,1)]"
+              >
+                {link.label}
+              </Link>
+            ))}
           </nav>
 
           {/* Actions */}
           <div className="ml-auto flex items-center space-x-0.5 md:space-x-1">
-            {/* Theme Toggle */}
             <ThemeToggleButton
               showLabel={false}
               variant="circle"
               start="top-right"
             />
 
-            {/* Orders */}
             <Link href="/orders">
-              <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground transition-colors duration-300">
                 <Package className="h-4 w-4" />
                 <span className="sr-only">Orders</span>
               </Button>
             </Link>
 
-            {/* Account - Hidden on mobile */}
             <Link href="/account" className="hidden sm:block">
-              <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground transition-colors duration-300">
                 <User className="h-4 w-4" />
                 <span className="sr-only">Account</span>
               </Button>
             </Link>
 
-            {/* Wishlist */}
             <Link href="/wishlist">
-              <Button variant="ghost" size="icon" className="h-9 w-9 relative">
+              <Button variant="ghost" size="icon" className="h-9 w-9 relative text-muted-foreground hover:text-foreground transition-colors duration-300">
                 <Heart className="h-4 w-4" />
                 {wishlistItems.length > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-accent text-white text-xs flex items-center justify-center font-medium">
+                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-accent text-white text-[10px] flex items-center justify-center font-semibold">
                     {wishlistItems.length}
                   </span>
                 )}
@@ -124,16 +146,15 @@ export function Navbar() {
               </Button>
             </Link>
 
-            {/* Cart */}
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 relative"
+              className="h-9 w-9 relative text-muted-foreground hover:text-foreground transition-colors duration-300"
               onClick={() => setIsOpen(true)}
             >
               <ShoppingBag className="h-4 w-4" />
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-accent text-white text-xs flex items-center justify-center font-medium">
+                <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-accent text-white text-[10px] flex items-center justify-center font-semibold">
                   {totalItems}
                 </span>
               )}
@@ -142,67 +163,42 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Menu */}
-        {showMobileMenu && (
-          <div className="md:hidden border-t border-border py-4 px-4 space-y-1 bg-background absolute top-full left-0 w-full shadow-lg z-50 animate-in slide-in-from-top-2">
-            <Link
-              href="/shop"
-              className="block py-3 text-sm font-medium tracking-wider uppercase border-b border-border"
-              onClick={() => setShowMobileMenu(false)}
+        {/* Mobile Menu — Staggered Reveal */}
+        <AnimatePresence>
+          {showMobileMenu && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: EASE_OUT_EXPO }}
+              className="md:hidden border-t border-border overflow-hidden bg-background absolute top-full left-0 w-full z-50"
             >
-              Shop All
-            </Link>
-            <Link
-              href="/shop/men"
-              className="block py-3 text-sm font-medium tracking-wider uppercase border-b border-border"
-              onClick={() => setShowMobileMenu(false)}
-            >
-              For Him
-            </Link>
-            <Link
-              href="/shop/women"
-              className="block py-3 text-sm font-medium tracking-wider uppercase border-b border-border"
-              onClick={() => setShowMobileMenu(false)}
-            >
-              For Her
-            </Link>
-            <Link
-              href="/new"
-              className="block py-3 text-sm font-medium tracking-wider uppercase border-b border-border"
-              onClick={() => setShowMobileMenu(false)}
-            >
-              New Drop
-            </Link>
-            <Link
-              href="/collections/essentials"
-              className="block py-3 text-sm font-medium tracking-wider uppercase border-b border-border"
-              onClick={() => setShowMobileMenu(false)}
-            >
-              Collections
-            </Link>
-            <Link
-              href="/account"
-              className="block py-3 text-sm font-medium tracking-wider uppercase text-muted-foreground border-b border-border"
-              onClick={() => setShowMobileMenu(false)}
-            >
-              Account
-            </Link>
-            <Link
-              href="/orders"
-              className="block py-3 text-sm font-medium tracking-wider uppercase text-muted-foreground border-b border-border"
-              onClick={() => setShowMobileMenu(false)}
-            >
-              Orders
-            </Link>
-            <Link
-              href="/about"
-              className="block py-3 text-sm font-medium tracking-wider uppercase text-muted-foreground"
-              onClick={() => setShowMobileMenu(false)}
-            >
-              About
-            </Link>
-          </div>
-        )}
+              <div className="py-4 px-4 space-y-0">
+                {mobileLinks.map((link, i) => (
+                  <motion.div
+                    key={link.href}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{
+                      duration: 0.35,
+                      delay: i * 0.04,
+                      ease: EASE_OUT_EXPO,
+                    }}
+                  >
+                    <Link
+                      href={link.href}
+                      className="block py-3.5 text-sm font-medium tracking-[0.15em] uppercase border-b border-border/60 text-foreground/80 hover:text-foreground transition-colors duration-300"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
     </>
   );
