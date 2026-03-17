@@ -44,7 +44,7 @@ export function Navbar() {
           {/* Logo */}
           <Link href="/" className="mr-6 flex items-center">
             <Image
-              src="/logo.jpeg"
+              src="/logo.png"
               alt="XILAR"
               width={160}
               height={40}

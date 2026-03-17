@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Check, CreditCard, Truck, MapPin, Loader2, AlertCircle } from "lucide-react"
+import { Check, CreditCard, Truck, MapPin, Loader2, AlertCircle, Sparkles } from "lucide-react"
 import { CheckoutBargain } from "@/components/features/checkout-bargain"
 import { useSession } from "@/lib/auth-client"
 import { getSavedShippingAddress } from "@/lib/actions/orders"
@@ -57,6 +57,9 @@ export default function CheckoutPage() {
     const [couponError, setCouponError] = useState<string | null>(null)
     const [isValidatingCoupon, setIsValidatingCoupon] = useState(false)
     const [hydrated, setHydrated] = useState(false)
+    const [showBargainNudge, setShowBargainNudge] = useState(false)
+    const [triggerBargainOpen, setTriggerBargainOpen] = useState(false)
+    const [bargainNudgeDismissed, setBargainNudgeDismissed] = useState(false)
     
     const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
         name: "",
@@ -469,13 +472,57 @@ export default function CheckoutPage() {
                                     />
                                 </div>
                             </div>
-                            <Button 
-                                className="w-full h-14 rounded-none uppercase tracking-widest" 
-                                onClick={() => setStep(2)}
+                            <Button
+                                className="w-full h-14 rounded-none uppercase tracking-widest"
+                                onClick={() => {
+                                    if (!appliedCoupon && !bargainNudgeDismissed && window.innerWidth < 1024) {
+                                        setShowBargainNudge(true)
+                                    } else {
+                                        setStep(2)
+                                    }
+                                }}
                                 disabled={!isAddressValid()}
                             >
                                 Continue to Payment
                             </Button>
+
+                            {/* Mobile Bargain Nudge */}
+                            {showBargainNudge && (
+                                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 p-4 bg-gold/10 border border-gold/30 space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0">
+                                            <Sparkles className="h-4 w-4 text-gold" />
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-sm">You haven&apos;t bargained yet!</p>
+                                            <p className="text-xs text-muted-foreground">Negotiate with our AI and get an exclusive discount on your order.</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="outline"
+                                            className="flex-1 h-10 rounded-none text-xs uppercase tracking-wide"
+                                            onClick={() => {
+                                                setShowBargainNudge(false)
+                                                setBargainNudgeDismissed(true)
+                                                setStep(2)
+                                            }}
+                                        >
+                                            Skip
+                                        </Button>
+                                        <Button
+                                            className="flex-1 h-10 rounded-none text-xs uppercase tracking-wide bg-gold text-black hover:bg-gold-dark"
+                                            onClick={() => {
+                                                setShowBargainNudge(false)
+                                                setBargainNudgeDismissed(true)
+                                                setTriggerBargainOpen(true)
+                                            }}
+                                        >
+                                            Bargain Now
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -676,6 +723,8 @@ export default function CheckoutPage() {
                         totalPrice={totalPrice}
                         onApplyCoupon={handleApplyCoupon}
                         appliedCoupon={appliedCoupon}
+                        triggerOpen={triggerBargainOpen}
+                        onTriggered={() => setTriggerBargainOpen(false)}
                     />
                 </div>
             </div>

@@ -65,7 +65,7 @@ export const metadata: Metadata = {
     url: "/",
     images: [
       {
-        url: "/logo.jpeg",
+        url: "/logo.png",
         width: 1200,
         height: 630,
         alt: "XILAR — The Future Wear | Premium Streetwear India",
@@ -77,14 +77,14 @@ export const metadata: Metadata = {
     title: "XILAR | The Future Wear",
     description:
       "Next-gen streetwear for the bold. Premium basics, oversized fits, and urban essentials.",
-    images: ["/logo.jpeg"],
+    images: ["/logo.png"],
   },
   icons: {
     icon: [
-      { url: "/logo.jpeg" },
-      { url: "/logo.jpeg", sizes: "32x32", type: "image/jpeg" },
+      { url: "/logo.png" },
+      { url: "/logo.png", sizes: "32x32", type: "image/png" },
     ],
-    apple: [{ url: "/logo.jpeg", sizes: "180x180", type: "image/jpeg" }],
+    apple: [{ url: "/logo.png", sizes: "180x180", type: "image/png" }],
   },
   robots: {
     index: true,

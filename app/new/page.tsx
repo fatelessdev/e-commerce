@@ -39,7 +39,7 @@ export default function NewArrivalsPage() {
                 <h1 className="text-4xl md:text-6xl font-black tracking-tighter uppercase">New Arrivals</h1>
                 <p className="text-muted-foreground mt-2">Fresh drops. First access.</p>
             </div>
-            <ProductGrid title="" />
+            <ProductGrid title="" isNew />
         </div>
     )
 }

@@ -17,7 +17,7 @@ export function organizationJsonLd(baseUrl: string) {
     "@type": "Organization",
     name: "XILAR",
     url: baseUrl,
-    logo: `${baseUrl}/logo.jpeg`,
+    logo: `${baseUrl}/logo.png`,
     description:
       "Next-gen streetwear for the bold. Premium basics, oversized fits, and urban essentials.",
     foundingDate: "2025",
@@ -123,7 +123,7 @@ export function productJsonLd(
     "@type": "Product",
     name: product.name,
     description: product.description || `Shop ${product.name} from XILAR.`,
-    image: product.images?.length ? product.images : [`${baseUrl}/logo.jpeg`],
+    image: product.images?.length ? product.images : [`${baseUrl}/logo.png`],
     brand: {
       "@type": "Brand",
       name: product.brand || "XILAR",
