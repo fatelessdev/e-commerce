@@ -39,35 +39,40 @@ export default async function OrdersPage() {
 
     return (
         <div className="min-h-screen">
-            <div className="px-6 py-12 border-b border-border">
-                <h1 className="text-4xl font-black tracking-tighter uppercase flex items-center gap-4">
-                    <Package className="h-8 w-8" /> My Orders
+            <div className="px-6 md:px-12 py-14 md:py-20 border-b border-border/60">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium mb-3">History</p>
+                <h1 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">
+                    My orders
                 </h1>
             </div>
 
-            <div className="p-6 max-w-4xl space-y-6">
+            <div className="p-6 md:px-12 max-w-4xl space-y-4">
                 {orders.length === 0 ? (
-                    <div className="text-center py-16 space-y-4">
-                        <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground" />
-                        <p className="text-lg text-muted-foreground">No orders yet</p>
-                        <p className="text-sm text-muted-foreground">
-                            Start shopping to see your orders here
-                        </p>
+                    <div className="text-center py-24 space-y-4">
+                        <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto">
+                            <ShoppingBag className="h-7 w-7 text-muted-foreground" />
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium">No orders yet</p>
+                            <p className="text-xs text-muted-foreground">
+                                Start shopping to see your orders here
+                            </p>
+                        </div>
                         <Link href="/shop">
-                            <Button className="rounded-none uppercase tracking-wide mt-4">
-                                Browse Products
+                            <Button className="rounded-none uppercase tracking-[0.1em] text-xs mt-4">
+                                Browse products
                             </Button>
                         </Link>
                     </div>
                 ) : (
                     orders.map((order) => (
-                        <div key={order.id} className="border border-border p-6 space-y-4">
+                        <div key={order.id} className="border border-border/60 p-6 space-y-4">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="text-xs text-muted-foreground tabular-nums">
                                         Order #{order.id.slice(0, 8).toUpperCase()}
                                     </p>
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="text-xs text-muted-foreground tabular-nums mt-0.5">
                                         {new Date(order.createdAt).toLocaleDateString("en-IN", {
                                             day: "numeric",
                                             month: "short",
@@ -76,22 +81,22 @@ export default async function OrdersPage() {
                                     </p>
                                 </div>
                                 <div className="text-right">
-                                    <span className={`text-xs uppercase px-2 py-1 ${STATUS_COLORS[order.status] || STATUS_COLORS.pending}`}>
+                                    <span className={`text-[10px] uppercase tracking-[0.1em] font-medium px-2.5 py-1 ${STATUS_COLORS[order.status] || STATUS_COLORS.pending}`}>
                                         {order.status}
                                     </span>
-                                    <p className="font-bold mt-1">₹{parseFloat(order.total).toLocaleString("en-IN")}</p>
+                                    <p className="font-semibold text-sm mt-1.5 tabular-nums">₹{parseFloat(order.total).toLocaleString("en-IN")}</p>
                                 </div>
                             </div>
 
                             {/* Order Items Preview */}
-                            <div className="flex gap-3 overflow-x-auto pb-2">
+                            <div className="flex gap-2.5 overflow-x-auto pb-2">
                                 {order.items.map((item) => (
                                     <div key={item.id} className="flex-shrink-0">
                                         <div
-                                            className="w-16 h-20 bg-cover bg-center bg-neutral-900"
+                                            className="w-14 h-18 bg-cover bg-center bg-muted/30"
                                             style={{ backgroundImage: item.productImage ? `url(${item.productImage})` : undefined }}
                                         />
-                                        <p className="text-xs text-muted-foreground mt-1 truncate max-w-16">
+                                        <p className="text-[10px] text-muted-foreground mt-1 truncate max-w-14">
                                             {item.productName}
                                         </p>
                                     </div>
@@ -99,21 +104,21 @@ export default async function OrdersPage() {
                             </div>
 
                             {/* Order Details */}
-                            <div className="text-sm text-muted-foreground space-y-1 border-t border-border pt-4">
+                            <div className="text-xs text-muted-foreground space-y-1.5 border-t border-border/40 pt-4">
                                 <div className="flex justify-between">
                                     <span>Items</span>
-                                    <span>{order.items.reduce((sum, item) => sum + item.quantity, 0)}</span>
+                                    <span className="tabular-nums">{order.items.reduce((sum, item) => sum + item.quantity, 0)}</span>
                                 </div>
                                 {order.couponCode && (
                                     <div className="flex justify-between text-green-600 dark:text-green-400">
                                         <span>Discount ({order.couponCode})</span>
-                                        <span>-₹{parseFloat(order.couponDiscount || "0").toLocaleString("en-IN")}</span>
+                                        <span className="tabular-nums">-₹{parseFloat(order.couponDiscount || "0").toLocaleString("en-IN")}</span>
                                     </div>
                                 )}
                                 {order.codFee && parseFloat(order.codFee) > 0 && (
                                     <div className="flex justify-between text-orange-600 dark:text-orange-400">
                                         <span>COD Fee</span>
-                                        <span>+₹{parseFloat(order.codFee).toLocaleString("en-IN")}</span>
+                                        <span className="tabular-nums">+₹{parseFloat(order.codFee).toLocaleString("en-IN")}</span>
                                     </div>
                                 )}
                                 <div className="flex justify-between">
@@ -124,7 +129,7 @@ export default async function OrdersPage() {
 
                             {/* Shipping Address */}
                             {order.shippingAddress && (
-                                <div className="text-sm text-muted-foreground border-t border-border pt-4">
+                                <div className="text-xs text-muted-foreground border-t border-border/40 pt-4">
                                     <p className="font-medium text-foreground">{order.shippingAddress.name}</p>
                                     <p>{order.shippingAddress.address}</p>
                                     <p>
