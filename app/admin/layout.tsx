@@ -2,14 +2,12 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getServerSession, isAdmin } from "@/lib/auth-server";
 import Link from "next/link";
-import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingCart, 
-  Ticket, 
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  Ticket,
   Settings,
-  LogOut,
-  Menu
 } from "lucide-react";
 
 export default async function AdminLayout({

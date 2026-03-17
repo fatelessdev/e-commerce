@@ -18,8 +18,8 @@ export function Navbar() {
   return (
     <>
       {/* Free Delivery Banner */}
-      <div className="w-full bg-gold/10 border-b border-gold/20 py-1.5">
-        <div className="flex items-center justify-center gap-2 text-xs tracking-wide text-gold">
+      <div className="w-full bg-red-accent/10 border-b border-red-accent/20 py-1.5">
+        <div className="flex items-center justify-center gap-2 text-xs tracking-wide text-red-accent">
           <Truck className="h-3.5 w-3.5" />
           <span>Free delivery on orders above {FREE_SHIPPING_THRESHOLD_DISPLAY}</span>
         </div>
@@ -62,25 +62,25 @@ export function Navbar() {
           <nav className="hidden lg:flex items-center space-x-6 xl:space-x-8 text-sm font-medium ml-auto mr-8 xl:mr-16">
             <Link
               href="/shop/men"
-              className="tracking-wider uppercase text-xs hover:text-gold transition-colors"
+              className="tracking-wider uppercase text-xs hover:text-red-accent transition-colors"
             >
               For Him
             </Link>
             <Link
               href="/shop/women"
-              className="tracking-wider uppercase text-xs hover:text-gold transition-colors"
+              className="tracking-wider uppercase text-xs hover:text-red-accent transition-colors"
             >
               For Her
             </Link>
             <Link
               href="/new"
-              className="tracking-wider uppercase text-xs hover:text-gold transition-colors"
+              className="tracking-wider uppercase text-xs hover:text-red-accent transition-colors"
             >
               New Drop
             </Link>
             <Link
-              href="/collections"
-              className="tracking-wider uppercase text-xs hover:text-gold transition-colors"
+              href="/collections/essentials"
+              className="tracking-wider uppercase text-xs hover:text-red-accent transition-colors"
             >
               Collections
             </Link>
@@ -116,7 +116,7 @@ export function Navbar() {
               <Button variant="ghost" size="icon" className="h-9 w-9 relative">
                 <Heart className="h-4 w-4" />
                 {wishlistItems.length > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-gold text-black text-xs flex items-center justify-center font-medium">
+                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-accent text-white text-xs flex items-center justify-center font-medium">
                     {wishlistItems.length}
                   </span>
                 )}
@@ -133,7 +133,7 @@ export function Navbar() {
             >
               <ShoppingBag className="h-4 w-4" />
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-gold text-black text-xs flex items-center justify-center font-medium">
+                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-accent text-white text-xs flex items-center justify-center font-medium">
                   {totalItems}
                 </span>
               )}
@@ -174,7 +174,7 @@ export function Navbar() {
               New Drop
             </Link>
             <Link
-              href="/collections"
+              href="/collections/essentials"
               className="block py-3 text-sm font-medium tracking-wider uppercase border-b border-border"
               onClick={() => setShowMobileMenu(false)}
             >

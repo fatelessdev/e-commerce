@@ -28,18 +28,13 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: ReactNode }) {
-    const [items, setItems] = useState<CartItem[]>([])
-    const [isOpen, setIsOpen] = useState(false)
-    const [isHydrated, setIsHydrated] = useState(false)
-
-    // Load from localStorage on mount
-    useEffect(() => {
+    const [items, setItems] = useState<CartItem[]>(() => {
+        if (typeof window === "undefined") return []
         const stored = localStorage.getItem("xilar-cart")
-        if (stored) {
-            setItems(JSON.parse(stored))
-        }
-        setIsHydrated(true)
-    }, [])
+        return stored ? JSON.parse(stored) : []
+    })
+    const [isOpen, setIsOpen] = useState(false)
+    const [isHydrated] = useState(() => typeof window !== "undefined")
 
     // Save to localStorage on change
     useEffect(() => {

@@ -129,7 +129,7 @@ export async function createOrder(input: CreateOrderInput) {
         couponCode: input.couponCode,
         couponDiscount: input.couponCode ? input.discount.toString() : null,
         codFee: input.codFee ? input.codFee.toString() : null,
-        codRemainingAmount: input.paymentMethod === "cod" ? input.total.toString() : null,
+        // codRemainingAmount: input.paymentMethod === "cod" ? input.total.toString() : null, // COD temporarily disabled
         shippingAddress: {
           name: input.shippingAddress.name,
           phone: input.shippingAddress.phone,
@@ -260,6 +260,7 @@ export async function createOrder(input: CreateOrderInput) {
         ordersCount: sql`${user.ordersCount} + 1`,
         totalSpent: sql`${user.totalSpent} + ${input.total}`,
         shippingAddress: {
+          name: input.shippingAddress.name,
           phone: input.shippingAddress.phone,
           address: input.shippingAddress.address,
           city: input.shippingAddress.city,
@@ -312,9 +313,10 @@ export async function getUserOrders() {
 }
 
 // ============================================
-// CANCEL ORDER (COD only, pending/confirmed)
+// CANCEL ORDER (COD only, pending/confirmed) — temporarily disabled
 // ============================================
 
+/* COD CANCEL ORDER — temporarily commented out
 export async function cancelOrder(orderId: string) {
   const session = await getServerSession();
   if (!session?.user?.id) {
@@ -435,6 +437,7 @@ export async function cancelOrder(orderId: string) {
 
   return { success: true };
 }
+*/
 
 // ============================================
 // SHIPPING ADDRESS (saved on user profile)
@@ -457,9 +460,9 @@ export async function getSavedShippingAddress() {
   if (!userData) return null;
 
   return {
-    name: userData.name,
+    name: userData.shippingAddress?.name || userData.name,
     email: userData.email,
-    phone: userData.phone || userData.shippingAddress?.phone || "",
+    phone: userData.shippingAddress?.phone || userData.phone || "",
     address: userData.shippingAddress?.address || "",
     city: userData.shippingAddress?.city || "",
     state: userData.shippingAddress?.state || "",

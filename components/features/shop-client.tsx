@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef, useCallback } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -35,7 +35,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 }
 const DEFAULT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"]
 const NUMBER_SIZES = ["26", "28", "30", "32", "34"]
-const NUMBER_SIZE_CATEGORIES = ["jogger", "jeans", "cargo"]
+const NUMBER_SIZE_CATEGORIES = ["jogger", "jeans", "cargo", "shorts"]
 const PRICE_RANGES = [
     { label: "All Prices", min: 0, max: Infinity },
     { label: "Under ₹1000", min: 0, max: 1000 },
@@ -149,13 +149,13 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
     return (
         <div className="flex flex-col min-h-screen">
             {/* Header */}
-            <div className="px-6 py-8 border-b border-white/10">
+            <div className="px-6 py-8 border-b border-border">
                 <h1 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">{title}</h1>
                 {subtitle && <p className="text-muted-foreground mt-1">{subtitle}</p>}
             </div>
 
             {/* Toolbar */}
-            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 px-6 py-4 border-b border-white/10 glass sticky top-16 z-40">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 px-6 py-4 border-b border-border sticky top-16 z-40">
                 {/* Search */}
                 <div className="relative flex-1 max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -189,7 +189,7 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
 
             {/* Filters Panel */}
             {showFilters && (
-                <div className="px-6 py-4 border-b border-white/10 bg-secondary/20 flex flex-wrap gap-6">
+                <div className="px-6 py-4 border-b border-border bg-secondary/20 flex flex-wrap gap-6">
                     {/* Category */}
                     <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Category</label>

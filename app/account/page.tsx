@@ -53,7 +53,7 @@ function AccountContent() {
                     router.push(redirect)
                 }
             }
-        } catch (err) {
+        } catch {
             setError("Something went wrong. Please try again.")
         } finally {
             setIsLoading(false)
@@ -162,7 +162,7 @@ function AccountContent() {
 
     return (
         <div className="min-h-screen">
-            <div className="px-6 py-12 border-b border-white/10">
+            <div className="px-6 py-12 border-b border-border">
                 <h1 className="text-4xl md:text-6xl font-black tracking-tighter uppercase flex items-center gap-4">
                     <User className="h-10 w-10" /> My Account
                 </h1>
@@ -183,7 +183,7 @@ function AccountContent() {
                         </Link>
                     )}
 
-                    <Link href="/orders" className="flex items-center gap-4 p-4 border border-white/10 hover:border-foreground transition-colors">
+                    <Link href="/orders" className="flex items-center gap-4 p-4 border border-border hover:border-foreground transition-colors">
                         <Package className="h-6 w-6" />
                         <div>
                             <h3 className="font-medium">My Orders</h3>
@@ -191,7 +191,7 @@ function AccountContent() {
                         </div>
                     </Link>
 
-                    <Link href="/wishlist" className="flex items-center gap-4 p-4 border border-white/10 hover:border-foreground transition-colors">
+                    <Link href="/wishlist" className="flex items-center gap-4 p-4 border border-border hover:border-foreground transition-colors">
                         <Heart className="h-6 w-6" />
                         <div>
                             <h3 className="font-medium">Wishlist</h3>
@@ -200,7 +200,7 @@ function AccountContent() {
                     </Link>
 
                     <button
-                        className="flex items-center gap-4 p-4 border border-white/10 hover:border-destructive transition-colors w-full text-left"
+                        className="flex items-center gap-4 p-4 border border-border hover:border-destructive transition-colors w-full text-left"
                         onClick={handleSignOut}
                     >
                         <LogOut className="h-6 w-6" />
@@ -212,7 +212,7 @@ function AccountContent() {
                 </div>
 
                 {/* Account Info */}
-                <div className="mt-8 p-4 border border-white/10">
+                <div className="mt-8 p-4 border border-border">
                     <h3 className="font-medium mb-4">Account Information</h3>
                     <div className="space-y-2 text-sm">
                         <div className="flex justify-between">

@@ -1,7 +1,8 @@
 import { getProducts } from "@/lib/actions/admin";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import { DeleteProductButton } from "./delete-button";
 
 export default async function ProductsPage() {
@@ -50,10 +51,13 @@ export default async function ProductsPage() {
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       {product.images?.[0] && (
-                        <img
+                        <Image
                           src={product.images[0]}
                           alt={product.name}
+                          width={48}
+                          height={48}
                           className="w-12 h-12 object-cover rounded"
+                          unoptimized
                         />
                       )}
                       <div>

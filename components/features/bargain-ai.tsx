@@ -33,16 +33,19 @@ interface Message {
  */
 export function ProductAssistant({ productContext }: ProductAssistantProps) {
     const [isOpen, setIsOpen] = useState(false)
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            id: "welcome",
-            role: "assistant",
-            content: "Hey! 👋 Got questions about this product? I'm here to help! Ask me about sizing, fabric, care, or anything else.",
-        },
-    ])
+    const getWelcomeMessage = (ctx?: ProductContext): Message => ({
+        id: "welcome",
+        role: "assistant",
+        content: ctx
+            ? `Hey! 👋 Checking out the ${ctx.name}? Great choice! Ask me anything - sizing, fabric, styling tips, or care instructions!`
+            : "Hey! 👋 Got questions about this product? I'm here to help! Ask me about sizing, fabric, care, or anything else.",
+    })
+
+    const [messages, setMessages] = useState<Message[]>([getWelcomeMessage(productContext)])
     const [input, setInput] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const prevProductIdRef = useRef(productContext?.id)
 
     // Auto-scroll to bottom on new messages
     useEffect(() => {
@@ -50,17 +53,12 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
     }, [messages])
 
     // Reset chat when product changes
-    useEffect(() => {
+    if (productContext?.id !== prevProductIdRef.current) {
+        prevProductIdRef.current = productContext?.id
         if (productContext) {
-            setMessages([
-                {
-                    id: "welcome",
-                    role: "assistant",
-                    content: `Hey! 👋 Checking out the ${productContext.name}? Great choice! Ask me anything - sizing, fabric, styling tips, or care instructions!`,
-                },
-            ])
+            setMessages([getWelcomeMessage(productContext)])
         }
-    }, [productContext?.id])
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()

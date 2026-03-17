@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Star, ChevronRight, Loader2 } from "lucide-react"
 
 interface Product {
@@ -32,6 +32,14 @@ function StarRating({ rating, reviews }: { rating: number; reviews: number }) {
             <span className="text-xs text-muted-foreground">({reviews})</span>
         </div>
     )
+}
+
+function stableReviewCount(id: string): number {
+    let hash = 0
+    for (let i = 0; i < id.length; i++) {
+        hash = ((hash << 5) - hash + id.charCodeAt(i)) | 0
+    }
+    return (Math.abs(hash) % 90) + 10
 }
 
 function ColorSwatches({ colors }: { colors: { name: string; hex: string }[] }) {
@@ -81,7 +89,7 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
             }
         }
         fetchProducts()
-    }, [activeTab])
+    }, [activeTab, isFeatured, isNew, gender])
 
     const formatPrice = (price: string) => {
         const num = parseFloat(price)
@@ -179,8 +187,8 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
                                     {/* Color Swatches */}
                                     <ColorSwatches colors={product.colors} />
 
-                                    {/* Star Rating (placeholder) */}
-                                    <StarRating rating={5} reviews={Math.floor(Math.random() * 100) + 10} />
+                                    {/* Star Rating */}
+                                    <StarRating rating={5} reviews={stableReviewCount(product.id)} />
                                 </CardFooter>
                             </Card>
                         </Link>
@@ -192,7 +200,7 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
             <div className="text-center mt-10">
                 <Link
                     href="/shop"
-                    className="text-sm font-medium uppercase tracking-wider underline underline-offset-4 hover:text-gold transition-colors"
+                    className="text-sm font-medium uppercase tracking-wider underline underline-offset-4 hover:text-red-accent transition-colors"
                 >
                     View All Products
                 </Link>

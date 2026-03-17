@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { updateProduct, type ProductInput } from "@/lib/actions/admin";
 import { Loader2, Plus, X, Upload, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 const categories = [
   { value: "tshirt", label: "T-Shirt" },
@@ -27,6 +28,8 @@ const genders = [
 ];
 
 const defaultSizes = ["S", "M", "L", "XL", "XXL"];
+const numberSizes = ["26", "28", "30", "32", "34"];
+const NUMBER_SIZE_CATEGORIES = ["jogger", "jeans", "cargo", "shorts"];
 
 interface ProductData {
   id: string;
@@ -477,10 +480,13 @@ export default function EditProductPage() {
                 <div className="flex flex-wrap gap-3">
                   {images.map((img, idx) => (
                     <div key={idx} className="relative group">
-                      <img
+                      <Image
                         src={img}
                         alt={`Product ${idx + 1}`}
+                        width={96}
+                        height={96}
                         className="w-24 h-24 object-cover rounded border"
+                        unoptimized
                       />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <button
@@ -538,7 +544,7 @@ export default function EditProductPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Sizes</label>
               <div className="flex flex-wrap gap-2">
-                {defaultSizes.map((size) => (
+                {(NUMBER_SIZE_CATEGORIES.includes(formData.category) ? numberSizes : defaultSizes).map((size) => (
                   <button
                     key={size}
                     type="button"

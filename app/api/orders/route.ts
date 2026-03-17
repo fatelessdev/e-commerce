@@ -7,9 +7,13 @@ import { products } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE, COD_FEE } from "@/lib/constants";
 
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
+  // COD temporarily disabled
+  return NextResponse.json({ success: false, error: "Cash on Delivery is not available at this time." }, { status: 503 });
+
+  /* COD ORDER CREATION — temporarily commented out
   try {
-    const body = await req.json();
+    const body = await _req.json();
 
     if (body.paymentMethod !== "cod") {
       return NextResponse.json(
@@ -102,4 +106,5 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+  */
 }

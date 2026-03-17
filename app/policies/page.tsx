@@ -96,7 +96,7 @@ export default function PoliciesPage() {
                                     <policy.icon className="h-6 w-6" />
                                 </div>
                                 <div>
-                                    <h2 className="font-bold text-lg uppercase tracking-tight group-hover:text-gold transition-colors">
+                                    <h2 className="font-bold text-lg uppercase tracking-tight group-hover:text-red-accent transition-colors">
                                         {policy.title}
                                     </h2>
                                     <p className="text-sm text-muted-foreground mt-1">
@@ -113,19 +113,19 @@ export default function PoliciesPage() {
                     <h2 className="font-bold text-lg uppercase tracking-tight mb-4">Quick Summary</h2>
                     <ul className="space-y-3 text-sm">
                         <li className="flex items-start gap-2">
-                            <span className="text-gold">•</span>
+                            <span className="text-red-accent">•</span>
                             <span><strong>Exchanges:</strong> Within 48 hours for size/color only. Product must be unused with tags.</span>
                         </li>
                         <li className="flex items-start gap-2">
-                            <span className="text-gold">•</span>
+                            <span className="text-red-accent">•</span>
                             <span><strong>Returns:</strong> Only for defective items. Unboxing video required as proof.</span>
                         </li>
                         <li className="flex items-start gap-2">
-                            <span className="text-gold">•</span>
+                            <span className="text-red-accent">•</span>
                             <span><strong>Refunds:</strong> Issued as store credit (not cash) with +5% bonus.</span>
                         </li>
                         <li className="flex items-start gap-2">
-                            <span className="text-gold">•</span>
+                            <span className="text-red-accent">•</span>
                             <span><strong>Shipping:</strong> Free above ₹999, otherwise ₹99. COD available (+₹50 fee).</span>
                         </li>
                     </ul>
