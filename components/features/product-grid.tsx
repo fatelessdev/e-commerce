@@ -160,7 +160,7 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
                     {products.map((product) => (
                         <StaggerItem key={product.id}>
                             <Link href={`/product/${product.id}`} className="group">
-                                <Card className="bg-transparent hover-lift">
+                                <Card className="bg-transparent border-0 rounded-none hover-lift">
                                     <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
                                         {/* Sold Out Badge */}
                                         {product.stock === 0 && (

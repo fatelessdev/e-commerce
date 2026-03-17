@@ -271,7 +271,7 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                                 {visibleProducts.map((product) => (
                                     <Link href={`/product/${product.id}`} key={product.id} className="group">
-                                        <Card className="bg-transparent hover-lift">
+                                        <Card className="bg-transparent border-0 rounded-none hover-lift">
                                             <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
                                                 <div
                                                     className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
