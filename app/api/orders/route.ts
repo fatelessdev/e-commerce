@@ -5,19 +5,23 @@ import { getServerSession } from "@/lib/auth-server";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE, COD_FEE } from "@/lib/constants";
+import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE, COD_FEE, COD_ALLOWED_PINCODES } from "@/lib/constants";
 
 export async function POST(_req: NextRequest) {
-  // COD temporarily disabled
-  return NextResponse.json({ success: false, error: "Cash on Delivery is not available at this time." }, { status: 503 });
-
-  /* COD ORDER CREATION — temporarily commented out
   try {
     const body = await _req.json();
 
     if (body.paymentMethod !== "cod") {
       return NextResponse.json(
         { success: false, error: "Invalid payment method for this endpoint" },
+        { status: 400 }
+      );
+    }
+
+    // Only allow COD for specific pincodes
+    if (!COD_ALLOWED_PINCODES.includes(body.shippingAddress?.pincode)) {
+      return NextResponse.json(
+        { success: false, error: "Cash on Delivery is not available for this pincode" },
         { status: 400 }
       );
     }
@@ -65,7 +69,7 @@ export async function POST(_req: NextRequest) {
     }
 
     const shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
-    const codFee = body.paymentMethod === "cod" ? COD_FEE : 0;
+    const codFee = COD_FEE;
 
     // Validate coupon using canonical rules
     let discount = 0;
@@ -106,5 +110,4 @@ export async function POST(_req: NextRequest) {
       { status: 500 }
     );
   }
-  */
 }

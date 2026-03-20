@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins";
 import { db } from "./db";
 import * as schema from "./db/schema";
+import { sendResetPasswordEmail } from "./email";
 
 const authBaseUrl =
   process.env.BETTER_AUTH_URL ||
@@ -30,6 +31,9 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,
+    sendResetPassword: async ({ user, url }) => {
+      await sendResetPasswordEmail(user, url);
+    },
   },
 
   session: {

@@ -128,6 +128,14 @@ function AccountContent() {
                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                 className="w-full h-12 px-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
                             />
+                            {showLogin && (
+                                <Link
+                                    href="/forgot-password"
+                                    className="text-[10px] text-muted-foreground hover:text-foreground underline-offset-4 hover:underline transition-colors duration-300 block pt-1"
+                                >
+                                    Forgot password?
+                                </Link>
+                            )}
                         </div>
                         {!showLogin && (
                             <div className="space-y-1.5">
