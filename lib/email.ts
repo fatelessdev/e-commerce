@@ -13,7 +13,17 @@ function getResend(): Resend {
   return _resend;
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export async function sendResetPasswordEmail(user: { email: string; name: string }, url: string) {
+  const safeName = escapeHtml(user.name || "there");
   await getResend().emails.send({
     from: "XILAR <onboarding@resend.dev>",
     to: user.email,
@@ -21,9 +31,9 @@ export async function sendResetPasswordEmail(user: { email: string; name: string
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
         <h2>Reset your password</h2>
-        <p>Hi ${user.name || "there"},</p>
+        <p>Hi ${safeName},</p>
         <p>We received a request to reset your XILAR account password. Click the button below to set a new password:</p>
-        <a href="${url}" style="display:inline-block;padding:12px 24px;background:#C62828;color:#fff;text-decoration:none;font-weight:600;">Reset Password</a>
+        <a href="${escapeHtml(url)}" style="display:inline-block;padding:12px 24px;background:#C62828;color:#fff;text-decoration:none;font-weight:600;">Reset Password</a>
         <p style="margin-top:20px;font-size:13px;color:#666;">If you didn't request this, you can safely ignore this email. The link expires in 1 hour.</p>
       </div>
     `,

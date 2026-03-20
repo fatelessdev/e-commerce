@@ -32,7 +32,12 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: 8,
     sendResetPassword: async ({ user, url }) => {
-      await sendResetPasswordEmail(user, url);
+      try {
+        await sendResetPasswordEmail(user, url);
+      } catch (error) {
+        console.error("Failed to send password reset email:", error);
+        throw new Error("Failed to send password reset email");
+      }
     },
   },
 
