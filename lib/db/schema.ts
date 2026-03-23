@@ -153,6 +153,9 @@ export const products = pgTable("products", {
   isFeatured: boolean("is_featured").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),
   
+  // Manual merchandising (gap method with increments of 100)
+  displayOrder: integer("display_order").notNull().default(0),
+  
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
