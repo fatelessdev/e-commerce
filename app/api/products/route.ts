@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
       .select()
       .from(products)
       .where(and(...conditions))
-      .orderBy(desc(products.createdAt))
+      .orderBy(desc(products.displayOrder), desc(products.createdAt))
       .limit(limit)
       .offset(offset);
 

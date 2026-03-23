@@ -32,6 +32,7 @@ export type ProductInput = {
   isNew?: boolean;
   isFeatured?: boolean;
   isActive?: boolean;
+  displayOrder?: number;
 };
 
 // Helper: recompute total stock from variants
@@ -104,6 +105,7 @@ export async function createProduct(data: ProductInput) {
       isNew: data.isNew ?? false,
       isFeatured: data.isFeatured ?? false,
       isActive: data.isActive ?? true,
+      displayOrder: data.displayOrder ?? 0,
     })
     .returning();
 
@@ -198,7 +200,7 @@ export async function getProducts(options?: {
     .select()
     .from(products)
     .where(conditions.length > 0 ? and(...conditions) : undefined)
-    .orderBy(desc(products.createdAt))
+    .orderBy(desc(products.displayOrder), desc(products.createdAt))
     .limit(options?.limit || 50)
     .offset(options?.offset || 0);
 
