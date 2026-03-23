@@ -47,6 +47,7 @@ interface ProductData {
   isNew: boolean;
   isFeatured: boolean;
   isActive: boolean;
+  displayOrder: number;
   images: string[] | null;
   sizes: string[] | null;
   careInstructions: string[] | null;
@@ -81,6 +82,7 @@ export default function EditProductPage() {
     isNew: false,
     isFeatured: false,
     isActive: true,
+    displayOrder: 0,
   });
 
   const [images, setImages] = useState<string[]>([]);
@@ -123,6 +125,7 @@ export default function EditProductPage() {
           isNew: product.isNew,
           isFeatured: product.isFeatured,
           isActive: product.isActive,
+          displayOrder: product.displayOrder || 0,
         });
         setImages(product.images || []);
         setSizes(product.sizes || ["S", "M", "L", "XL"]);
@@ -865,12 +868,12 @@ export default function EditProductPage() {
           </CardContent>
         </Card>
 
-        {/* Status */}
+        {/* Status & Display Order */}
         <Card>
           <CardHeader>
-            <CardTitle>Status</CardTitle>
+            <CardTitle>Status & Display Order</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="flex flex-wrap gap-6">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -899,6 +902,22 @@ export default function EditProductPage() {
                 />
                 <span className="text-sm">Featured Product</span>
               </label>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Display Order (Manual Merchandising)</label>
+              <input
+                type="number"
+                min="0"
+                step="100"
+                value={formData.displayOrder}
+                onChange={(e) => setFormData({ ...formData, displayOrder: parseInt(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border rounded-lg bg-background"
+                placeholder="0"
+              />
+              <p className="text-xs text-muted-foreground">
+                Higher values appear first. Use increments of 100 (e.g., 100, 200, 300) for easy reordering. Default 0 = sort by newest.
+              </p>
             </div>
           </CardContent>
         </Card>
