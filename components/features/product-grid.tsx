@@ -3,8 +3,9 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/scroll-reveal"
 import Link from "next/link"
-import { useState, useEffect, useMemo } from "react"
-import { Star, ArrowRight, Loader2 } from "lucide-react"
+import Image from "next/image"
+import { useState, useEffect } from "react"
+import { ArrowRight } from "lucide-react"
 
 interface Product {
     id: string
@@ -19,47 +20,25 @@ interface Product {
     colors: { name: string; hex: string }[]
 }
 
-function StarRating({ rating, reviews }: { rating: number; reviews: number }) {
-    return (
-        <div className="flex items-center gap-1.5">
-            <div className="star-rating">
-                {[...Array(5)].map((_, i) => (
-                    <Star
-                        key={i}
-                        className={`h-2.5 w-2.5 ${i < rating ? 'fill-current' : 'fill-none stroke-current opacity-20'}`}
-                    />
-                ))}
-            </div>
-            <span className="text-[10px] text-muted-foreground tabular-nums">({reviews})</span>
-        </div>
-    )
-}
-
-function stableReviewCount(id: string): number {
-    let hash = 0
-    for (let i = 0; i < id.length; i++) {
-        hash = ((hash << 5) - hash + id.charCodeAt(i)) | 0
-    }
-    return (Math.abs(hash) % 90) + 10
-}
-
 function ColorSwatches({ colors }: { colors: { name: string; hex: string }[] }) {
     if (!colors || colors.length === 0) return null
     return (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
             {colors.slice(0, 4).map((color, i) => (
                 <div
                     key={i}
-                    className="w-3 h-3 rounded-full border border-border/60"
+                    className="w-7 h-7 rounded-full border border-border/60 flex items-center justify-center"
                     style={{ backgroundColor: color.hex }}
                     title={color.name}
+                    role="img"
+                    aria-label={`Color: ${color.name}`}
                 />
             ))}
         </div>
     )
 }
 
-export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNew }: { title?: string; gender?: "men" | "women" | "unisex"; isFeatured?: boolean; isNew?: boolean }) {
+export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNew, layout = "grid" }: { title?: string; gender?: "men" | "women" | "unisex"; isFeatured?: boolean; isNew?: boolean; layout?: "grid" | "scroll" }) {
     const [activeTab, setActiveTab] = useState<"men" | "women">(gender === "women" ? "women" : "men")
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
@@ -107,9 +86,11 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
                     )}
 
                     {/* FOR HIM / FOR HER Tabs */}
-                    {!gender && (
-                        <div className="flex items-center gap-8 text-sm">
+                    {!gender && layout !== "scroll" && (
+                        <div className="flex items-center gap-8 text-sm" role="tablist" aria-label="Shop by gender">
                             <button
+                                role="tab"
+                                aria-selected={activeTab === "men"}
                                 onClick={() => setActiveTab("men")}
                                 className={`tracking-[0.15em] uppercase text-[11px] font-medium pb-2 border-b-2 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${activeTab === "men"
                                     ? "border-foreground text-foreground"
@@ -119,6 +100,8 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
                                 For Him
                             </button>
                             <button
+                                role="tab"
+                                aria-selected={activeTab === "women"}
                                 onClick={() => setActiveTab("women")}
                                 className={`tracking-[0.15em] uppercase text-[11px] font-medium pb-2 border-b-2 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${activeTab === "women"
                                     ? "border-foreground text-foreground"
@@ -154,8 +137,43 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
                 </div>
             )}
 
-            {/* Product Grid */}
+            {/* Product Grid / Scroll */}
             {!loading && products.length > 0 && (
+                layout === "scroll" ? (
+                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-6 px-6 md:-mx-12 md:px-12">
+                        {products.map((product) => (
+                            <div key={product.id} className="flex-shrink-0 w-[200px] sm:w-[240px] snap-start">
+                                <Link href={`/product/${product.id}`} className="group">
+                                    <Card className="bg-transparent border-0 rounded-none hover-lift">
+                                        <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
+                                            {product.stock === 0 && (
+                                                <div className="absolute top-3 left-3 z-10 badge-sold-out">Sold Out</div>
+                                            )}
+                                            <Image
+                                                src={product.images?.[0] || "/clothes/placeholder.jpeg"}
+                                                alt={product.name}
+                                                fill
+                                                sizes="240px"
+                                                className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
+                                            />
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500" />
+                                        </CardContent>
+                                        <CardFooter className="flex flex-col items-start px-1 pt-3 pb-2 space-y-1">
+                                            <h3 className="font-medium tracking-tight text-xs uppercase leading-tight line-clamp-1">{product.name}</h3>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-xs font-semibold tabular-nums">{formatPrice(product.sellingPrice)}</p>
+                                                {parseFloat(product.mrp) > parseFloat(product.sellingPrice) && (
+                                                    <p className="text-[10px] text-muted-foreground line-through tabular-nums">{formatPrice(product.mrp)}</p>
+                                                )}
+                                            </div>
+                                            <ColorSwatches colors={product.colors} />
+                                        </CardFooter>
+                                    </Card>
+                                </Link>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
                 <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                     {products.map((product) => (
                         <StaggerItem key={product.id}>
@@ -170,9 +188,12 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
                                         )}
 
                                         {/* Product Image */}
-                                        <div
-                                            className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
-                                            style={{ backgroundImage: `url(${product.images?.[0] || "/clothes/placeholder.jpeg"})` }}
+                                        <Image
+                                            src={product.images?.[0] || "/clothes/placeholder.jpeg"}
+                                            alt={product.name}
+                                            fill
+                                            sizes="(max-width: 640px) 50vw, 25vw"
+                                            className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
                                         />
 
                                         {/* Hover Overlay */}
@@ -198,16 +219,17 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
                                         </div>
 
                                         <ColorSwatches colors={product.colors} />
-                                        <StarRating rating={5} reviews={stableReviewCount(product.id)} />
                                     </CardFooter>
                                 </Card>
                             </Link>
                         </StaggerItem>
                     ))}
                 </StaggerContainer>
+                )
             )}
 
             {/* View All Link */}
+            {layout !== "scroll" && (
             <ScrollReveal delay={0.2}>
                 <div className="text-center mt-14">
                     <Link
@@ -219,6 +241,7 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
                     </Link>
                 </div>
             </ScrollReveal>
+            )}
         </section>
     )
 }

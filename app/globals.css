@@ -42,9 +42,7 @@
   --red-light: oklch(0.52 0.19 25);
   --red-dark: oklch(0.32 0.14 25);
 
-  /* Glassmorphism utilities */
-  --glass-border: rgba(255, 255, 255, 0.2);
-  --glass-bg: rgba(255, 255, 255, 0.1);
+  /* Glassmorphism utilities — removed for clarity, using solid backgrounds instead */
 
   --chart-1: oklch(0.55 0.22 25);
   --chart-2: oklch(0.6 0.118 184.704);
@@ -95,8 +93,6 @@
   --red-light: oklch(0.6 0.21 25);
   --red-dark: oklch(0.4 0.16 25);
 
-  --glass-border: rgba(255, 255, 255, 0.06);
-  --glass-bg: rgba(0, 0, 0, 0.5);
   --chart-1: oklch(0.55 0.22 25);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.65 0.2 30);
@@ -204,6 +200,15 @@ body {
   fill: currentColor;
 }
 
+/* Hide scrollbar for horizontal scroll containers */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Sold out badge */
 .badge-sold-out {
   background-color: oklch(0.12 0.01 30);
@@ -213,15 +218,6 @@ body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 500;
-}
-
-/* Glass surface with inner refraction */
-.glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 @layer base {

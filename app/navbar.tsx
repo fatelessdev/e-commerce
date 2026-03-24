@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
 import ThemeToggleButton from "@/components/ui/theme-toggle-button";
-import { FREE_SHIPPING_THRESHOLD_DISPLAY } from "@/lib/constants";
+import { FREE_SHIPPING_THRESHOLD_DISPLAY, CONTACT_PHONE } from "@/lib/constants";
 
 const EASE_OUT_EXPO = [0.32, 0.72, 0, 1] as const;
 
@@ -47,6 +47,9 @@ export function Navbar() {
             size="icon"
             className="md:hidden mr-2"
             onClick={() => setShowMobileMenu(!showMobileMenu)}
+            aria-expanded={showMobileMenu}
+            aria-controls="mobile-menu"
+            aria-label={showMobileMenu ? "Close menu" : "Open menu"}
           >
             <div className="relative h-5 w-5">
               <AnimatePresence mode="wait" initial={false}>
@@ -91,7 +94,7 @@ export function Navbar() {
           {/* Questions - Desktop */}
           <div className="hidden lg:flex items-center text-[10px] tracking-[0.1em] uppercase text-muted-foreground">
             Questions?{" "}
-            <span className="ml-2 text-foreground font-medium">+91 8090644991</span>
+            <span className="ml-2 text-foreground font-medium">{CONTACT_PHONE}</span>
           </div>
 
           {/* Desktop Nav */}
@@ -171,6 +174,7 @@ export function Navbar() {
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.4, ease: EASE_OUT_EXPO }}
+              id="mobile-menu"
               className="md:hidden border-t border-border overflow-hidden bg-background absolute top-full left-0 w-full z-50"
             >
               <div className="py-4 px-4 space-y-0">

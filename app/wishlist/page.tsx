@@ -5,6 +5,7 @@ import { useCart } from "@/lib/cart-context"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import Image from "next/image"
 import { Heart, ShoppingBag, Trash2 } from "lucide-react"
 
 export default function WishlistPage() {
@@ -35,11 +36,11 @@ export default function WishlistPage() {
                         <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-5">
                             <Heart className="h-7 w-7 text-muted-foreground" />
                         </div>
-                        <p className="text-sm font-medium mb-1">Your wishlist is empty</p>
-                        <p className="text-xs text-muted-foreground mb-6">Save items you love for later</p>
+                        <p className="text-sm font-medium mb-1">No saved items yet</p>
+                        <p className="text-xs text-muted-foreground mb-6 max-w-[260px] mx-auto">Tap the heart icon on any product to save it here for later.</p>
                         <Link href="/shop">
                             <Button variant="outline" className="rounded-none text-xs uppercase tracking-[0.1em]">
-                                Start shopping
+                                Browse products
                             </Button>
                         </Link>
                     </div>
@@ -49,9 +50,12 @@ export default function WishlistPage() {
                             <Card key={item.id} className="bg-transparent border-0 rounded-none">
                                 <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
                                     <Link href={`/product/${item.id}`}>
-                                        <div
-                                            className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-105"
-                                            style={{ backgroundImage: `url(${item.image})` }}
+                                        <Image
+                                            src={item.image}
+                                            alt={item.name}
+                                            fill
+                                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                                            className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-105"
                                         />
                                     </Link>
                                     <Button

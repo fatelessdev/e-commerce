@@ -5,13 +5,36 @@ import { Button } from "@/components/ui/button"
 import { X, Minus, Plus, ShoppingBag } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useSession } from "@/lib/auth-client"
+import { useEffect, useRef } from "react"
 
 export function CartDrawer() {
     const { items, isOpen, setIsOpen, removeItem, updateQuantity, totalItems, totalPrice, clearCart } = useCart()
     const { data: session } = useSession()
     const router = useRouter()
+    const drawerRef = useRef<HTMLDivElement>(null)
+    const closeButtonRef = useRef<HTMLButtonElement>(null)
+
+    // Focus trap: focus close button when drawer opens
+    useEffect(() => {
+        if (isOpen && closeButtonRef.current) {
+            closeButtonRef.current.focus()
+        }
+    }, [isOpen])
+
+    // Close on Escape key
+    useEffect(() => {
+        if (!isOpen) return
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                setIsOpen(false)
+            }
+        }
+        document.addEventListener("keydown", handleKeyDown)
+        return () => document.removeEventListener("keydown", handleKeyDown)
+    }, [isOpen, setIsOpen])
 
     return (
         <AnimatePresence>
@@ -29,6 +52,10 @@ export function CartDrawer() {
 
                     {/* Drawer */}
                     <motion.div
+                        ref={drawerRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="Shopping cart"
                         initial={{ x: "100%" }}
                         animate={{ x: 0 }}
                         exit={{ x: "100%" }}
@@ -41,7 +68,7 @@ export function CartDrawer() {
                                 <ShoppingBag className="h-4 w-4" />
                                 <h2 className="text-sm font-semibold uppercase tracking-[0.15em]">Cart ({totalItems})</h2>
                             </div>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)}>
+                            <Button ref={closeButtonRef} variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)} aria-label="Close cart">
                                 <X className="h-4 w-4" />
                             </Button>
                         </div>
@@ -53,20 +80,23 @@ export function CartDrawer() {
                                     <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center">
                                         <ShoppingBag className="h-7 w-7 text-muted-foreground" />
                                     </div>
-                                    <div className="space-y-1">
-                                        <p className="text-sm font-medium">Your cart is empty</p>
-                                        <p className="text-xs text-muted-foreground">Add items to get started</p>
+                                    <div className="space-y-1.5">
+                                        <p className="text-sm font-medium">Nothing here yet</p>
+                                        <p className="text-xs text-muted-foreground max-w-[220px]">Browse our latest drops and find something bold. Free shipping on orders above ₹999.</p>
                                     </div>
-                                    <Button variant="outline" className="rounded-none text-xs uppercase tracking-[0.1em]" onClick={() => setIsOpen(false)}>
-                                        Continue shopping
+                                    <Button variant="outline" className="rounded-none text-xs uppercase tracking-[0.1em]" onClick={() => { setIsOpen(false); router.push("/shop"); }}>
+                                        Explore the shop
                                     </Button>
                                 </div>
                             ) : (
                                 items.map((item) => (
                                     <div key={`${item.id}-${item.size}-${item.color || ''}`} className="flex gap-4 pb-5 border-b border-border/40">
-                                        <div
-                                            className="w-20 h-24 bg-cover bg-center bg-muted/30 flex-shrink-0"
-                                            style={{ backgroundImage: `url(${item.image})` }}
+                                        <Image
+                                            src={item.image}
+                                            alt={item.name}
+                                            width={80}
+                                            height={96}
+                                            className="w-20 h-24 object-cover flex-shrink-0 bg-muted/30"
                                         />
                                         <div className="flex-1 space-y-1">
                                             <h3 className="font-medium text-sm leading-tight">{item.name}</h3>

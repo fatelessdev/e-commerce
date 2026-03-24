@@ -67,8 +67,9 @@ function AccountContent() {
 
     if (isPending) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin" />
+            <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+                <Loader2 className="h-6 w-6 animate-spin text-red-accent" />
+                <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Loading account</p>
             </div>
         )
     }
@@ -95,8 +96,9 @@ function AccountContent() {
                     <form onSubmit={handleSubmit} className="space-y-3">
                         {!showLogin && (
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Full name</label>
+                                <label htmlFor="signup-name" className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Full name</label>
                                 <input
+                                    id="signup-name"
                                     type="text"
                                     placeholder="Your name"
                                     required={!showLogin}
@@ -107,8 +109,9 @@ function AccountContent() {
                             </div>
                         )}
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Email</label>
+                            <label htmlFor="auth-email" className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Email</label>
                             <input
+                                id="auth-email"
                                 type="email"
                                 placeholder="you@example.com"
                                 required
@@ -118,8 +121,9 @@ function AccountContent() {
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Password</label>
+                            <label htmlFor="auth-password" className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Password</label>
                             <input
+                                id="auth-password"
                                 type="password"
                                 placeholder="Min. 8 characters"
                                 required
@@ -139,8 +143,9 @@ function AccountContent() {
                         </div>
                         {!showLogin && (
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Phone (optional)</label>
+                                <label htmlFor="signup-phone" className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Phone (optional)</label>
                                 <input
+                                    id="signup-phone"
                                     type="tel"
                                     placeholder="+91 XXXXXXXXXX"
                                     value={formData.phone}
@@ -258,8 +263,9 @@ function AccountContent() {
 export default function AccountPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin" />
+            <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+                <Loader2 className="h-6 w-6 animate-spin text-red-accent" />
+                <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Loading</p>
             </div>
         }>
             <AccountContent />

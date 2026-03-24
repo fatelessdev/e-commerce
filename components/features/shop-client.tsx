@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import Image from "next/image"
 import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react"
 
 interface Product {
@@ -273,9 +274,12 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                                     <Link href={`/product/${product.id}`} key={product.id} className="group">
                                         <Card className="bg-transparent border-0 rounded-none hover-lift">
                                             <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
-                                                <div
-                                                    className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
-                                                    style={{ backgroundImage: `url(${product.images?.[0] || "/placeholder.jpg"})` }}
+                                                <Image
+                                                    src={product.images?.[0] || "/placeholder.jpg"}
+                                                    alt={product.name}
+                                                    fill
+                                                    sizes="(max-width: 640px) 50vw, 25vw"
+                                                    className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
                                                 />
                                                 {product.isNew && (
                                                     <span className="absolute top-3 left-3 bg-foreground text-background text-[10px] px-2.5 py-1 uppercase tracking-[0.1em] font-medium">

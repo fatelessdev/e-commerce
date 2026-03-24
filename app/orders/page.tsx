@@ -1,7 +1,8 @@
 import type { Metadata } from "next"
 import { Button } from "@/components/ui/button"
-import { Package, ShoppingBag } from "lucide-react"
+import { ShoppingBag } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { getUserOrders } from "@/lib/actions/orders"
 import { getServerSession } from "@/lib/auth-server"
 import { redirect } from "next/navigation"
@@ -52,15 +53,15 @@ export default async function OrdersPage() {
                         <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto">
                             <ShoppingBag className="h-7 w-7 text-muted-foreground" />
                         </div>
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium">No orders yet</p>
-                            <p className="text-xs text-muted-foreground">
-                                Start shopping to see your orders here
+                        <div className="space-y-1.5">
+                            <p className="text-sm font-medium">No orders placed yet</p>
+                            <p className="text-xs text-muted-foreground max-w-[260px] mx-auto">
+                                Your order history will appear here once you complete your first purchase.
                             </p>
                         </div>
                         <Link href="/shop">
                             <Button className="rounded-none uppercase tracking-[0.1em] text-xs mt-4">
-                                Browse products
+                                Shop now
                             </Button>
                         </Link>
                     </div>
@@ -92,10 +93,17 @@ export default async function OrdersPage() {
                             <div className="flex gap-2.5 overflow-x-auto pb-2">
                                 {order.items.map((item) => (
                                     <div key={item.id} className="flex-shrink-0">
-                                        <div
-                                            className="w-14 h-18 bg-cover bg-center bg-muted/30"
-                                            style={{ backgroundImage: item.productImage ? `url(${item.productImage})` : undefined }}
-                                        />
+                                        {item.productImage ? (
+                                            <Image
+                                                src={item.productImage}
+                                                alt={item.productName}
+                                                width={56}
+                                                height={72}
+                                                className="w-14 h-18 object-cover bg-muted/30"
+                                            />
+                                        ) : (
+                                            <div className="w-14 h-18 bg-muted/30" aria-label={item.productName} />
+                                        )}
                                         <p className="text-[10px] text-muted-foreground mt-1 truncate max-w-14">
                                             {item.productName}
                                         </p>

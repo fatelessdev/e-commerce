@@ -409,6 +409,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                         value={input}
                                         onChange={handleInputChange}
                                         placeholder="Ask for a discount..."
+                                        aria-label="Bargain message input"
                                         className="flex-1 px-3 py-2 border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-red-accent"
                                         disabled={isLoading}
                                     />

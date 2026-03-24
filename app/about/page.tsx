@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { JsonLd, breadcrumbJsonLd } from "@/components/seo/structured-data"
+import { CONTACT_EMAIL, CONTACT_PHONE } from "@/lib/constants"
 
 export const metadata: Metadata = {
     title: "About XILAR — Our Story",
@@ -53,8 +54,8 @@ export default function AboutPage() {
 
                 <div className="mt-20 pt-8 border-t border-border/60">
                     <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-4">Get in touch</h2>
-                    <p className="text-foreground font-medium">amansomvanshi29112003@gmail.com</p>
-                    <p className="text-muted-foreground mt-1">+91 8090644991</p>
+                    <p className="text-foreground font-medium">{CONTACT_EMAIL}</p>
+                    <p className="text-muted-foreground mt-1">{CONTACT_PHONE}</p>
                 </div>
             </div>
         </div>

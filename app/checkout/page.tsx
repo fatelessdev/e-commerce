@@ -4,6 +4,7 @@ import { useCart } from "@/lib/cart-context"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Check, CreditCard, Truck, MapPin, Loader2, AlertCircle, Sparkles } from "lucide-react"
 import { CheckoutBargain } from "@/components/features/checkout-bargain"
@@ -57,6 +58,7 @@ export default function CheckoutPage() {
     const [couponInput, setCouponInput] = useState("")
     const [couponError, setCouponError] = useState<string | null>(null)
     const [isValidatingCoupon, setIsValidatingCoupon] = useState(false)
+    const [orderError, setOrderError] = useState<string | null>(null)
     const [hydrated, setHydrated] = useState(false)
     const [showBargainNudge, setShowBargainNudge] = useState(false)
     const [triggerBargainOpen, setTriggerBargainOpen] = useState(false)
@@ -71,6 +73,27 @@ export default function CheckoutPage() {
         state: "",
         pincode: ""
     })
+    const [touched, setTouched] = useState<Record<string, boolean>>({})
+
+    // Field-level validation
+    const fieldErrors: Record<string, string> = {}
+    if (touched.name && !shippingAddress.name.trim()) fieldErrors.name = "Full name is required"
+    if (touched.email) {
+        if (!shippingAddress.email.trim()) fieldErrors.email = "Email is required"
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shippingAddress.email)) fieldErrors.email = "Enter a valid email"
+    }
+    if (touched.phone) {
+        if (!shippingAddress.phone.trim()) fieldErrors.phone = "Phone number is required"
+        else if (!/^\+?[\d\s-]{8,}$/.test(shippingAddress.phone)) fieldErrors.phone = "Enter a valid phone number"
+    }
+    if (touched.address && !shippingAddress.address.trim()) fieldErrors.address = "Address is required"
+    if (touched.city && !shippingAddress.city.trim()) fieldErrors.city = "City is required"
+    if (touched.pincode) {
+        if (!shippingAddress.pincode.trim()) fieldErrors.pincode = "PIN code is required"
+        else if (!/^\d{6}$/.test(shippingAddress.pincode)) fieldErrors.pincode = "Enter a valid 6-digit PIN code"
+    }
+
+    const markTouched = (field: string) => setTouched(prev => ({ ...prev, [field]: true }))
 
     // Restore checkout state from sessionStorage on mount, then fill gaps from DB
     useEffect(() => {
@@ -229,7 +252,7 @@ export default function CheckoutPage() {
                     clearCart()
                     sessionStorage.removeItem(CHECKOUT_STORAGE_KEY)
                 } else {
-                    alert(result.error || "Failed to place order.")
+                    setOrderError(result.error || "Failed to place order.")
                 }
                 setIsPlacingOrder(false)
                 return
@@ -249,7 +272,7 @@ export default function CheckoutPage() {
                 const rzpOrderData = await rzpOrderRes.json()
 
                 if (!rzpOrderData.success) {
-                    alert("Failed to initiate payment. Please try again.")
+                    setOrderError("Failed to initiate payment. Please try again.")
                     setIsPlacingOrder(false)
                     return
                 }
@@ -286,10 +309,10 @@ export default function CheckoutPage() {
                                 clearCart()
                                 sessionStorage.removeItem(CHECKOUT_STORAGE_KEY)
                             } else {
-                                alert(verifyResult.error || "Payment verification failed.")
+                                setOrderError(verifyResult.error || "Payment verification failed.")
                             }
                         } catch {
-                            alert("Payment verification failed. Please contact support.")
+                            setOrderError("Payment verification failed. Please contact support.")
                         }
                         setIsPlacingOrder(false)
                     },
@@ -310,7 +333,7 @@ export default function CheckoutPage() {
 
                 const RazorpayClass = (window as unknown as { Razorpay?: new (opts: typeof options) => { open: () => void } }).Razorpay
                 if (!RazorpayClass) {
-                    alert("Payment gateway is loading. Please try again in a moment.")
+                    setOrderError("Payment gateway is loading. Please try again in a moment.")
                     setIsPlacingOrder(false)
                     return
                 }
@@ -318,7 +341,7 @@ export default function CheckoutPage() {
                 rzp.open()
                 return // Don't set isPlacingOrder to false — handler/ondismiss will do it
         } catch {
-            alert("Failed to place order. Please try again.")
+            setOrderError("Failed to place order. Please try again.")
             setIsPlacingOrder(false)
         }
     }
@@ -343,8 +366,9 @@ export default function CheckoutPage() {
     // Show loading while checking auth
     if (isAuthPending || !session) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+                <Loader2 className="h-6 w-6 animate-spin text-red-accent" />
+                <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Loading checkout</p>
             </div>
         )
     }
@@ -409,6 +433,15 @@ export default function CheckoutPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+                {/* Inline Error Display */}
+                {orderError && (
+                    <div className="col-span-full px-6 lg:px-12 pt-4">
+                        <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400">
+                            <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                            {orderError}
+                        </div>
+                    </div>
+                )}
                 {/* Form Section */}
                 <div className="p-6 lg:p-12 space-y-8 lg:border-r border-border/60">
                     {/* Progress */}
@@ -428,54 +461,70 @@ export default function CheckoutPage() {
                             </div>
                             <div className="space-y-5">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">Full name *</label>
+                                    <label htmlFor="checkout-name" className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">Full name *</label>
                                     <input
+                                        id="checkout-name"
                                         type="text"
                                         value={shippingAddress.name}
                                         onChange={(e) => setShippingAddress(prev => ({ ...prev, name: e.target.value }))}
-                                        className="w-full h-11 px-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
+                                        onBlur={() => markTouched("name")}
+                                        className={`w-full h-11 px-4 bg-secondary/30 border rounded-none text-sm focus:outline-none focus:ring-1 transition-all duration-300 ${fieldErrors.name ? "border-destructive focus:ring-destructive" : touched.name && shippingAddress.name.trim() ? "border-green-600 focus:ring-green-600" : "border-input focus:ring-ring"}`}
                                     />
+                                    {fieldErrors.name && <p className="text-[10px] text-destructive">{fieldErrors.name}</p>}
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">Email *</label>
+                                    <label htmlFor="checkout-email" className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">Email *</label>
                                     <input
+                                        id="checkout-email"
                                         type="email"
                                         value={shippingAddress.email}
                                         onChange={(e) => setShippingAddress(prev => ({ ...prev, email: e.target.value }))}
-                                        className="w-full h-11 px-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
+                                        onBlur={() => markTouched("email")}
+                                        className={`w-full h-11 px-4 bg-secondary/30 border rounded-none text-sm focus:outline-none focus:ring-1 transition-all duration-300 ${fieldErrors.email ? "border-destructive focus:ring-destructive" : touched.email && !fieldErrors.email ? "border-green-600 focus:ring-green-600" : "border-input focus:ring-ring"}`}
                                     />
+                                    {fieldErrors.email && <p className="text-[10px] text-destructive">{fieldErrors.email}</p>}
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">Phone number *</label>
+                                    <label htmlFor="checkout-phone" className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">Phone number *</label>
                                     <input
+                                        id="checkout-phone"
                                         type="tel"
                                         value={shippingAddress.phone}
                                         onChange={(e) => setShippingAddress(prev => ({ ...prev, phone: e.target.value }))}
-                                        className="w-full h-11 px-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
+                                        onBlur={() => markTouched("phone")}
+                                        className={`w-full h-11 px-4 bg-secondary/30 border rounded-none text-sm focus:outline-none focus:ring-1 transition-all duration-300 ${fieldErrors.phone ? "border-destructive focus:ring-destructive" : touched.phone && !fieldErrors.phone ? "border-green-600 focus:ring-green-600" : "border-input focus:ring-ring"}`}
                                     />
+                                    {fieldErrors.phone && <p className="text-[10px] text-destructive">{fieldErrors.phone}</p>}
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">Address *</label>
+                                    <label htmlFor="checkout-address" className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">Address *</label>
                                     <textarea
+                                        id="checkout-address"
                                         rows={3}
                                         value={shippingAddress.address}
                                         onChange={(e) => setShippingAddress(prev => ({ ...prev, address: e.target.value }))}
-                                        className="w-full px-4 py-3 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring resize-none transition-all duration-300"
+                                        onBlur={() => markTouched("address")}
+                                        className={`w-full px-4 py-3 bg-secondary/30 border rounded-none text-sm focus:outline-none focus:ring-1 resize-none transition-all duration-300 ${fieldErrors.address ? "border-destructive focus:ring-destructive" : touched.address && shippingAddress.address.trim() ? "border-green-600 focus:ring-green-600" : "border-input focus:ring-ring"}`}
                                     />
+                                    {fieldErrors.address && <p className="text-[10px] text-destructive">{fieldErrors.address}</p>}
                                 </div>
                                 <div className="grid grid-cols-3 gap-4">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">City *</label>
+                                        <label htmlFor="checkout-city" className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">City *</label>
                                         <input
+                                            id="checkout-city"
                                             type="text"
                                             value={shippingAddress.city}
                                             onChange={(e) => setShippingAddress(prev => ({ ...prev, city: e.target.value }))}
-                                            className="w-full h-11 px-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
+                                            onBlur={() => markTouched("city")}
+                                            className={`w-full h-11 px-4 bg-secondary/30 border rounded-none text-sm focus:outline-none focus:ring-1 transition-all duration-300 ${fieldErrors.city ? "border-destructive focus:ring-destructive" : touched.city && shippingAddress.city.trim() ? "border-green-600 focus:ring-green-600" : "border-input focus:ring-ring"}`}
                                         />
+                                        {fieldErrors.city && <p className="text-[10px] text-destructive">{fieldErrors.city}</p>}
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">State</label>
+                                        <label htmlFor="checkout-state" className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">State</label>
                                         <input
+                                            id="checkout-state"
                                             type="text"
                                             value={shippingAddress.state}
                                             onChange={(e) => setShippingAddress(prev => ({ ...prev, state: e.target.value }))}
@@ -483,13 +532,16 @@ export default function CheckoutPage() {
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">PIN code *</label>
+                                        <label htmlFor="checkout-pincode" className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">PIN code *</label>
                                         <input
+                                            id="checkout-pincode"
                                             type="text"
                                             value={shippingAddress.pincode}
                                             onChange={(e) => setShippingAddress(prev => ({ ...prev, pincode: e.target.value }))}
-                                            className="w-full h-11 px-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
+                                            onBlur={() => markTouched("pincode")}
+                                            className={`w-full h-11 px-4 bg-secondary/30 border rounded-none text-sm focus:outline-none focus:ring-1 transition-all duration-300 ${fieldErrors.pincode ? "border-destructive focus:ring-destructive" : touched.pincode && !fieldErrors.pincode ? "border-green-600 focus:ring-green-600" : "border-input focus:ring-ring"}`}
                                         />
+                                        {fieldErrors.pincode && <p className="text-[10px] text-destructive">{fieldErrors.pincode}</p>}
                                     </div>
                                 </div>
                             </div>
@@ -589,9 +641,10 @@ export default function CheckoutPage() {
 
                             {/* Coupon Code Input */}
                             <div className="space-y-3 pt-5 border-t border-border/60">
-                                <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em]">Have a coupon code?</h3>
+                                <label htmlFor="checkout-coupon" className="text-[10px] font-semibold uppercase tracking-[0.2em]">Have a coupon code?</label>
                                 <div className="flex gap-2">
                                     <input
+                                        id="checkout-coupon"
                                         type="text"
                                         value={couponInput}
                                         onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
@@ -662,9 +715,12 @@ export default function CheckoutPage() {
                             <div className="space-y-4">
                                 {items.map((item) => (
                                     <div key={`${item.id}-${item.size}`} className="flex gap-4 border-b border-border/60 pb-4">
-                                        <div
-                                            className="w-14 h-18 bg-cover bg-center bg-muted/30 flex-shrink-0"
-                                            style={{ backgroundImage: `url(${item.image})` }}
+                                        <Image
+                                            src={item.image}
+                                            alt={item.name}
+                                            width={56}
+                                            height={72}
+                                            className="w-14 h-18 object-cover flex-shrink-0 bg-muted/30"
                                         />
                                         <div className="flex-1 space-y-0.5">
                                             <h3 className="font-medium text-sm">{item.name}</h3>

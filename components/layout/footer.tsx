@@ -1,5 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
+import { CONTACT_EMAIL, CONTACT_PHONE } from "@/lib/constants"
 
 export function Footer() {
     return (
@@ -21,8 +22,8 @@ export function Footer() {
                             Gen-Z streetwear built on bold design and affordable luxury. Based in Lucknow, India.
                         </p>
                         <div className="mt-5 space-y-1 text-sm text-muted-foreground">
-                            <p>amansomvanshi29112003@gmail.com</p>
-                            <p>+91 8090644991</p>
+                            <p>{CONTACT_EMAIL}</p>
+                            <p>{CONTACT_PHONE}</p>
                         </div>
                     </div>
 

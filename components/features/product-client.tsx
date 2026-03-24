@@ -122,8 +122,9 @@ export function ProductClient({ id }: { id: string }) {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+                <Loader2 className="h-6 w-6 animate-spin text-red-accent" />
+                <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Loading product</p>
             </div>
         )
     }
@@ -438,8 +439,9 @@ export function ProductClient({ id }: { id: string }) {
             </div>
 
             {/* Related Products */}
-            <div className="border-t border-border/60 mt-24">
-                <ProductGrid title="You may also like" />
+            <div className="border-t border-border/60 mt-24 px-6 md:px-12 lg:px-16">
+                <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-6 mt-12">You may also like</h2>
+                <ProductGrid title="" layout="scroll" />
             </div>
         </div>
     )
