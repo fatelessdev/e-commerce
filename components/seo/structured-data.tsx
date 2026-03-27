@@ -1,3 +1,5 @@
+import { CONTACT_EMAIL } from "@/lib/constants"
+
 type JsonLdProps = {
   data: Record<string, unknown> | Record<string, unknown>[];
 };
@@ -34,7 +36,7 @@ export function organizationJsonLd(baseUrl: string) {
       "@type": "ContactPoint",
       telephone: "+91-8090644991",
       contactType: "customer service",
-      email: "amansomvanshi29112003@gmail.com",
+      email: CONTACT_EMAIL,
       availableLanguage: ["English", "Hindi"],
     },
     sameAs: [],

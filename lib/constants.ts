@@ -8,5 +8,5 @@ export const COD_FEE = 50;
 export const COD_ALLOWED_PINCODES = ["144411", "144402", "144401"];
 
 // Contact
-export const CONTACT_EMAIL = "amansomvanshi29112003@gmail.com";
+export const CONTACT_EMAIL = "contact@xilar.in";
 export const CONTACT_PHONE = "+91 8090644991";
