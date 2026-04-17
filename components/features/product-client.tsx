@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ProductGrid } from "@/components/features/product-grid"
+import { BargainDiscountStrip } from "@/components/ui/bargain-discount-strip"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/lib/cart-context"
 import { useWishlist } from "@/lib/wishlist-context"
@@ -23,6 +24,7 @@ interface Product {
     description: string | null
     mrp: string
     sellingPrice: string
+    maxBargainDiscount: string
     images: string[]
     sizes: string[]
     colors: { name: string; hex: string; images?: string[] }[]
@@ -103,8 +105,9 @@ export function ProductClient({ id }: { id: string }) {
     // Helper: check if a color is available for any size
     const isColorAvailable = (colorName: string): boolean => {
         if (!product?.variants || product.variants.length === 0) return (product?.stock ?? 0) > 0
-        if (selectedSize) {
-            return getVariantStock(selectedSize, colorName) > 0
+        const resolvedSize = selectedSize || (product?.category === "accessory" ? "One Size" : null)
+        if (resolvedSize) {
+            return getVariantStock(resolvedSize, colorName) > 0
         }
         // No size selected: color is available if ANY size has stock for this color
         return product.sizes.some((s) => getVariantStock(s, colorName) > 0)
@@ -112,10 +115,11 @@ export function ProductClient({ id }: { id: string }) {
 
     // Currently selected variant stock
     const selectedVariantStock = (): number | null => {
-        if (!selectedSize) return null
+        const resolvedSize = selectedSize || (product?.category === "accessory" ? "One Size" : null)
+        if (!resolvedSize) return null
         if (product?.colors?.length && product.colors.length > 0 && !selectedColor) return null
         const color = selectedColor || null
-        return getVariantStock(selectedSize, color)
+        return getVariantStock(resolvedSize, color)
     }
 
     const currentStock = selectedVariantStock()
@@ -143,6 +147,9 @@ export function ProductClient({ id }: { id: string }) {
         )
     }
 
+    const isAccessory = product.category === "accessory"
+    const effectiveSelectedSize = selectedSize || (isAccessory ? "One Size" : null)
+
     const price = parseFloat(product.sellingPrice)
     const mrp = parseFloat(product.mrp)
     const hasDiscount = mrp > price
@@ -153,8 +160,8 @@ export function ProductClient({ id }: { id: string }) {
     const inWishlist = isInWishlist(product.id)
 
     const handleAddToCart = () => {
-        if (!selectedSize) return
-        if (product.colors.length > 0 && !selectedColor) return
+        if (!effectiveSelectedSize) return
+        if (!isAccessory && product.colors.length > 0 && !selectedColor) return
         const stock = currentStock
         if (stock !== null && stock <= 0) return
         if (product.stock === 0) return
@@ -165,7 +172,7 @@ export function ProductClient({ id }: { id: string }) {
             price: price,
             displayPrice: displayPrice,
             image: images[0],
-            size: selectedSize,
+            size: effectiveSelectedSize,
             color: selectedColor || undefined,
         })
         setAdded(true)
@@ -187,7 +194,8 @@ export function ProductClient({ id }: { id: string }) {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
                 {/* Gallery Section — Horizontal Slider */}
                 <div className="relative bg-white/5 overflow-hidden group">
-                    <div className="aspect-[4/5] w-full relative">
+<div className="aspect-[4/5] w-full relative">
+                        <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-20" />
                         <AnimatePresence initial={false} mode="popLayout">
                             <motion.img
                                 key={selectedImage}
@@ -270,7 +278,9 @@ export function ProductClient({ id }: { id: string }) {
                 <div className="lg:h-[calc(100vh-4rem)] lg:sticky lg:top-16 p-8 lg:p-14 flex flex-col justify-center space-y-8">
                     <div className="space-y-5">
                         <div className="space-y-2">
-                            <p className="text-[10px] font-medium tracking-[0.2em] text-muted-foreground uppercase">{product.category} · {product.gender}</p>
+                            <p className="text-[10px] font-medium tracking-[0.2em] text-muted-foreground uppercase">
+                                {isAccessory ? product.category : `${product.category} · ${product.gender}`}
+                            </p>
                             <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tighter uppercase leading-[0.9]">{product.name}</h1>
                         </div>
                         <div className="flex items-baseline gap-3">
@@ -296,43 +306,45 @@ export function ProductClient({ id }: { id: string }) {
 
                     <div className="space-y-6">
                         {/* Size Selection */}
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-semibold uppercase tracking-[0.2em] flex items-center justify-between">
-                                <span>Select size</span>
-                                {!selectedSize && <span className="text-destructive font-normal normal-case text-[10px]">Required</span>}
-                            </label>
-                            <div className="flex gap-2 flex-wrap">
-                                {(NUMBER_SIZE_CATEGORIES.includes(product.category)
-                                    ? product.sizes.filter((s) => /^\d+$/.test(s))
-                                    : product.sizes
-                                ).map((size) => {
-                                    const available = isSizeAvailable(size)
-                                    return (
-                                        <Button
-                                            key={size}
-                                            variant={selectedSize === size ? "default" : "outline"}
-                                            className={`w-12 h-12 rounded-none border-input transition-all duration-300 relative text-xs ${
-                                                !available
-                                                    ? "opacity-30 cursor-not-allowed line-through"
-                                                    : "hover:border-foreground"
-                                            }`}
-                                            onClick={() => {
-                                                if (available) setSelectedSize(size)
-                                            }}
-                                            disabled={!available}
-                                            title={available ? size : `${size} — Out of stock`}
-                                        >
-                                            {size}
-                                            {!available && (
-                                                <span className="absolute inset-0 flex items-center justify-center">
-                                                    <span className="block w-[1px] h-full bg-muted-foreground/60 rotate-45 absolute" />
-                                                </span>
-                                            )}
-                                        </Button>
-                                    )
-                                })}
+                        {!isAccessory && (
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-semibold uppercase tracking-[0.2em] flex items-center justify-between">
+                                    <span>Select size</span>
+                                    {!selectedSize && <span className="text-destructive font-normal normal-case text-[10px]">Required</span>}
+                                </label>
+                                <div className="flex gap-2 flex-wrap">
+                                    {(NUMBER_SIZE_CATEGORIES.includes(product.category)
+                                        ? product.sizes.filter((s) => /^\d+$/.test(s))
+                                        : product.sizes
+                                    ).map((size) => {
+                                        const available = isSizeAvailable(size)
+                                        return (
+                                            <Button
+                                                key={size}
+                                                variant={selectedSize === size ? "default" : "outline"}
+                                                className={`w-12 h-12 rounded-none border-input transition-all duration-300 relative text-xs ${
+                                                    !available
+                                                        ? "opacity-30 cursor-not-allowed line-through"
+                                                        : "hover:border-foreground"
+                                                }`}
+                                                onClick={() => {
+                                                    if (available) setSelectedSize(size)
+                                                }}
+                                                disabled={!available}
+                                                title={available ? size : `${size} — Out of stock`}
+                                            >
+                                                {size}
+                                                {!available && (
+                                                    <span className="absolute inset-0 flex items-center justify-center">
+                                                        <span className="block w-[1px] h-full bg-muted-foreground/60 rotate-45 absolute" />
+                                                    </span>
+                                                )}
+                                            </Button>
+                                        )
+                                    })}
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Color Selection */}
                         {product.colors && product.colors.length > 0 && (
@@ -384,7 +396,7 @@ export function ProductClient({ id }: { id: string }) {
                         {currentStock === null && product.stock === 0 && (
                             <p className="text-xs text-red-500 font-medium">Out of stock</p>
                         )}
-                        {currentStock === null && product.stock > 0 && (
+                        {currentStock === null && product.stock > 0 && !isAccessory && (
                             <p className="text-xs text-muted-foreground">Select a size to check availability</p>
                         )}
 
@@ -395,7 +407,7 @@ export function ProductClient({ id }: { id: string }) {
                                     size="lg"
                                     className="flex-1 h-13 rounded-none text-xs uppercase tracking-[0.2em] font-semibold disabled:opacity-40"
                                     onClick={handleAddToCart}
-                                    disabled={!selectedSize || (product.colors.length > 0 && !selectedColor) || product.stock === 0 || (currentStock !== null && currentStock === 0)}
+                                    disabled={!effectiveSelectedSize || (!isAccessory && product.colors.length > 0 && !selectedColor) || product.stock === 0 || (currentStock !== null && currentStock === 0)}
                                 >
                                     {product.stock === 0 ? (
                                         "Out of stock"

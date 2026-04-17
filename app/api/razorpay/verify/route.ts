@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { validateCoupon } from "@/lib/actions/admin";
 import { getServerSession } from "@/lib/auth-server";
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from "@/lib/constants";
+import { computeComboDiscountFromItems } from "@/lib/combos";
 
 export async function POST(req: NextRequest) {
   try {
@@ -95,15 +96,27 @@ export async function POST(req: NextRequest) {
     const serverShipping = serverSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
 
     // Validate coupon using canonical rules (expiry, usage limits, min order, etc.)
-    let serverDiscount = 0;
+    let couponDiscount = 0;
     if (orderData.couponCode) {
       const session = await getServerSession();
       const couponResult = await validateCoupon(orderData.couponCode, serverSubtotal, session?.user?.id);
       if (couponResult.valid && couponResult.discount) {
-        serverDiscount = couponResult.discount;
+        couponDiscount = couponResult.discount;
       }
     }
 
+    let comboDiscount = 0;
+    try {
+      comboDiscount = await computeComboDiscountFromItems(verifiedItems);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Invalid combo selection";
+      return NextResponse.json(
+        { success: false, error: message },
+        { status: 400 }
+      );
+    }
+
+    const serverDiscount = couponDiscount + comboDiscount;
     const serverTotal = serverSubtotal + serverShipping - serverDiscount;
 
     // Fetch the Razorpay order to verify the paid amount matches
@@ -127,6 +140,7 @@ export async function POST(req: NextRequest) {
       subtotal: serverSubtotal,
       shippingCost: serverShipping,
       discount: serverDiscount,
+      couponDiscount,
       couponCode: orderData.couponCode,
       codFee: 0,
       total: serverTotal,

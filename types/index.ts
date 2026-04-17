@@ -48,6 +48,10 @@ export interface CartItem {
   image: string;
   size: string;
   color?: string;
+  comboId?: string;
+  comboGroupId?: string;
+  comboName?: string;
+  comboDiscountPercentage?: number;
   quantity: number;
 }
 

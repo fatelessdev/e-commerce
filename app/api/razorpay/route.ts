@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { validateCoupon } from "@/lib/actions/admin";
 import { getServerSession } from "@/lib/auth-server";
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from "@/lib/constants";
+import { computeComboDiscountFromItems } from "@/lib/combos";
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest) {
 
     // Compute total from actual DB prices
     let subtotal = 0;
+    const verifiedItems = [];
     for (const item of items) {
       if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
         return NextResponse.json(
@@ -40,21 +42,38 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      subtotal += parseFloat(product.sellingPrice) * item.quantity;
+      const unitPrice = parseFloat(product.sellingPrice);
+      subtotal += unitPrice * item.quantity;
+      verifiedItems.push({
+        ...item,
+        unitPrice,
+      });
     }
 
     const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
 
     // Validate coupon using canonical rules (expiry, usage limits, min order, etc.)
-    let discount = 0;
+    let couponDiscount = 0;
     if (couponCode) {
       const session = await getServerSession();
       const couponResult = await validateCoupon(couponCode, subtotal, session?.user?.id);
       if (couponResult.valid && couponResult.discount !== undefined) {
-        discount = couponResult.discount;
+        couponDiscount = couponResult.discount;
       }
     }
 
+    let comboDiscount = 0;
+    try {
+      comboDiscount = await computeComboDiscountFromItems(verifiedItems);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Invalid combo selection";
+      return NextResponse.json(
+        { success: false, error: message },
+        { status: 400 }
+      );
+    }
+
+    const discount = couponDiscount + comboDiscount;
     const total = subtotal + shipping - discount;
 
     if (total <= 0) {

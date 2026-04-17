@@ -3,13 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { ShoppingBag, Heart, Menu, X, User, Package, Truck } from "lucide-react";
+import { ShoppingBag, Heart, Menu, X, User, Package, Bot } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
 import ThemeToggleButton from "@/components/ui/theme-toggle-button";
-import { FREE_SHIPPING_THRESHOLD_DISPLAY, CONTACT_PHONE } from "@/lib/constants";
+import { BARGAIN_BOT_BANNER_MESSAGE, CONTACT_PHONE } from "@/lib/constants";
 
 const EASE_OUT_EXPO = [0.32, 0.72, 0, 1] as const;
 
@@ -31,11 +31,11 @@ export function Navbar() {
 
   return (
     <>
-      {/* Free Delivery Banner */}
+      {/* Bargain Bot Banner */}
       <div className="w-full bg-red-accent/8 border-b border-red-accent/10 py-1.5">
         <div className="flex items-center justify-center gap-2 text-[10px] tracking-[0.15em] uppercase text-red-accent font-medium">
-          <Truck className="h-3 w-3" />
-          <span>Free delivery on orders above {FREE_SHIPPING_THRESHOLD_DISPLAY}</span>
+          <Bot className="h-3 w-3" />
+          <span>{BARGAIN_BOT_BANNER_MESSAGE}</span>
         </div>
       </div>
 

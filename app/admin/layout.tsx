@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   LayoutDashboard,
   Package,
+  Layers,
   ShoppingCart,
   Ticket,
   Settings,
@@ -49,6 +50,13 @@ export default async function AdminLayout({
             >
               <Package className="h-4 w-4" />
               Products
+            </Link>
+            <Link
+              href="/admin/combos"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+            >
+              <Layers className="h-4 w-4" />
+              Combos
             </Link>
             <Link 
               href="/admin/orders" 

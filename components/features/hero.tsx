@@ -2,43 +2,43 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronDown, ArrowRight } from "lucide-react";
-import { useState } from "react";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
 
 const EASE_OUT_EXPO = [0.32, 0.72, 0, 1] as const;
+const HERO_IMAGES = [
+  "/hero/image.png",
+  "/hero/image(1).png",
+  "/hero/image(2).png",
+  "/hero/image(3).png",
+  "/hero/image(4).png",
+  "/hero/image(5).png",
+];
 
 export function Hero() {
-  const [videoEnded, setVideoEnded] = useState(false);
-
   return (
     <section className="relative min-h-[100dvh] w-full overflow-hidden flex items-end pb-50 md:pb-24 lg:items-center lg:pb-0">
-      {/* Background Image / Video */}
+      {/* Background image collage */}
       <div className="absolute inset-0 bg-neutral-950 z-0 select-none">
-        {!videoEnded && (
-          <video
-            src="/landingPage/landingVideo.mp4"
-            autoPlay
-            muted
-            playsInline
-            preload="metadata"
-            className="absolute inset-0 w-full h-full object-cover z-20"
-            onEnded={() => setVideoEnded(true)}
-          />
-        )}
-        {/* Fallback/Final Image */}
-        <div
-          className={cn(
-            "absolute inset-0 bg-cover bg-center transition-opacity duration-1000",
-            videoEnded ? "opacity-100 z-10" : "opacity-0 z-0",
-          )}
-          style={{ backgroundImage: "url('/landingPage/landingImage.png')" }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10 z-30" />
+        <div className="absolute inset-0 grid grid-cols-3 grid-rows-2">
+          {HERO_IMAGES.map((src, index) => (
+            <div key={src} className="relative">
+              <Image
+                src={src}
+                alt={`XILAR hero image ${index + 1}`}
+                fill
+                sizes="50vw"
+                className="object-cover"
+                priority={index < 2}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/40 to-black/30 z-10" />
       </div>
 
-      <div className="relative z-40 w-full max-w-7xl mx-auto px-6 md:px-12 lg:px-16">
+      <div className="relative z-20 w-full max-w-7xl mx-auto px-6 md:px-12 lg:px-16">
         <div className="max-w-2xl space-y-8">
           {/* Eyebrow */}
           <motion.p
@@ -107,7 +107,7 @@ export function Hero() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.5, duration: 1 }}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40"
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20"
       >
         <ChevronDown className="h-6 w-6 text-white/40 animate-bounce" />
       </motion.div>

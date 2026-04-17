@@ -37,6 +37,7 @@ export interface CreateOrderInput {
   subtotal: number;
   shippingCost: number;
   discount: number;
+  couponDiscount?: number;
   couponCode?: string;
   codFee?: number;
   total: number;
@@ -127,7 +128,9 @@ export async function createOrder(input: CreateOrderInput) {
         shipping: input.shippingCost.toString(),
         total: input.total.toString(),
         couponCode: input.couponCode,
-        couponDiscount: input.couponCode ? input.discount.toString() : null,
+        couponDiscount: input.couponCode
+          ? (input.couponDiscount ?? input.discount).toString()
+          : null,
         codFee: input.codFee ? input.codFee.toString() : null,
         // codRemainingAmount: input.paymentMethod === "cod" ? input.total.toString() : null, // COD temporarily disabled
         shippingAddress: {

@@ -15,6 +15,10 @@ const authSecret =
   process.env.BETTER_AUTH_SECRET ||
   "xilar-local-dev-secret-change-in-production";
 
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+const hasGoogleOAuth = Boolean(googleClientId && googleClientSecret);
+
 export const auth = betterAuth({
   baseURL: authBaseUrl,
   secret: authSecret,
@@ -38,6 +42,23 @@ export const auth = betterAuth({
         console.error("Failed to send password reset email:", error);
         throw new Error("Failed to send password reset email");
       }
+    },
+  },
+
+  socialProviders: hasGoogleOAuth
+    ? {
+        google: {
+          clientId: googleClientId!,
+          clientSecret: googleClientSecret!,
+        },
+      }
+    : {},
+
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: hasGoogleOAuth ? ["email-password", "google"] : ["email-password"],
+      updateUserInfoOnLink: true,
     },
   },
 

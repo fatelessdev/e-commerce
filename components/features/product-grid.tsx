@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/scroll-reveal"
+import { BargainDiscountStrip } from "@/components/ui/bargain-discount-strip"
 import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect } from "react"
@@ -13,6 +14,7 @@ interface Product {
     slug: string
     sellingPrice: string
     mrp: string
+    maxBargainDiscount: string
     images: string[]
     category: string
     gender: string
@@ -145,7 +147,8 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
                             <div key={product.id} className="flex-shrink-0 w-[200px] sm:w-[240px] snap-start">
                                 <Link href={`/product/${product.id}`} className="group">
                                     <Card className="bg-transparent border-0 rounded-none hover-lift">
-                                        <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
+<CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
+                                            <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-10" />
                                             {product.stock === 0 && (
                                                 <div className="absolute top-3 left-3 z-10 badge-sold-out">Sold Out</div>
                                             )}
@@ -179,7 +182,8 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
                         <StaggerItem key={product.id}>
                             <Link href={`/product/${product.id}`} className="group">
                                 <Card className="bg-transparent border-0 rounded-none hover-lift">
-                                    <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
+<CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
+                                        <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-10" />
                                         {/* Sold Out Badge */}
                                         {product.stock === 0 && (
                                             <div className="absolute top-3 left-3 z-10 badge-sold-out">

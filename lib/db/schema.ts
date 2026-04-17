@@ -179,6 +179,27 @@ export const productVariants = pgTable("product_variants", {
 ]);
 
 // ============================================
+// COMBOS TABLE
+// ============================================
+
+export const combos = pgTable("combos", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  productAId: uuid("product_a_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  productBId: uuid("product_b_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  discountPercentage: decimal("discount_percentage", { precision: 5, scale: 2 }).notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  displayOrder: integer("display_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("combo_pair_unique").on(table.productAId, table.productBId),
+]);
+
+// ============================================
 // ORDER TABLES
 // ============================================
 
@@ -353,12 +374,27 @@ export const productsRelations = relations(products, ({ many }) => ({
   orderItems: many(orderItems),
   wishlist: many(wishlist),
   variants: many(productVariants),
+  combosAsA: many(combos, { relationName: "comboProductA" }),
+  combosAsB: many(combos, { relationName: "comboProductB" }),
 }));
 
 export const productVariantsRelations = relations(productVariants, ({ one }) => ({
   product: one(products, {
     fields: [productVariants.productId],
     references: [products.id],
+  }),
+}));
+
+export const combosRelations = relations(combos, ({ one }) => ({
+  productA: one(products, {
+    fields: [combos.productAId],
+    references: [products.id],
+    relationName: "comboProductA",
+  }),
+  productB: one(products, {
+    fields: [combos.productBId],
+    references: [products.id],
+    relationName: "comboProductB",
   }),
 }));
 

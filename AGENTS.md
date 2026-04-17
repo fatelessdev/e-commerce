@@ -101,3 +101,8 @@ Required: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `RAZORPAY_KEY
 - Order items snapshot product data at purchase time (name, price, image) for historical accuracy
 - Pages use metadata exports for SEO; root layout includes Open Graph & JSON-LD
 - Dark mode default (`html.dark`), toggle via ThemeProvider
+
+## Design Context
+
+- Refer to [.impeccable.md](.impeccable.md) for the full design context, brand personality, aesthetic direction, motion rules, and accessibility guidance.
+- Keep this file focused on repo-wide engineering and implementation rules.

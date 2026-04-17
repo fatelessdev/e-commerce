@@ -1,19 +1,18 @@
 import type { Metadata } from "next"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { JsonLd, breadcrumbJsonLd } from "@/components/seo/structured-data"
+import { ShopClient } from "@/components/features/shop-client"
+import { JsonLd, breadcrumbJsonLd, collectionJsonLd } from "@/components/seo/structured-data"
 
 export const metadata: Metadata = {
-    title: "Accessories — Coming Soon",
+    title: "Accessories",
     description:
-        "XILAR accessories are coming soon. Stay tuned for streetwear accessories — caps, bags, chains, and more.",
+        "Shop XILAR accessories, including perfume and limited essentials.",
     alternates: {
         canonical: "/shop/accessories",
     },
     openGraph: {
         title: "Accessories | XILAR",
         description:
-            "XILAR accessories are coming soon. Stay tuned for streetwear accessories — caps, bags, chains, and more.",
+            "Shop XILAR accessories, including perfume and limited essentials.",
         url: "/shop/accessories",
     },
 }
@@ -30,17 +29,19 @@ export default function AccessoriesPage() {
                     { name: "Accessories", url: "/shop/accessories" },
                 ])}
             />
-            <div className="flex flex-col min-h-screen items-center justify-center px-6">
-                <div className="text-center space-y-6 max-w-lg">
-                    <h1 className="text-4xl md:text-6xl font-black tracking-tighter uppercase">Accessories</h1>
-                    <p className="text-muted-foreground text-lg">Coming Soon. Stay tuned for fresh drops.</p>
-                    <Link href="/shop">
-                        <Button variant="outline" className="rounded-none h-12 px-8 uppercase tracking-widest">
-                            Shop All
-                        </Button>
-                    </Link>
-                </div>
-            </div>
+            <JsonLd
+                data={collectionJsonLd(baseUrl, {
+                    name: "Accessories — XILAR",
+                    description: "Shop XILAR accessories, including perfume and limited essentials.",
+                    url: "/shop/accessories",
+                })}
+            />
+            <ShopClient
+                genderFilter="all"
+                fixedCategory="accessory"
+                title="Accessories"
+                subtitle="Perfume and selected essentials"
+            />
         </>
     )
 }

@@ -98,6 +98,7 @@ export default function EditProductPage() {
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
   const [variantStock, setVariantStock] = useState<Record<string, number>>({});
+  const isAccessory = formData.category === "accessory";
 
   // Fetch product data on mount
   useEffect(() => {
@@ -203,12 +204,13 @@ export default function EditProductPage() {
 
     try {
       // Build variants array from the stock matrix
-      const effectiveSizes = formData.category === "accessory" ? ["One Size"] : sizes;
+      const effectiveSizes = isAccessory ? ["One Size"] : sizes;
+      const effectiveColors = isAccessory ? [] : colors;
       const variants: { size: string; color: string | null; stock: number }[] = [];
 
       for (const size of effectiveSizes) {
-        if (colors.length > 0) {
-          for (const color of colors) {
+        if (effectiveColors.length > 0) {
+          for (const color of effectiveColors) {
             const key = `${size}|${color.name}`;
             variants.push({ size, color: color.name, stock: variantStock[key] || 0 });
           }
@@ -222,15 +224,17 @@ export default function EditProductPage() {
 
       const productData: ProductInput = {
         ...formData,
+        gender: isAccessory ? "unisex" : formData.gender,
         stock: totalStock,
         images,
         sizes: effectiveSizes,
-        careInstructions,
-        features,
-        colors,
+        careInstructions: isAccessory ? [] : careInstructions,
+        features: isAccessory ? [] : features,
+        colors: effectiveColors,
         tags,
         variants,
-        gsm: formData.gsm || undefined,
+        fabric: isAccessory ? undefined : (formData.fabric || undefined),
+        gsm: isAccessory ? undefined : (formData.gsm || undefined),
       };
 
       await updateProduct(productId, productData);
@@ -336,7 +340,14 @@ export default function EditProductPage() {
                 <select
                   required
                   value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value as ProductInput["category"] })}
+                  onChange={(e) => {
+                    const category = e.target.value as ProductInput["category"];
+                    setFormData((prev) => ({
+                      ...prev,
+                      category,
+                      gender: category === "accessory" ? "unisex" : prev.gender,
+                    }));
+                  }}
                   className="w-full px-3 py-2 border rounded-lg bg-background"
                 >
                   {categories.map((cat) => (
@@ -346,21 +357,32 @@ export default function EditProductPage() {
                   ))}
                 </select>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Gender *</label>
-                <select
-                  required
-                  value={formData.gender}
-                  onChange={(e) => setFormData({ ...formData, gender: e.target.value as ProductInput["gender"] })}
-                  className="w-full px-3 py-2 border rounded-lg bg-background"
-                >
-                  {genders.map((g) => (
-                    <option key={g.value} value={g.value}>
-                      {g.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {!isAccessory ? (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Gender *</label>
+                  <select
+                    required
+                    value={formData.gender}
+                    onChange={(e) => setFormData({ ...formData, gender: e.target.value as ProductInput["gender"] })}
+                    className="w-full px-3 py-2 border rounded-lg bg-background"
+                  >
+                    {genders.map((g) => (
+                      <option key={g.value} value={g.value}>
+                        {g.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Gender</label>
+                  <input
+                    value="Unisex (auto for accessories)"
+                    readOnly
+                    className="w-full px-3 py-2 border rounded-lg bg-muted text-muted-foreground"
+                  />
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -519,6 +541,8 @@ export default function EditProductPage() {
             <CardTitle>Product Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {!isAccessory && (
+            <>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Fabric</label>
@@ -624,6 +648,8 @@ export default function EditProductPage() {
                 </div>
               )}
             </div>
+            </>
+            )}
 
             {/* Tags */}
             <div className="space-y-2">
@@ -670,6 +696,8 @@ export default function EditProductPage() {
               )}
             </div>
 
+            {!isAccessory && (
+            <>
             {/* Features */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Features</label>
@@ -759,6 +787,8 @@ export default function EditProductPage() {
                 </div>
               )}
             </div>
+            </>
+            )}
           </CardContent>
         </Card>
 
@@ -768,103 +798,124 @@ export default function EditProductPage() {
             <CardTitle>Inventory (Stock per Variant)</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {(() => {
-              const effectiveSizes = formData.category === "accessory" ? ["One Size"] : sizes;
-              const totalStock = effectiveSizes.reduce((sum, size) => {
-                if (colors.length > 0) {
-                  return sum + colors.reduce((colorSum, color) => colorSum + (variantStock[`${size}|${color.name}`] || 0), 0);
+            {isAccessory ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Stock</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={variantStock["One Size|"] || 0}
+                  onChange={(e) =>
+                    setVariantStock({
+                      ...variantStock,
+                      ["One Size|"]: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  className="w-full px-3 py-2 border rounded-lg bg-background"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Accessories use a single inventory bucket (no size/color variants).
+                </p>
+              </div>
+            ) : (
+              (() => {
+                const effectiveSizes = sizes;
+                const totalStock = effectiveSizes.reduce((sum, size) => {
+                  if (colors.length > 0) {
+                    return sum + colors.reduce((colorSum, color) => colorSum + (variantStock[`${size}|${color.name}`] || 0), 0);
+                  }
+                  return sum + (variantStock[`${size}|`] || 0);
+                }, 0);
+
+                if (effectiveSizes.length === 0) {
+                  return (
+                    <p className="text-sm text-muted-foreground">
+                      Add sizes above to configure inventory.
+                    </p>
+                  );
                 }
-                return sum + (variantStock[`${size}|`] || 0);
-              }, 0);
 
-              if (effectiveSizes.length === 0) {
                 return (
-                  <p className="text-sm text-muted-foreground">
-                    Add sizes above to configure inventory.
-                  </p>
-                );
-              }
-
-              return (
-                <div className="space-y-4">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left p-2 font-medium">Size</th>
-                          {colors.length > 0 ? (
-                            colors.map((color) => (
-                              <th key={color.name} className="p-2 font-medium text-center">
-                                <div className="flex items-center justify-center gap-1.5">
-                                  <div
-                                    className="w-3 h-3 rounded-full border"
-                                    style={{ backgroundColor: color.hex }}
-                                  />
-                                  {color.name}
-                                </div>
-                              </th>
-                            ))
-                          ) : (
-                            <th className="p-2 font-medium text-center">Stock</th>
-                          )}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {effectiveSizes.map((size) => (
-                          <tr key={size} className="border-b last:border-0">
-                            <td className="p-2 font-medium">{size}</td>
+                  <div className="space-y-4">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left p-2 font-medium">Size</th>
                             {colors.length > 0 ? (
-                              colors.map((color) => {
-                                const key = `${size}|${color.name}`;
-                                return (
-                                  <td key={key} className="p-2">
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      value={variantStock[key] || 0}
-                                      onChange={(e) =>
-                                        setVariantStock({
-                                          ...variantStock,
-                                          [key]: parseInt(e.target.value) || 0,
-                                        })
-                                      }
-                                      className="w-full px-2 py-1 border rounded bg-background text-center"
+                              colors.map((color) => (
+                                <th key={color.name} className="p-2 font-medium text-center">
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    <div
+                                      className="w-3 h-3 rounded-full border"
+                                      style={{ backgroundColor: color.hex }}
                                     />
-                                  </td>
-                                );
-                              })
+                                    {color.name}
+                                  </div>
+                                </th>
+                              ))
                             ) : (
-                              <td className="p-2">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={variantStock[`${size}|`] || 0}
-                                  onChange={(e) =>
-                                    setVariantStock({
-                                      ...variantStock,
-                                      [`${size}|`]: parseInt(e.target.value) || 0,
-                                    })
-                                  }
-                                  className="w-full px-2 py-1 border rounded bg-background text-center"
-                                />
-                              </td>
+                              <th className="p-2 font-medium text-center">Stock</th>
                             )}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {effectiveSizes.map((size) => (
+                            <tr key={size} className="border-b last:border-0">
+                              <td className="p-2 font-medium">{size}</td>
+                              {colors.length > 0 ? (
+                                colors.map((color) => {
+                                  const key = `${size}|${color.name}`;
+                                  return (
+                                    <td key={key} className="p-2">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        value={variantStock[key] || 0}
+                                        onChange={(e) =>
+                                          setVariantStock({
+                                            ...variantStock,
+                                            [key]: parseInt(e.target.value) || 0,
+                                          })
+                                        }
+                                        className="w-full px-2 py-1 border rounded bg-background text-center"
+                                      />
+                                    </td>
+                                  );
+                                })
+                              ) : (
+                                <td className="p-2">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={variantStock[`${size}|`] || 0}
+                                    onChange={(e) =>
+                                      setVariantStock({
+                                        ...variantStock,
+                                        [`${size}|`]: parseInt(e.target.value) || 0,
+                                      })
+                                    }
+                                    className="w-full px-2 py-1 border rounded bg-background text-center"
+                                  />
+                                </td>
+                              )}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <span className="text-sm text-muted-foreground">
+                        {effectiveSizes.length * Math.max(colors.length, 1)} variants
+                      </span>
+                      <span className="text-sm font-medium">
+                        Total Stock: <span className={totalStock === 0 ? "text-destructive" : "text-green-500"}>{totalStock}</span>
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between pt-2 border-t">
-                    <span className="text-sm text-muted-foreground">
-                      {effectiveSizes.length * Math.max(colors.length, 1)} variants
-                    </span>
-                    <span className="text-sm font-medium">
-                      Total Stock: <span className={totalStock === 0 ? "text-destructive" : "text-green-500"}>{totalStock}</span>
-                    </span>
-                  </div>
-                </div>
-              );
-            })()}
+                );
+              })()
+            )}
           </CardContent>
         </Card>
 

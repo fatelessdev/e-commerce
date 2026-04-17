@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { User, Package, Heart, LogOut, Shield, Loader2 } from "lucide-react"
+import { Package, Heart, LogOut, Shield, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useState, Suspense } from "react"
 import { useSession, signIn, signUp, signOut } from "@/lib/auth-client"
@@ -15,6 +15,7 @@ function AccountContent() {
     
     const [showLogin, setShowLogin] = useState(true)
     const [isLoading, setIsLoading] = useState(false)
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false)
     const [error, setError] = useState("")
     
     // Form state
@@ -65,6 +66,26 @@ function AccountContent() {
         router.refresh()
     }
 
+    const handleGoogleSignIn = async () => {
+        setError("")
+        setIsGoogleLoading(true)
+
+        try {
+            const result = await signIn.social({
+                provider: "google",
+                callbackURL: redirect,
+            })
+
+            if (result?.error) {
+                setError(result.error.message || "Failed to continue with Google")
+            }
+        } catch {
+            setError("Failed to continue with Google")
+        } finally {
+            setIsGoogleLoading(false)
+        }
+    }
+
     if (isPending) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center gap-4">
@@ -94,6 +115,29 @@ function AccountContent() {
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-3">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full h-12 rounded-none text-xs uppercase tracking-[0.15em] font-medium"
+                            onClick={handleGoogleSignIn}
+                            disabled={isLoading || isGoogleLoading}
+                        >
+                            {isGoogleLoading ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                "Continue with Google"
+                            )}
+                        </Button>
+
+                        <div className="relative py-1 text-center">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t border-border/60" />
+                            </div>
+                            <span className="relative bg-background px-2 text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+                                Or continue with email
+                            </span>
+                        </div>
+
                         {!showLogin && (
                             <div className="space-y-1.5">
                                 <label htmlFor="signup-name" className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Full name</label>
@@ -157,7 +201,7 @@ function AccountContent() {
                         <Button
                             type="submit"
                             className="w-full h-13 rounded-none uppercase tracking-[0.2em] text-xs font-semibold mt-2"
-                            disabled={isLoading}
+                            disabled={isLoading || isGoogleLoading}
                         >
                             {isLoading ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />

@@ -2,7 +2,7 @@
 
 import { useCart } from "@/lib/cart-context"
 import { Button } from "@/components/ui/button"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -224,13 +224,17 @@ export default function CheckoutPage() {
                 productImage: item.image,
                 size: item.size,
                 color: item.color,
+                comboId: item.comboId,
+                comboGroupId: item.comboGroupId,
                 quantity: item.quantity,
                 unitPrice: item.price,
                 totalPrice: item.price * item.quantity
             })),
             subtotal: totalPrice,
             shippingCost,
-            discount: appliedCoupon?.discount || 0,
+            discount: discount,
+            couponDiscount,
+            comboDiscount,
             couponCode: appliedCoupon?.code,
             codFee,
             total: finalTotal,
@@ -264,7 +268,12 @@ export default function CheckoutPage() {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        items: items.map(item => ({ productId: item.id, quantity: item.quantity })),
+                        items: items.map(item => ({
+                            productId: item.id,
+                            quantity: item.quantity,
+                            comboId: item.comboId,
+                            comboGroupId: item.comboGroupId,
+                        })),
                         couponCode: appliedCoupon?.code,
                         receipt: `order_${Date.now()}`,
                     })
@@ -357,9 +366,36 @@ export default function CheckoutPage() {
         )
     }
 
+    const comboDiscount = useMemo(() => {
+        const groups = new Map<string, typeof items>()
+
+        for (const item of items) {
+            if (!item.comboGroupId || !item.comboId || !item.comboDiscountPercentage) continue
+            const group = groups.get(item.comboGroupId) || []
+            group.push(item)
+            groups.set(item.comboGroupId, group)
+        }
+
+        let totalComboDiscount = 0
+        for (const groupItems of groups.values()) {
+            if (groupItems.length !== 2) continue
+            const [first, second] = groupItems
+            if (first.comboId !== second.comboId) continue
+            if (first.quantity !== second.quantity) continue
+            const discountPercentage = first.comboDiscountPercentage || 0
+            if (discountPercentage <= 0) continue
+
+            const groupSubtotal = (first.price * first.quantity) + (second.price * second.quantity)
+            totalComboDiscount += (groupSubtotal * discountPercentage) / 100
+        }
+
+        return Math.round(totalComboDiscount * 100) / 100
+    }, [items])
+
     // Calculate pricing: free shipping above threshold, otherwise standard fee
     const shippingCost = totalPrice >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE
-    const discount = appliedCoupon?.discount || 0
+    const couponDiscount = appliedCoupon?.discount || 0
+    const discount = couponDiscount + comboDiscount
     const codFee = paymentMethod === "cod" ? COD_FEE : 0
     const finalTotal = totalPrice + shippingCost - discount + codFee
 
@@ -404,6 +440,11 @@ export default function CheckoutPage() {
                     </p>
                     {appliedCoupon && (
                         <p className="text-xs text-red-accent tabular-nums">You saved ₹{appliedCoupon.discount} with coupon {appliedCoupon.code}</p>
+                    )}
+                    {comboDiscount > 0 && (
+                        <p className="text-xs text-green-600 dark:text-green-400 tabular-nums">
+                            Combo savings: ₹{comboDiscount.toLocaleString("en-IN")}
+                        </p>
                     )}
                     {orderId && (
                         <p className="text-xs text-muted-foreground tabular-nums">Order ID: #{orderId.slice(0, 8).toUpperCase()}</p>
@@ -714,7 +755,7 @@ export default function CheckoutPage() {
 
                             <div className="space-y-4">
                                 {items.map((item) => (
-                                    <div key={`${item.id}-${item.size}`} className="flex gap-4 border-b border-border/60 pb-4">
+                                    <div key={`${item.comboGroupId || "single"}-${item.id}-${item.size}-${item.color || ""}`} className="flex gap-4 border-b border-border/60 pb-4">
                                         <Image
                                             src={item.image}
                                             alt={item.name}
@@ -724,7 +765,11 @@ export default function CheckoutPage() {
                                         />
                                         <div className="flex-1 space-y-0.5">
                                             <h3 className="font-medium text-sm">{item.name}</h3>
-                                            <p className="text-xs text-muted-foreground">Size: {item.size} × {item.quantity}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {item.size === "One Size" && !item.color
+                                                    ? `Qty: ${item.quantity}`
+                                                    : `Size: ${item.size}${item.color ? ` · ${item.color}` : ""} × ${item.quantity}`}
+                                            </p>
                                             <p className="font-semibold text-sm tabular-nums">{item.displayPrice}</p>
                                         </div>
                                     </div>
@@ -758,8 +803,12 @@ export default function CheckoutPage() {
                     <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-6">Order summary</h2>
                     <div className="space-y-3">
                         {items.map((item) => (
-                            <div key={`${item.id}-${item.size}`} className="flex justify-between text-xs">
-                                <span className="text-muted-foreground">{item.name} ({item.size}) × {item.quantity}</span>
+                            <div key={`${item.comboGroupId || "single"}-${item.id}-${item.size}-${item.color || ""}`} className="flex justify-between text-xs">
+                                <span className="text-muted-foreground">
+                                    {item.size === "One Size" && !item.color
+                                        ? `${item.name} × ${item.quantity}`
+                                        : `${item.name} (${item.size}${item.color ? ` · ${item.color}` : ""}) × ${item.quantity}`}
+                                </span>
                                 <span className="tabular-nums">₹{(item.price * item.quantity).toLocaleString("en-IN")}</span>
                             </div>
                         ))}
@@ -776,6 +825,12 @@ export default function CheckoutPage() {
                             <div className="flex justify-between text-xs text-green-600 dark:text-green-400">
                                 <span>Discount ({appliedCoupon.code})</span>
                                 <span className="tabular-nums">-₹{appliedCoupon.discount}</span>
+                            </div>
+                        )}
+                        {comboDiscount > 0 && (
+                            <div className="flex justify-between text-xs text-green-600 dark:text-green-400">
+                                <span>Combo Discount</span>
+                                <span className="tabular-nums">-₹{comboDiscount.toLocaleString("en-IN")}</span>
                             </div>
                         )}
                         {paymentMethod === "cod" && (

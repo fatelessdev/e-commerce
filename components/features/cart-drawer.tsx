@@ -90,7 +90,7 @@ export function CartDrawer() {
                                 </div>
                             ) : (
                                 items.map((item) => (
-                                    <div key={`${item.id}-${item.size}-${item.color || ''}`} className="flex gap-4 pb-5 border-b border-border/40">
+                                    <div key={`${item.comboGroupId || "single"}-${item.id}-${item.size}-${item.color || ''}`} className="flex gap-4 pb-5 border-b border-border/40">
                                         <Image
                                             src={item.image}
                                             alt={item.name}
@@ -100,16 +100,23 @@ export function CartDrawer() {
                                         />
                                         <div className="flex-1 space-y-1">
                                             <h3 className="font-medium text-sm leading-tight">{item.name}</h3>
-                                            <p className="text-xs text-muted-foreground">
-                                                Size: {item.size}{item.color && ` · ${item.color}`}
-                                            </p>
+                                            {item.comboName && (
+                                                <p className="text-[10px] uppercase tracking-[0.15em] text-red-accent">
+                                                    Combo: {item.comboName}
+                                                </p>
+                                            )}
+                                            {!(item.size === "One Size" && !item.color) && (
+                                                <p className="text-xs text-muted-foreground">
+                                                    Size: {item.size}{item.color && ` · ${item.color}`}
+                                                </p>
+                                            )}
                                             <p className="font-semibold text-sm tabular-nums">{item.displayPrice}</p>
                                             <div className="flex items-center gap-2 pt-2">
                                                 <Button
                                                     variant="outline"
                                                     size="icon"
                                                     className="h-7 w-7 rounded-none"
-                                                    onClick={() => updateQuantity(item.id, item.size, item.quantity - 1, item.color)}
+                                                    onClick={() => updateQuantity(item.id, item.size, item.quantity - 1, item.color, item.comboGroupId)}
                                                 >
                                                     <Minus className="h-3 w-3" />
                                                 </Button>
@@ -118,7 +125,7 @@ export function CartDrawer() {
                                                     variant="outline"
                                                     size="icon"
                                                     className="h-7 w-7 rounded-none"
-                                                    onClick={() => updateQuantity(item.id, item.size, item.quantity + 1, item.color)}
+                                                    onClick={() => updateQuantity(item.id, item.size, item.quantity + 1, item.color, item.comboGroupId)}
                                                 >
                                                     <Plus className="h-3 w-3" />
                                                 </Button>
@@ -128,7 +135,7 @@ export function CartDrawer() {
                                             variant="ghost"
                                             size="icon"
                                             className="h-7 w-7 self-start text-muted-foreground hover:text-foreground"
-                                            onClick={() => removeItem(item.id, item.size, item.color)}
+                                            onClick={() => removeItem(item.id, item.size, item.color, item.comboGroupId)}
                                         >
                                             <X className="h-3.5 w-3.5" />
                                         </Button>

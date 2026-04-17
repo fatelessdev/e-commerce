@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { BargainDiscountStrip } from "@/components/ui/bargain-discount-strip"
 import Link from "next/link"
 import Image from "next/image"
 import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react"
@@ -13,6 +14,7 @@ interface Product {
     slug: string
     sellingPrice: string
     mrp: string
+    maxBargainDiscount: string
     images: string[]
     category: string
     gender: "men" | "women" | "unisex"
@@ -49,17 +51,25 @@ interface ShopClientProps {
     title?: string
     subtitle?: string
     initialSearch?: string
+    fixedCategory?: string
 }
 
-export function ShopClient({ genderFilter = "all", title = "All Products", subtitle, initialSearch = "" }: ShopClientProps) {
+export function ShopClient({ genderFilter = "all", title = "All Products", subtitle, initialSearch = "", fixedCategory }: ShopClientProps) {
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState(initialSearch)
-    const [selectedCategory, setSelectedCategory] = useState("All")
+    const [selectedCategory, setSelectedCategory] = useState(fixedCategory || "All")
     const [selectedSize, setSelectedSize] = useState<string | null>(null)
     const [selectedPriceRange, setSelectedPriceRange] = useState(PRICE_RANGES[0])
     const [showFilters, setShowFilters] = useState(false)
     const [visibleCount, setVisibleCount] = useState(8)
+
+    useEffect(() => {
+        if (fixedCategory) {
+            setSelectedCategory(fixedCategory)
+            setSelectedSize(null)
+        }
+    }, [fixedCategory])
 
     // Fetch products from API
     useEffect(() => {
@@ -70,6 +80,9 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                 params.set("limit", "100")
                 if (genderFilter !== "all") {
                     params.set("gender", genderFilter)
+                }
+                if (fixedCategory) {
+                    params.set("category", fixedCategory)
                 }
                 
                 const res = await fetch(`/api/products?${params.toString()}`)
@@ -84,7 +97,7 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
             }
         }
         fetchProducts()
-    }, [genderFilter])
+    }, [genderFilter, fixedCategory])
 
     const filteredProducts = useMemo(() => {
         return products.filter((product) => {
@@ -131,13 +144,13 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
 
     const clearFilters = () => {
         setSearchQuery("")
-        setSelectedCategory("All")
+        setSelectedCategory(fixedCategory || "All")
         setSelectedSize(null)
         setSelectedPriceRange(PRICE_RANGES[0])
     }
 
     const activeFilterCount = [
-        selectedCategory !== "All",
+        !fixedCategory && selectedCategory !== "All",
         selectedSize !== null,
         selectedPriceRange !== PRICE_RANGES[0],
     ].filter(Boolean).length
@@ -193,43 +206,47 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
             {showFilters && (
                 <div className="px-6 md:px-12 py-5 border-b border-border/60 bg-secondary/10 flex flex-wrap gap-6">
                     {/* Category */}
-                    <div className="space-y-2.5">
-                        <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Category</label>
-                        <div className="flex flex-wrap gap-1.5">
-                            {CATEGORIES.map((cat) => (
-                                <Button
-                                    key={cat}
-                                    variant={selectedCategory === cat ? "default" : "outline"}
-                                    size="sm"
-                                    className="rounded-none h-8 text-[10px] tracking-wide"
-                                    onClick={() => {
-                                        setSelectedCategory(cat)
-                                        setSelectedSize(null)
-                                    }}
-                                >
-                                    {CATEGORY_LABELS[cat] || cat}
-                                </Button>
-                            ))}
+                    {!fixedCategory && (
+                        <div className="space-y-2.5">
+                            <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Category</label>
+                            <div className="flex flex-wrap gap-1.5">
+                                {CATEGORIES.map((cat) => (
+                                    <Button
+                                        key={cat}
+                                        variant={selectedCategory === cat ? "default" : "outline"}
+                                        size="sm"
+                                        className="rounded-none h-8 text-[10px] tracking-wide"
+                                        onClick={() => {
+                                            setSelectedCategory(cat)
+                                            setSelectedSize(null)
+                                        }}
+                                    >
+                                        {CATEGORY_LABELS[cat] || cat}
+                                    </Button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Size */}
-                    <div className="space-y-2.5">
-                        <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Size</label>
-                        <div className="flex flex-wrap gap-1.5">
-                            {(NUMBER_SIZE_CATEGORIES.includes(selectedCategory) ? NUMBER_SIZES : selectedCategory === "All" ? [...DEFAULT_SIZES, ...NUMBER_SIZES] : DEFAULT_SIZES).map((size) => (
-                                <Button
-                                    key={size}
-                                    variant={selectedSize === size ? "default" : "outline"}
-                                    size="sm"
-                                    className="rounded-none h-8 text-[10px] tracking-wide"
-                                    onClick={() => setSelectedSize(selectedSize === size ? null : size)}
-                                >
-                                    {size}
-                                </Button>
-                            ))}
+                    {selectedCategory !== "accessory" && (
+                        <div className="space-y-2.5">
+                            <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Size</label>
+                            <div className="flex flex-wrap gap-1.5">
+                                {(NUMBER_SIZE_CATEGORIES.includes(selectedCategory) ? NUMBER_SIZES : selectedCategory === "All" ? [...DEFAULT_SIZES, ...NUMBER_SIZES] : DEFAULT_SIZES).map((size) => (
+                                    <Button
+                                        key={size}
+                                        variant={selectedSize === size ? "default" : "outline"}
+                                        size="sm"
+                                        className="rounded-none h-8 text-[10px] tracking-wide"
+                                        onClick={() => setSelectedSize(selectedSize === size ? null : size)}
+                                    >
+                                        {size}
+                                    </Button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Price */}
                     <div className="space-y-2.5">
@@ -273,7 +290,8 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                                 {visibleProducts.map((product) => (
                                     <Link href={`/product/${product.id}`} key={product.id} className="group">
                                         <Card className="bg-transparent border-0 rounded-none hover-lift">
-                                            <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
+<CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
+                                                <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-10" />
                                                 <Image
                                                     src={product.images?.[0] || "/placeholder.jpg"}
                                                     alt={product.name}

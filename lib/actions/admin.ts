@@ -22,8 +22,8 @@ export type ProductInput = {
   tags?: string[];
   stock: number;
   images?: string[];
-  fabric?: string;
-  gsm?: number;
+  fabric?: string | null;
+  gsm?: number | null;
   careInstructions?: string[];
   features?: string[];
   sizes?: string[];
@@ -34,6 +34,8 @@ export type ProductInput = {
   isActive?: boolean;
   displayOrder?: number;
 };
+
+const ACCESSORY_SIZE = "One Size";
 
 // Helper: recompute total stock from variants
 async function recomputeProductStock(productId: string) {
@@ -79,8 +81,15 @@ async function syncProductVariants(
 export async function createProduct(data: ProductInput) {
   await requireAdmin();
 
-  const effectiveSizes = data.sizes || ["S", "M", "L", "XL"];
-  const effectiveColors = data.colors || [];
+  const isAccessory = data.category === "accessory";
+  const effectiveSizes = isAccessory ? [ACCESSORY_SIZE] : (data.sizes || ["S", "M", "L", "XL"]);
+  const effectiveColors = isAccessory ? [] : (data.colors || []);
+  const effectiveGender = isAccessory ? "unisex" : data.gender;
+  const effectiveFabric = isAccessory ? null : (data.fabric ?? null);
+  const effectiveGsm = isAccessory ? null : (data.gsm ?? null);
+  const effectiveCareInstructions = isAccessory ? [] : (data.careInstructions || []);
+  const effectiveFeatures = isAccessory ? [] : (data.features || []);
+  const effectiveStock = Math.max(0, data.stock || 0);
 
   const [product] = await db
     .insert(products)
@@ -92,14 +101,14 @@ export async function createProduct(data: ProductInput) {
       sellingPrice: data.sellingPrice,
       maxBargainDiscount: data.maxBargainDiscount || "0",
       category: data.category,
-      gender: data.gender,
+      gender: effectiveGender,
       tags: data.tags || [],
       stock: 0, // Will be computed from variants
       images: data.images || [],
-      fabric: data.fabric,
-      gsm: data.gsm,
-      careInstructions: data.careInstructions || [],
-      features: data.features || [],
+      fabric: effectiveFabric,
+      gsm: effectiveGsm,
+      careInstructions: effectiveCareInstructions,
+      features: effectiveFeatures,
       sizes: effectiveSizes,
       colors: effectiveColors,
       isNew: data.isNew ?? false,
@@ -110,7 +119,9 @@ export async function createProduct(data: ProductInput) {
     .returning();
 
   // Create variant rows
-  if (data.variants && data.variants.length > 0) {
+  if (isAccessory) {
+    await syncProductVariants(product.id, [{ size: ACCESSORY_SIZE, color: null, stock: effectiveStock }]);
+  } else if (data.variants && data.variants.length > 0) {
     await syncProductVariants(product.id, data.variants);
   } else {
     // Fallback: create variants from sizes × colors with the provided stock split evenly
@@ -140,8 +151,33 @@ export async function createProduct(data: ProductInput) {
 export async function updateProduct(id: string, data: Partial<ProductInput>) {
   await requireAdmin();
 
+  const [existingProduct] = await db
+    .select()
+    .from(products)
+    .where(eq(products.id, id));
+
+  if (!existingProduct) {
+    throw new Error("Product not found");
+  }
+
   // Separate variants from the rest of the data
-  const { variants, ...productData } = data;
+  const { variants, ...incomingData } = data;
+  const nextCategory = incomingData.category ?? existingProduct.category;
+  const isAccessory = nextCategory === "accessory";
+
+  const productData: Partial<typeof products.$inferInsert> = {
+    ...incomingData,
+  };
+
+  if (isAccessory) {
+    productData.gender = "unisex";
+    productData.fabric = null;
+    productData.gsm = null;
+    productData.sizes = [ACCESSORY_SIZE];
+    productData.colors = [];
+    productData.careInstructions = [];
+    productData.features = [];
+  }
 
   const [product] = await db
     .update(products)
@@ -152,8 +188,14 @@ export async function updateProduct(id: string, data: Partial<ProductInput>) {
     .where(eq(products.id, id))
     .returning();
 
-  // If variants are provided, sync them
-  if (variants) {
+  // Keep accessory inventory as a single no-color variant.
+  if (isAccessory) {
+    const accessoryStock =
+      variants?.[0]?.stock ??
+      (typeof data.stock === "number" ? data.stock : existingProduct.stock);
+    await syncProductVariants(id, [{ size: ACCESSORY_SIZE, color: null, stock: Math.max(0, accessoryStock) }]);
+  } else if (variants) {
+    // If variants are provided, sync them
     await syncProductVariants(id, variants);
   }
 

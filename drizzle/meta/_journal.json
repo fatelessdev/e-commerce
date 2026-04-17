@@ -43,6 +43,13 @@
       "when": 1774294229230,
       "tag": "0005_reflective_micromax",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1775953338837,
+      "tag": "0006_wealthy_steel_serpent",
+      "breakpoints": true
     }
   ]
 }

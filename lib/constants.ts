@@ -4,6 +4,9 @@ export const FREE_SHIPPING_THRESHOLD_DISPLAY = "₹999";
 export const SHIPPING_FEE = 99;
 export const COD_FEE = 50;
 
+// Bargain Bot
+export const BARGAIN_BOT_BANNER_MESSAGE = "Bargain Bot is live - negotiate for a lower price.";
+
 // COD allowed only for these pincodes
 export const COD_ALLOWED_PINCODES = ["144411", "144402", "144401"];
 

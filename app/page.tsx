@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Hero } from "@/components/features/hero";
+import { ComboSection } from "@/components/features/combo-section";
 import { ProductGrid } from "@/components/features/product-grid";
 import {
   JsonLd,
@@ -35,6 +36,7 @@ export default function Home() {
       />
       <Hero />
       <ProductGrid title="Best Sellers" isFeatured />
+      <ComboSection />
       <ProductGrid title="New Arrivals" isNew />
     </div>
   );
