@@ -51,7 +51,7 @@ export interface CartItem {
   comboId?: string;
   comboGroupId?: string;
   comboName?: string;
-  comboDiscountPercentage?: number;
+  comboMaxDiscountAmount?: number;
   quantity: number;
 }
 

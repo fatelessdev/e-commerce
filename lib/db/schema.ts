@@ -190,7 +190,7 @@ export const combos = pgTable("combos", {
   productBId: uuid("product_b_id")
     .notNull()
     .references(() => products.id, { onDelete: "cascade" }),
-  discountPercentage: decimal("discount_percentage", { precision: 5, scale: 2 }).notNull(),
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).notNull(),
   isActive: boolean("is_active").notNull().default(true),
   displayOrder: integer("display_order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),

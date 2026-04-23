@@ -16,6 +16,8 @@ interface CartItem {
     name: string
     price: number
     quantity: number
+    comboId?: string
+    comboGroupId?: string
 }
 
 interface CheckoutBargainProps {
@@ -103,7 +105,9 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                         id: item.id,
                         name: item.name,
                         quantity: item.quantity,
-                        price: item.price
+                        price: item.price,
+                        comboId: item.comboId,
+                        comboGroupId: item.comboGroupId,
                     })),
                     cartTotal: totalPrice,
                     negotiationRound: currentRound

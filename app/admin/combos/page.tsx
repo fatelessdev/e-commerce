@@ -9,13 +9,13 @@ async function createComboAction(formData: FormData) {
 
   const productAId = String(formData.get("productAId") || "");
   const productBId = String(formData.get("productBId") || "");
-  const discountPercentage = Number(formData.get("discountPercentage") || "0");
+  const discountAmount = Number(formData.get("discountAmount") || "0");
   const displayOrder = Number(formData.get("displayOrder") || "0");
 
   await createCombo({
     productAId,
     productBId,
-    discountPercentage,
+    discountAmount,
     displayOrder,
   });
 }
@@ -24,12 +24,12 @@ async function updateComboAction(formData: FormData) {
   "use server";
 
   const id = String(formData.get("id") || "");
-  const discountPercentage = Number(formData.get("discountPercentage") || "0");
+  const discountAmount = Number(formData.get("discountAmount") || "0");
   const displayOrder = Number(formData.get("displayOrder") || "0");
   const isActive = formData.get("isActive") === "on";
 
   await updateCombo(id, {
-    discountPercentage,
+    discountAmount,
     displayOrder,
     isActive,
   });
@@ -53,7 +53,7 @@ export default async function AdminCombosPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Combos</h1>
         <p className="text-muted-foreground">
-          Pair two clothing products and set a percentage discount.
+          Pair two clothing products and set a max bargain discount amount.
         </p>
       </div>
 
@@ -96,15 +96,14 @@ export default async function AdminCombosPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Discount %</label>
+              <label className="text-sm font-medium">Max Bargain Discount (₹)</label>
               <input
                 type="number"
-                name="discountPercentage"
-                min="1"
-                max="99"
+                name="discountAmount"
+                min="0"
                 step="0.01"
                 required
-                defaultValue="10"
+                defaultValue="0"
                 className="w-full px-3 py-2 border rounded-lg bg-background"
               />
             </div>
@@ -115,7 +114,7 @@ export default async function AdminCombosPage() {
                 type="number"
                 name="displayOrder"
                 min="0"
-                step="100"
+                step="1"
                 defaultValue="0"
                 className="w-full px-3 py-2 border rounded-lg bg-background"
               />
@@ -149,6 +148,9 @@ export default async function AdminCombosPage() {
                     <p className="text-xs text-muted-foreground">
                       {combo.productA ? `₹${combo.productA.sellingPrice}` : "N/A"} + {combo.productB ? `₹${combo.productB.sellingPrice}` : "N/A"}
                     </p>
+                    <p className="text-xs text-red-accent">
+                      Max bargain discount: ₹{Number(combo.discountAmount).toLocaleString("en-IN")}
+                    </p>
                   </div>
 
                   <div className="flex flex-wrap gap-3">
@@ -156,14 +158,13 @@ export default async function AdminCombosPage() {
                       <input type="hidden" name="id" value={combo.id} />
 
                       <div className="space-y-1">
-                        <label className="text-xs text-muted-foreground">Discount %</label>
+                        <label className="text-xs text-muted-foreground">Max Bargain Discount (₹)</label>
                         <input
                           type="number"
-                          name="discountPercentage"
-                          min="1"
-                          max="99"
+                          name="discountAmount"
+                          min="0"
                           step="0.01"
-                          defaultValue={Number(combo.discountPercentage)}
+                          defaultValue={Number(combo.discountAmount)}
                           className="w-28 px-3 py-2 border rounded-lg bg-background text-sm"
                         />
                       </div>
@@ -174,7 +175,7 @@ export default async function AdminCombosPage() {
                           type="number"
                           name="displayOrder"
                           min="0"
-                          step="100"
+                          step="1"
                           defaultValue={combo.displayOrder}
                           className="w-28 px-3 py-2 border rounded-lg bg-background text-sm"
                         />

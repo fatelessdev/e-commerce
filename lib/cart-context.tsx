@@ -13,7 +13,7 @@ export interface CartItem {
     comboId?: string
     comboGroupId?: string
     comboName?: string
-    comboDiscountPercentage?: number
+    comboMaxDiscountAmount?: number
     quantity: number
 }
 
@@ -23,10 +23,10 @@ interface CartContextType {
     addCombo: (combo: {
         comboId: string
         comboName: string
-        discountPercentage: number
+        maxDiscountAmount: number
         items: [
-            Omit<CartItem, "quantity" | "comboId" | "comboGroupId" | "comboName" | "comboDiscountPercentage">,
-            Omit<CartItem, "quantity" | "comboId" | "comboGroupId" | "comboName" | "comboDiscountPercentage">
+            Omit<CartItem, "quantity" | "comboId" | "comboGroupId" | "comboName" | "comboMaxDiscountAmount">,
+            Omit<CartItem, "quantity" | "comboId" | "comboGroupId" | "comboName" | "comboMaxDiscountAmount">
         ]
     }) => void
     removeItem: (id: string, size: string, color?: string, comboGroupId?: string) => void
@@ -89,7 +89,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 comboId: combo.comboId,
                 comboGroupId,
                 comboName: combo.comboName,
-                comboDiscountPercentage: combo.discountPercentage,
+                comboMaxDiscountAmount: combo.maxDiscountAmount,
             })),
         ])
         setIsOpen(true)

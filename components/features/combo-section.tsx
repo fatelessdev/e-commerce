@@ -30,7 +30,7 @@ interface ComboProduct {
 
 interface Combo {
   id: string;
-  discountPercentage: string;
+  discountAmount: string;
   productA: ComboProduct;
   productB: ComboProduct;
 }
@@ -73,10 +73,9 @@ function ComboCard({ combo }: { combo: Combo }) {
   const [selectedColorB, setSelectedColorB] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
 
-  const discountPercentage = Number(combo.discountPercentage);
+  const maxDiscountAmount = Number(combo.discountAmount);
   const originalTotal = Number(combo.productA.sellingPrice) + Number(combo.productB.sellingPrice);
-  const discountValue = (originalTotal * discountPercentage) / 100;
-  const discountedTotal = originalTotal - discountValue;
+  const discountValue = Math.min(Math.max(0, maxDiscountAmount), originalTotal);
 
   const requiredColorA = combo.productA.colors.length > 0;
   const requiredColorB = combo.productB.colors.length > 0;
@@ -218,18 +217,11 @@ function ComboCard({ combo }: { combo: Combo }) {
       <CardFooter className="border-t border-border/60 pt-4 pb-4 px-4 flex-col items-start gap-3">
         <div className="space-y-1">
           <p className="text-[10px] uppercase tracking-[0.2em] text-red-accent font-semibold">
-            {discountPercentage}% Combo Discount
+            Max bargain on combo: {formatPrice(maxDiscountAmount)}
           </p>
-          <div className="flex items-center gap-2">
-            <span className="text-xs line-through text-muted-foreground tabular-nums">
-              {formatPrice(originalTotal)}
-            </span>
-            <span className="text-sm font-semibold tabular-nums">
-              {formatPrice(discountedTotal)}
-            </span>
-            <span className="text-[10px] text-green-600 dark:text-green-400">
-              Save {formatPrice(discountValue)}
-            </span>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground tabular-nums">Combo total: {formatPrice(originalTotal)}</span>
+            <span className="text-green-600 dark:text-green-400 tabular-nums">Bargain cap: {formatPrice(discountValue)}</span>
           </div>
         </div>
 
@@ -242,7 +234,7 @@ function ComboCard({ combo }: { combo: Combo }) {
             addCombo({
               comboId: combo.id,
               comboName: `${combo.productA.name} + ${combo.productB.name}`,
-              discountPercentage,
+              maxDiscountAmount,
               items: [
                 {
                   id: combo.productA.id,

@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { useCart } from "@/lib/cart-context"
 import { useWishlist } from "@/lib/wishlist-context"
 import { Heart, Check, Loader2, X, ChevronLeft, ChevronRight } from "lucide-react"
+import Link from "next/link"
+import Image from "next/image"
 
 interface ProductVariant {
     id: string;
@@ -35,6 +37,14 @@ interface Product {
     gender: string
     stock: number
     variants?: ProductVariant[]
+    relatedProducts?: {
+        id: string
+        name: string
+        sellingPrice: string
+        mrp: string
+        maxBargainDiscount: string
+        images: string[]
+    }[]
 }
 
 const NUMBER_SIZE_CATEGORIES = ["jogger", "jeans", "cargo", "shorts"]
@@ -158,6 +168,7 @@ export function ProductClient({ id }: { id: string }) {
     const images = product.images.length > 0 ? product.images : ["/clothes/placeholder.jpeg"]
 
     const inWishlist = isInWishlist(product.id)
+    const shouldUseComboRelated = product.category === "shirt" && (product.relatedProducts?.length || 0) > 0
 
     const handleAddToCart = () => {
         if (!effectiveSelectedSize) return
@@ -453,7 +464,37 @@ export function ProductClient({ id }: { id: string }) {
             {/* Related Products */}
             <div className="border-t border-border/60 mt-24 px-6 md:px-12 lg:px-16">
                 <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-6 mt-12">You may also like</h2>
-                <ProductGrid title="" layout="scroll" />
+                {shouldUseComboRelated ? (
+                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+                        {(product.relatedProducts || []).map((related) => (
+                            <Link key={related.id} href={`/product/${related.id}`} className="group flex-shrink-0 w-[200px] sm:w-[240px] snap-start">
+                                <div className="space-y-3">
+                                    <div className="relative aspect-[3/4] overflow-hidden bg-muted/30">
+                                        <BargainDiscountStrip maxBargainDiscount={related.maxBargainDiscount} className="z-10" />
+                                        <Image
+                                            src={related.images?.[0] || "/clothes/placeholder.jpeg"}
+                                            alt={related.name}
+                                            fill
+                                            sizes="240px"
+                                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-xs font-medium line-clamp-1 uppercase">{related.name}</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-xs font-semibold tabular-nums">₹{Number(related.sellingPrice).toLocaleString("en-IN")}</p>
+                                            {Number(related.mrp) > Number(related.sellingPrice) && (
+                                                <p className="text-[10px] text-muted-foreground line-through tabular-nums">₹{Number(related.mrp).toLocaleString("en-IN")}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                ) : (
+                    <ProductGrid title="" layout="scroll" />
+                )}
             </div>
         </div>
     )

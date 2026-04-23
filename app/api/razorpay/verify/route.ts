@@ -8,7 +8,6 @@ import { eq } from "drizzle-orm";
 import { validateCoupon } from "@/lib/actions/admin";
 import { getServerSession } from "@/lib/auth-server";
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from "@/lib/constants";
-import { computeComboDiscountFromItems } from "@/lib/combos";
 
 export async function POST(req: NextRequest) {
   try {
@@ -60,7 +59,6 @@ export async function POST(req: NextRequest) {
     // --- Server-side amount verification ---
     // Recalculate total from actual DB prices to prevent tampering
     let serverSubtotal = 0;
-    const verifiedItems = [];
 
     for (const item of orderData.items) {
       if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
@@ -85,12 +83,6 @@ export async function POST(req: NextRequest) {
       const realPrice = parseFloat(product.sellingPrice);
       const itemTotal = realPrice * item.quantity;
       serverSubtotal += itemTotal;
-
-      verifiedItems.push({
-        ...item,
-        unitPrice: realPrice,
-        totalPrice: itemTotal,
-      });
     }
 
     const serverShipping = serverSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
@@ -105,18 +97,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    let comboDiscount = 0;
-    try {
-      comboDiscount = await computeComboDiscountFromItems(verifiedItems);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Invalid combo selection";
-      return NextResponse.json(
-        { success: false, error: message },
-        { status: 400 }
-      );
-    }
-
-    const serverDiscount = couponDiscount + comboDiscount;
+    const serverDiscount = couponDiscount;
     const serverTotal = serverSubtotal + serverShipping - serverDiscount;
 
     // Fetch the Razorpay order to verify the paid amount matches
@@ -136,7 +117,7 @@ export async function POST(req: NextRequest) {
 
     // Payment verified & amount validated — create the order with server-computed values
     const result = await createOrder({
-      items: verifiedItems,
+      items: orderData.items,
       subtotal: serverSubtotal,
       shippingCost: serverShipping,
       discount: serverDiscount,

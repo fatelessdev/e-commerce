@@ -10,7 +10,7 @@ import { canonicalizeComboPair } from "@/lib/combos";
 export type ComboInput = {
   productAId: string;
   productBId: string;
-  discountPercentage: number;
+  discountAmount: number;
   displayOrder?: number;
   isActive?: boolean;
 };
@@ -42,16 +42,16 @@ async function validateComboProducts(productAId: string, productBId: string) {
   }
 }
 
-function validateDiscount(discountPercentage: number) {
-  if (!Number.isFinite(discountPercentage) || discountPercentage <= 0 || discountPercentage >= 100) {
-    throw new Error("Combo discount must be between 0 and 100");
+function validateDiscountAmount(discountAmount: number) {
+  if (!Number.isFinite(discountAmount) || discountAmount < 0) {
+    throw new Error("Combo max bargain discount must be 0 or more");
   }
 }
 
 export async function createCombo(input: ComboInput) {
   await requireAdmin();
 
-  validateDiscount(input.discountPercentage);
+  validateDiscountAmount(input.discountAmount);
   const [productAId, productBId] = canonicalizeComboPair(input.productAId, input.productBId);
   await validateComboProducts(productAId, productBId);
 
@@ -69,7 +69,7 @@ export async function createCombo(input: ComboInput) {
     .values({
       productAId,
       productBId,
-      discountPercentage: input.discountPercentage.toFixed(2),
+      discountAmount: input.discountAmount.toFixed(2),
       displayOrder: input.displayOrder ?? 0,
       isActive: input.isActive ?? true,
     })
@@ -80,19 +80,19 @@ export async function createCombo(input: ComboInput) {
   return combo;
 }
 
-export async function updateCombo(id: string, updates: { discountPercentage?: number; displayOrder?: number; isActive?: boolean }) {
+export async function updateCombo(id: string, updates: { discountAmount?: number; displayOrder?: number; isActive?: boolean }) {
   await requireAdmin();
 
-  if (updates.discountPercentage !== undefined) {
-    validateDiscount(updates.discountPercentage);
+  if (updates.discountAmount !== undefined) {
+    validateDiscountAmount(updates.discountAmount);
   }
 
   const updateValues: Partial<typeof combos.$inferInsert> = {
     updatedAt: new Date(),
   };
 
-  if (updates.discountPercentage !== undefined) {
-    updateValues.discountPercentage = updates.discountPercentage.toFixed(2);
+  if (updates.discountAmount !== undefined) {
+    updateValues.discountAmount = updates.discountAmount.toFixed(2);
   }
   if (updates.displayOrder !== undefined) {
     updateValues.displayOrder = updates.displayOrder;

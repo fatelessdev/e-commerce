@@ -152,7 +152,11 @@ export async function computeComboDiscountFromItems(items: ComboLinkedItem[]) {
       return sum + (unitPrice * item.quantity);
     }, 0);
 
-    totalDiscount += groupSubtotal * (Number(combo.discountPercentage) / 100);
+    const serverMaxDiscount = Math.max(0, Number(combo.discountAmount));
+
+    const pairSubtotal = groupSubtotal / quantity;
+    const appliedDiscountPerPair = Math.min(serverMaxDiscount, pairSubtotal);
+    totalDiscount += appliedDiscountPerPair * quantity;
   }
 
   return Math.round(totalDiscount * 100) / 100;

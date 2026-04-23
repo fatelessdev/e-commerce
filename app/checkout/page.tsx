@@ -2,7 +2,7 @@
 
 import { useCart } from "@/lib/cart-context"
 import { Button } from "@/components/ui/button"
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -234,7 +234,6 @@ export default function CheckoutPage() {
             shippingCost,
             discount: discount,
             couponDiscount,
-            comboDiscount,
             couponCode: appliedCoupon?.code,
             codFee,
             total: finalTotal,
@@ -366,36 +365,10 @@ export default function CheckoutPage() {
         )
     }
 
-    const comboDiscount = useMemo(() => {
-        const groups = new Map<string, typeof items>()
-
-        for (const item of items) {
-            if (!item.comboGroupId || !item.comboId || !item.comboDiscountPercentage) continue
-            const group = groups.get(item.comboGroupId) || []
-            group.push(item)
-            groups.set(item.comboGroupId, group)
-        }
-
-        let totalComboDiscount = 0
-        for (const groupItems of groups.values()) {
-            if (groupItems.length !== 2) continue
-            const [first, second] = groupItems
-            if (first.comboId !== second.comboId) continue
-            if (first.quantity !== second.quantity) continue
-            const discountPercentage = first.comboDiscountPercentage || 0
-            if (discountPercentage <= 0) continue
-
-            const groupSubtotal = (first.price * first.quantity) + (second.price * second.quantity)
-            totalComboDiscount += (groupSubtotal * discountPercentage) / 100
-        }
-
-        return Math.round(totalComboDiscount * 100) / 100
-    }, [items])
-
     // Calculate pricing: free shipping above threshold, otherwise standard fee
     const shippingCost = totalPrice >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE
     const couponDiscount = appliedCoupon?.discount || 0
-    const discount = couponDiscount + comboDiscount
+    const discount = couponDiscount
     const codFee = paymentMethod === "cod" ? COD_FEE : 0
     const finalTotal = totalPrice + shippingCost - discount + codFee
 
@@ -440,11 +413,6 @@ export default function CheckoutPage() {
                     </p>
                     {appliedCoupon && (
                         <p className="text-xs text-red-accent tabular-nums">You saved ₹{appliedCoupon.discount} with coupon {appliedCoupon.code}</p>
-                    )}
-                    {comboDiscount > 0 && (
-                        <p className="text-xs text-green-600 dark:text-green-400 tabular-nums">
-                            Combo savings: ₹{comboDiscount.toLocaleString("en-IN")}
-                        </p>
                     )}
                     {orderId && (
                         <p className="text-xs text-muted-foreground tabular-nums">Order ID: #{orderId.slice(0, 8).toUpperCase()}</p>
@@ -825,12 +793,6 @@ export default function CheckoutPage() {
                             <div className="flex justify-between text-xs text-green-600 dark:text-green-400">
                                 <span>Discount ({appliedCoupon.code})</span>
                                 <span className="tabular-nums">-₹{appliedCoupon.discount}</span>
-                            </div>
-                        )}
-                        {comboDiscount > 0 && (
-                            <div className="flex justify-between text-xs text-green-600 dark:text-green-400">
-                                <span>Combo Discount</span>
-                                <span className="tabular-nums">-₹{comboDiscount.toLocaleString("en-IN")}</span>
                             </div>
                         )}
                         {paymentMethod === "cod" && (

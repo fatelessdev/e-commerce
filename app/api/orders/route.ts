@@ -6,7 +6,6 @@ import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE, COD_FEE, COD_ALLOWED_PINCODES } from "@/lib/constants";
-import { computeComboDiscountFromItems } from "@/lib/combos";
 
 export async function POST(_req: NextRequest) {
   try {
@@ -82,18 +81,7 @@ export async function POST(_req: NextRequest) {
       }
     }
 
-    let comboDiscount = 0;
-    try {
-      comboDiscount = await computeComboDiscountFromItems(verifiedItems);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Invalid combo selection";
-      return NextResponse.json(
-        { success: false, error: message },
-        { status: 400 }
-      );
-    }
-
-    const discount = couponDiscount + comboDiscount;
+    const discount = couponDiscount;
     const total = subtotal + shippingCost + codFee - discount;
 
     const result = await createOrder({
