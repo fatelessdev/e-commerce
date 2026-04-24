@@ -58,19 +58,22 @@ export async function GET(req: NextRequest) {
       conditions.push(eq(products.isFeatured, true));
     }
 
-    const result = await db
-      .select()
-      .from(products)
-      .where(and(...conditions))
-      .orderBy(desc(products.displayOrder), desc(products.createdAt))
-      .limit(limit)
-      .offset(offset);
-
-    // Get total count for pagination
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(products)
-      .where(and(...conditions));
+    // ⚡ Bolt: Parallelize independent DB queries to reduce overall latency.
+    // By fetching the paginated data and total count concurrently, response time
+    // drops from (query1 + query2) to max(query1, query2).
+    const [result, [{ count }]] = await Promise.all([
+      db
+        .select()
+        .from(products)
+        .where(and(...conditions))
+        .orderBy(desc(products.displayOrder), desc(products.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(products)
+        .where(and(...conditions)),
+    ]);
 
     return NextResponse.json({
       products: result,

@@ -30,15 +30,19 @@ export async function getActiveCombosWithProducts(limit = 6) {
     new Set(activeCombos.flatMap((combo) => [combo.productAId, combo.productBId]))
   );
 
-  const comboProducts = await db
-    .select()
-    .from(products)
-    .where(inArray(products.id, productIds));
-
-  const variants = await db
-    .select()
-    .from(productVariants)
-    .where(inArray(productVariants.productId, productIds));
+  // ⚡ Bolt: Parallelize independent DB queries to reduce overall latency.
+  // Fetching combo products and their variants concurrently instead of sequentially
+  // reduces wait time by overlapping the network requests.
+  const [comboProducts, variants] = await Promise.all([
+    db
+      .select()
+      .from(products)
+      .where(inArray(products.id, productIds)),
+    db
+      .select()
+      .from(productVariants)
+      .where(inArray(productVariants.productId, productIds)),
+  ]);
 
   const productMap = new Map(comboProducts.map((product) => [product.id, product]));
   const variantsByProductId = variants.reduce<Map<string, typeof variants>>((acc, variant) => {

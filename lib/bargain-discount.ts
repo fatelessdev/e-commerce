@@ -9,5 +9,5 @@ export function formatBargainDiscountLabel(maxBargainDiscount: string | number |
     ? value.toLocaleString("en-IN")
     : value.toLocaleString("en-IN", { maximumFractionDigits: 2 });
 
-  return `Bargain upto ₹${formatted}`;
+  return `Bargain up to ₹${formatted}`;
 }
