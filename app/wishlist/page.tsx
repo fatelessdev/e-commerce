@@ -61,6 +61,7 @@ export default function WishlistPage() {
                                     <Button
                                         variant="ghost"
                                         size="icon"
+                                        aria-label="Remove from wishlist"
                                         className="absolute top-3 right-3 h-8 w-8 bg-background/80 hover:bg-background backdrop-blur-sm"
                                         onClick={() => removeItem(item.id)}
                                     >

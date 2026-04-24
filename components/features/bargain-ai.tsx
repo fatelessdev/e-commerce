@@ -118,6 +118,7 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
                 <Button
                     onClick={() => setIsOpen(true)}
                     size="icon"
+                    aria-label="Open product assistant"
                     className="h-14 w-14 rounded-full shadow-2xl bg-foreground text-background hover:scale-110 transition-transform duration-300"
                 >
                     <MessageCircle className="h-6 w-6" />
@@ -138,6 +139,7 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
                         <Button 
                             variant="ghost" 
                             size="icon" 
+                            aria-label="Close product assistant"
                             className="h-6 w-6 text-background hover:text-background/80" 
                             onClick={() => setIsOpen(false)}
                         >
@@ -200,6 +202,7 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
                         <Button 
                             type="submit" 
                             size="icon" 
+                            aria-label="Send message"
                             className="rounded-full h-8 w-8"
                             disabled={isLoading || !input.trim()}
                         >

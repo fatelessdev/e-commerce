@@ -34,6 +34,7 @@ export function DeleteProductButton({
     <Button
       variant="ghost"
       size="icon"
+      aria-label="Delete product"
       onClick={handleDelete}
       disabled={isDeleting}
       className="text-destructive hover:text-destructive"

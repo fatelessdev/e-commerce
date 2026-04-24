@@ -34,6 +34,7 @@ export function DeleteCouponButton({
     <Button
       variant="ghost"
       size="icon"
+      aria-label="Delete coupon"
       onClick={handleDelete}
       disabled={isDeleting}
       className="text-destructive hover:text-destructive"
