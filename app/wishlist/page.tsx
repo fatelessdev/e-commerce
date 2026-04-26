@@ -62,6 +62,7 @@ export default function WishlistPage() {
                                         variant="ghost"
                                         size="icon"
                                         className="absolute top-3 right-3 h-8 w-8 bg-background/80 hover:bg-background backdrop-blur-sm"
+                                        aria-label={`Remove ${item.name} from wishlist`}
                                         onClick={() => removeItem(item.id)}
                                     >
                                         <Trash2 className="h-3.5 w-3.5" />
