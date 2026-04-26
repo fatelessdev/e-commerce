@@ -1,0 +1,3 @@
+## 2024-05-18 - Fixed N+1 DB query when fetching user orders
+**Learning:** Found an anti-pattern when fetching associated data in drizzle-orm where multiple database queries were being executed in a Promise.all() loop (`userOrders.map(async (order) => { ... await db.select().from(orderItems).where(eq(orderItems.orderId, order.id)) })`). This creates an N+1 performance bottleneck.
+**Action:** When needing to fetch related rows for a collection of items via Drizzle ORM, instead of mapping and looping queries, gather the IDs into an array and execute a single grouped `inArray` query. Then programmatically map the results back to their parent records. This avoids multiple database roundtrips and significantly lowers latency.
