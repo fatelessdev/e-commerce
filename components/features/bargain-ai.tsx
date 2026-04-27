@@ -119,6 +119,7 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
                     onClick={() => setIsOpen(true)}
                     size="icon"
                     className="h-14 w-14 rounded-full shadow-2xl bg-foreground text-background hover:scale-110 transition-transform duration-300"
+                    aria-label="Open Bargain AI assistant"
                 >
                     <MessageCircle className="h-6 w-6" />
                 </Button>
@@ -140,6 +141,7 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
                             size="icon" 
                             className="h-6 w-6 text-background hover:text-background/80" 
                             onClick={() => setIsOpen(false)}
+                            aria-label="Close Bargain AI assistant"
                         >
                             <X className="h-4 w-4" />
                         </Button>
@@ -202,6 +204,7 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
                             size="icon" 
                             className="rounded-full h-8 w-8"
                             disabled={isLoading || !input.trim()}
+                            aria-label="Send message"
                         >
                             {isLoading ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
