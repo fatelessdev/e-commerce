@@ -117,6 +117,7 @@ export function CartDrawer() {
                                                     size="icon"
                                                     className="h-7 w-7 rounded-none"
                                                     onClick={() => updateQuantity(item.id, item.size, item.quantity - 1, item.color, item.comboGroupId)}
+                                                    aria-label="Decrease quantity"
                                                 >
                                                     <Minus className="h-3 w-3" />
                                                 </Button>
@@ -126,6 +127,7 @@ export function CartDrawer() {
                                                     size="icon"
                                                     className="h-7 w-7 rounded-none"
                                                     onClick={() => updateQuantity(item.id, item.size, item.quantity + 1, item.color, item.comboGroupId)}
+                                                    aria-label="Increase quantity"
                                                 >
                                                     <Plus className="h-3 w-3" />
                                                 </Button>
@@ -136,6 +138,7 @@ export function CartDrawer() {
                                             size="icon"
                                             className="h-7 w-7 self-start text-muted-foreground hover:text-foreground"
                                             onClick={() => removeItem(item.id, item.size, item.color, item.comboGroupId)}
+                                            aria-label="Remove item"
                                         >
                                             <X className="h-3.5 w-3.5" />
                                         </Button>
