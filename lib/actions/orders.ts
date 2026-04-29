@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { orders, orderItems, products, productVariants, user, bargainSessions } from "@/lib/db/schema";
 import { getServerSession } from "@/lib/auth-server";
-import { eq, desc, sql, and, isNull } from "drizzle-orm";
+import { eq, desc, sql, and, isNull, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { markCouponUsed } from "./admin";
 
@@ -297,20 +297,31 @@ export async function getUserOrders() {
     .where(eq(orders.userId, session.user.id))
     .orderBy(desc(orders.createdAt));
 
-  // Fetch items for each order
-  const ordersWithItems = await Promise.all(
-    userOrders.map(async (order) => {
-      const items = await db
-        .select()
-        .from(orderItems)
-        .where(eq(orderItems.orderId, order.id));
+  if (userOrders.length === 0) {
+    return [];
+  }
 
-      return {
-        ...order,
-        items,
-      };
-    })
-  );
+  // ⚡ Bolt Optimization: Fix N+1 query problem by batch fetching all related order items
+  // Reduces DB queries from O(N) to O(1) where N is number of orders
+  const orderIds = userOrders.map((order) => order.id);
+  const allItems = await db
+    .select()
+    .from(orderItems)
+    .where(inArray(orderItems.orderId, orderIds));
+
+  // Group items by orderId to avoid nested loops mapping them
+  const itemsByOrderId = allItems.reduce((acc, item) => {
+    if (!acc[item.orderId]) {
+      acc[item.orderId] = [];
+    }
+    acc[item.orderId].push(item);
+    return acc;
+  }, {} as Record<string, typeof allItems>);
+
+  const ordersWithItems = userOrders.map((order) => ({
+    ...order,
+    items: itemsByOrderId[order.id] || [],
+  }));
 
   return ordersWithItems;
 }
