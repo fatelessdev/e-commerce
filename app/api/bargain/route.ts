@@ -4,6 +4,7 @@ import { db, user, coupons, bargainSessions, products, combos } from "@/lib/db";
 import { and, eq, inArray } from "drizzle-orm";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { generateSecureCode } from "@/lib/utils";
 
 export const maxDuration = 30;
 const MAX_NEGOTIATION_ROUNDS = 10;
@@ -20,12 +21,7 @@ type BargainCartItem = {
 
 // Generate unique coupon code
 function generateCouponCode(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let code = "BRG-";
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
+  return generateSecureCode("BRG-", 6);
 }
 
 function calculateCartRuleCap(cartTotal: number, isFirstTimeUser: boolean): number {
