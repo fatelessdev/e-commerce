@@ -1,0 +1,3 @@
+## 2025-05-18 - N+1 Query Bottlenecks in Drizzle Object Mappings
+**Learning:** Found an N+1 performance bottleneck when fetching relational data manually without using Drizzle's relational query API (`db.query.*`). `getUserOrders` was performing a loop to make sequential DB requests for items belonging to each order.
+**Action:** Use `inArray` to batch queries across multiple parent entity IDs to resolve N+1 scaling bottlenecks when retrieving relational data sequentially. Memory-mapping the results is O(N) compared to multiple network I/O calls.
