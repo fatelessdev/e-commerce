@@ -10,8 +10,8 @@ test("returns null label when max bargain discount is missing or zero", () => {
 })
 
 test("formats bargain strip label from server max discount", () => {
-  assert.equal(formatBargainDiscountLabel("250"), "Bargain up to ₹250")
-  assert.equal(formatBargainDiscountLabel("250.5"), "Bargain up to ₹250.5")
+  assert.equal(formatBargainDiscountLabel("250"), "Bargain upto ₹250")
+  assert.equal(formatBargainDiscountLabel("250.5"), "Bargain upto ₹250.5")
 })
 
 test("uses a short bargain bot announcement copy", () => {
