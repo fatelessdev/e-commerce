@@ -1,0 +1,3 @@
+## 2024-06-25 - Parallelize Independent Sequential Drizzle Queries
+**Learning:** Found multiple instances where independent database queries (like paginated fetches alongside total count queries, or multiple aggregate queries for a dashboard) were being awaited sequentially using `await db.select(...)`. In this Next.js Drizzle architecture, this creates an unnecessary waterfall of requests, increasing latency.
+**Action:** When interacting with the database via Drizzle ORM, parallelize independent sequential queries using `Promise.all([db.select(...), db.select(...)])` to minimize overall request latency.
