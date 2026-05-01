@@ -124,21 +124,21 @@ export function Navbar() {
             />
 
             <Link href="/orders">
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground transition-colors duration-300">
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground transition-colors duration-300" aria-label="Orders">
                 <Package className="h-4 w-4" />
                 <span className="sr-only">Orders</span>
               </Button>
             </Link>
 
             <Link href="/account" className="hidden sm:block">
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground transition-colors duration-300">
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground transition-colors duration-300" aria-label="Account">
                 <User className="h-4 w-4" />
                 <span className="sr-only">Account</span>
               </Button>
             </Link>
 
             <Link href="/wishlist">
-              <Button variant="ghost" size="icon" className="h-9 w-9 relative text-muted-foreground hover:text-foreground transition-colors duration-300">
+              <Button variant="ghost" size="icon" className="h-9 w-9 relative text-muted-foreground hover:text-foreground transition-colors duration-300" aria-label="Wishlist">
                 <Heart className="h-4 w-4" />
                 {wishlistItems.length > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-accent text-white text-[10px] flex items-center justify-center font-semibold">
@@ -154,6 +154,7 @@ export function Navbar() {
               size="icon"
               className="h-9 w-9 relative text-muted-foreground hover:text-foreground transition-colors duration-300"
               onClick={() => setIsOpen(true)}
+              aria-label="Cart"
             >
               <ShoppingBag className="h-4 w-4" />
               {totalItems > 0 && (

@@ -71,10 +71,10 @@ export function Navbar() {
                                 autoFocus
                                 className="h-9 w-32 md:w-48 px-3 bg-secondary/50 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                             />
-                            <Button type="submit" variant="ghost" size="icon" className="h-9 w-9">
+                            <Button type="submit" variant="ghost" size="icon" className="h-9 w-9" aria-label="Submit search">
                                 <Search className="h-4 w-4" />
                             </Button>
-                            <Button type="button" variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowSearch(false)}>
+                            <Button type="button" variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowSearch(false)} aria-label="Close search">
                                 <X className="h-4 w-4" />
                             </Button>
                         </form>
@@ -87,7 +87,7 @@ export function Navbar() {
 
                     {/* Wishlist */}
                     <Link href="/wishlist">
-                        <Button variant="ghost" size="icon" className="h-9 w-9 relative">
+                        <Button variant="ghost" size="icon" className="h-9 w-9 relative" aria-label="Wishlist">
                             <Heart className="h-4 w-4" />
                             {wishlistItems.length > 0 && (
                                 <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-foreground text-background text-xs flex items-center justify-center">
@@ -100,14 +100,14 @@ export function Navbar() {
 
                     {/* Account */}
                     <Link href="/account">
-                        <Button variant="ghost" size="icon" className="h-9 w-9">
+                        <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Account">
                             <User className="h-4 w-4" />
                             <span className="sr-only">Account</span>
                         </Button>
                     </Link>
 
                     {/* Cart */}
-                    <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={() => setIsOpen(true)}>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={() => setIsOpen(true)} aria-label="Cart">
                         <ShoppingBag className="h-4 w-4" />
                         {totalItems > 0 && (
                             <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-foreground text-background text-xs flex items-center justify-center">
