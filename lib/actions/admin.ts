@@ -5,6 +5,7 @@ import { products, productVariants, coupons, orders, orderItems } from "@/lib/db
 import { requireAdmin } from "@/lib/auth-server";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { generateSecureCode } from "@/lib/utils";
 
 // ============================================
 // PRODUCT ACTIONS
@@ -567,11 +568,7 @@ export async function issueStoreCredit(data: IssueStoreCreditInput) {
   const creditAmount = Math.round(data.refundAmount * bonusMultiplier);
   
   // Generate unique store credit code
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let code = "CREDIT-";
-  for (let i = 0; i < 8; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
+  const code = generateSecureCode("CREDIT-", 8);
 
   // Set validity (30-60 days)
   const validityDays = Math.min(Math.max(data.validityDays || 30, 30), 60);
