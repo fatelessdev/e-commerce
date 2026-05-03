@@ -58,19 +58,21 @@ export async function GET(req: NextRequest) {
       conditions.push(eq(products.isFeatured, true));
     }
 
-    const result = await db
-      .select()
-      .from(products)
-      .where(and(...conditions))
-      .orderBy(desc(products.displayOrder), desc(products.createdAt))
-      .limit(limit)
-      .offset(offset);
+    // Parallelize data fetch and total count queries to reduce latency
+    const [result, [{ count }]] = await Promise.all([
+      db
+        .select()
+        .from(products)
+        .where(and(...conditions))
+        .orderBy(desc(products.displayOrder), desc(products.createdAt))
+        .limit(limit)
+        .offset(offset),
 
-    // Get total count for pagination
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(products)
-      .where(and(...conditions));
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(products)
+        .where(and(...conditions))
+    ]);
 
     return NextResponse.json({
       products: result,
