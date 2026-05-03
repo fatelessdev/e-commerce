@@ -1,0 +1,4 @@
+## 2025-02-20 - Insecure Random Number Generation for Coupon Codes
+**Vulnerability:** Found `Math.random()` being used to generate coupon codes and store credit codes in `app/api/bargain/route.ts` and `lib/actions/admin.ts`. `Math.random()` is not cryptographically secure and its outputs can be predicted.
+**Learning:** For any code that generates sensitive tokens like coupon codes, authentication tokens, or store credits, we need to ensure the source of randomness is cryptographically secure. The use of `Math.random()` in Next.js backend actions can expose financial endpoints to brute-force attacks if code generation becomes predictable.
+**Prevention:** Use the Web Crypto API (`crypto.getRandomValues()`) or the Node.js `crypto` module (`crypto.randomBytes()`) for generation. Created a `generateSecureCode(prefix, length)` utility in `lib/utils.ts` to be used for all code generation.
