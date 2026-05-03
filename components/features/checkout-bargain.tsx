@@ -294,6 +294,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                 variant="ghost"
                                 size="icon"
                                 className="h-6 w-6 text-white hover:bg-white/10"
+                                aria-label="Close bargain chat"
                                 onClick={() => setIsOpen(false)}
                             >
                                 <X className="h-3.5 w-3.5" />
@@ -421,6 +422,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                         type="submit"
                                         size="icon"
                                         className="rounded-none bg-red-accent text-white hover:bg-[#8E0000]"
+                                        aria-label="Send message"
                                         disabled={isLoading || !input.trim()}
                                     >
                                         <Send className="h-4 w-4" />

@@ -139,6 +139,7 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
                             variant="ghost" 
                             size="icon" 
                             className="h-6 w-6 text-background hover:text-background/80" 
+                            aria-label="Close product assistant"
                             onClick={() => setIsOpen(false)}
                         >
                             <X className="h-4 w-4" />
@@ -201,6 +202,7 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
                             type="submit" 
                             size="icon" 
                             className="rounded-full h-8 w-8"
+                            aria-label="Send message"
                             disabled={isLoading || !input.trim()}
                         >
                             {isLoading ? (
