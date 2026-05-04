@@ -1,0 +1,4 @@
+## 2024-05-04 - [Replaced Insecure Math.random() with Cryptographically Secure Code Generation]
+**Vulnerability:** Weak random number generation (`Math.random()`) was being used for sensitive security mechanisms like generating discount coupons (`BRG-XXXX`) and store credit codes (`CREDIT-XXXX`), which could lead to predictable codes and potential financial loss if guessed by attackers.
+**Learning:** `Math.random()` is not cryptographically secure and should never be used for tokens, passwords, discount codes, or anything that requires unpredictability. The repository requires a secure implementation for tokens.
+**Prevention:** Always use `globalThis.crypto.getRandomValues()` or `crypto.randomUUID()` when generating secure, random values. I added `generateSecureCode(prefix, length)` to `lib/utils.ts` to ensure consistent cryptographic safety.

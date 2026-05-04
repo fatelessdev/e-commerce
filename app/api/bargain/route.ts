@@ -3,6 +3,7 @@ import { bargainModel } from "@/lib/nim";
 import { db, user, coupons, bargainSessions, products, combos } from "@/lib/db";
 import { and, eq, inArray } from "drizzle-orm";
 import { headers } from "next/headers";
+import { generateSecureCode } from "@/lib/utils";
 import { auth } from "@/lib/auth";
 
 export const maxDuration = 30;
@@ -20,12 +21,7 @@ type BargainCartItem = {
 
 // Generate unique coupon code
 function generateCouponCode(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let code = "BRG-";
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
+  return generateSecureCode("BRG-", 6);
 }
 
 function calculateCartRuleCap(cartTotal: number, isFirstTimeUser: boolean): number {
