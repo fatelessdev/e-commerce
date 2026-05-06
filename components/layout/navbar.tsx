@@ -35,6 +35,7 @@ export function Navbar() {
                     size="icon"
                     className="md:hidden mr-2"
                     onClick={() => setShowMobileMenu(!showMobileMenu)}
+                    aria-label="Toggle mobile menu"
                 >
                     {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                 </Button>
@@ -71,10 +72,10 @@ export function Navbar() {
                                 autoFocus
                                 className="h-9 w-32 md:w-48 px-3 bg-secondary/50 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                             />
-                            <Button type="submit" variant="ghost" size="icon" className="h-9 w-9">
+                            <Button type="submit" variant="ghost" size="icon" className="h-9 w-9" aria-label="Submit search">
                                 <Search className="h-4 w-4" />
                             </Button>
-                            <Button type="button" variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowSearch(false)}>
+                            <Button type="button" variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowSearch(false)} aria-label="Close search">
                                 <X className="h-4 w-4" />
                             </Button>
                         </form>
