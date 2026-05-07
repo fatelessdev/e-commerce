@@ -42,6 +42,16 @@ export function Footer() {
                                 </Link>
                             </li>
                             <li>
+                                <Link href="/shop/accessories" className="hover:text-foreground transition-colors duration-300">
+                                    Accessories
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/shop/men" className="hover:text-foreground transition-colors duration-300">
+                                    Combos
+                                </Link>
+                            </li>
+                            <li>
                                 <Link href="/new" className="hover:text-foreground transition-colors duration-300">
                                     New Arrivals
                                 </Link>

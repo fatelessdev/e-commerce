@@ -7,6 +7,7 @@ import { getUserOrders } from "@/lib/actions/orders"
 import { getServerSession } from "@/lib/auth-server"
 import { redirect } from "next/navigation"
 import { CancelOrderButton } from "./cancel-button"
+import { normalizeProductImage } from "@/lib/image"
 
 export const metadata: Metadata = {
     title: "My Orders",
@@ -95,7 +96,7 @@ export default async function OrdersPage() {
                                     <div key={item.id} className="flex-shrink-0">
                                         {item.productImage ? (
                                             <Image
-                                                src={item.productImage}
+                                                src={normalizeProductImage(item.productImage)}
                                                 alt={item.productName}
                                                 width={56}
                                                 height={72}

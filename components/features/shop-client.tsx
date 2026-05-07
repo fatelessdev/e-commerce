@@ -7,6 +7,7 @@ import { BargainDiscountStrip } from "@/components/ui/bargain-discount-strip"
 import Link from "next/link"
 import Image from "next/image"
 import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react"
+import { normalizeProductImage } from "@/lib/image"
 
 interface Product {
     id: string
@@ -293,7 +294,7 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
 <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
                                                 <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-10" />
                                                 <Image
-                                                    src={product.images?.[0] || "/placeholder.jpg"}
+                                                    src={normalizeProductImage(product.images?.[0])}
                                                     alt={product.name}
                                                     fill
                                                     sizes="(max-width: 640px) 50vw, 25vw"

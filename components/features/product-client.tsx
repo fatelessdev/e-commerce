@@ -10,6 +10,7 @@ import { useWishlist } from "@/lib/wishlist-context"
 import { Heart, Check, Loader2, X, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { normalizeProductImage } from "@/lib/image"
 
 interface ProductVariant {
     id: string;
@@ -37,6 +38,7 @@ interface Product {
     gender: string
     stock: number
     variants?: ProductVariant[]
+    relatedCombos?: any[]
     relatedProducts?: {
         id: string
         name: string
@@ -48,6 +50,11 @@ interface Product {
 }
 
 const NUMBER_SIZE_CATEGORIES = ["jogger", "jeans", "cargo", "shorts"]
+
+function formatPrice(value: string | number) {
+    const amount = typeof value === "number" ? value : Number(value)
+    return `₹${amount.toLocaleString("en-IN")}`
+}
 
 export function ProductClient({ id }: { id: string }) {
     const [product, setProduct] = useState<Product | null>(null)
@@ -165,10 +172,13 @@ export function ProductClient({ id }: { id: string }) {
     const hasDiscount = mrp > price
     const displayPrice = `₹${price.toLocaleString("en-IN")}`
     const displayMrp = `₹${mrp.toLocaleString("en-IN")}`
-    const images = product.images.length > 0 ? product.images : ["/clothes/placeholder.jpeg"]
+    const images = product.images.length > 0
+        ? product.images.map((image) => normalizeProductImage(image))
+        : [normalizeProductImage()]
 
     const inWishlist = isInWishlist(product.id)
-    const shouldUseComboRelated = product.category === "shirt" && (product.relatedProducts?.length || 0) > 0
+    const hasRelatedContent = (product.relatedCombos?.length || 0) > 0 || (product.relatedProducts?.length || 0) > 0
+    const shouldUseComboRelated = hasRelatedContent
 
     const handleAddToCart = () => {
         if (!effectiveSelectedSize) return
@@ -466,13 +476,52 @@ export function ProductClient({ id }: { id: string }) {
                 <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-6 mt-12">You may also like</h2>
                 {shouldUseComboRelated ? (
                     <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+                        {/* Render combos first */}
+                        {(product.relatedCombos || []).map((combo) => (
+                            <Link key={combo.id} href={`/combo/${combo.id}`} className="group flex-shrink-0 w-[200px] sm:w-[240px] snap-start">
+                                <div className="space-y-3">
+                                    <div className="relative aspect-[3/4] overflow-hidden bg-muted/30 grid grid-cols-2 gap-px">
+                                        <div className="relative">
+                                            <Image
+                                                src={normalizeProductImage(combo.productA.images?.[0])}
+                                                alt={combo.productA.name}
+                                                fill
+                                                sizes="(max-width: 768px) 50vw, 20vw"
+                                                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                            />
+                                        </div>
+                                        <div className="relative">
+                                            <Image
+                                                src={normalizeProductImage(combo.productB.images?.[0])}
+                                                alt={combo.productB.name}
+                                                fill
+                                                sizes="(max-width: 768px) 50vw, 20vw"
+                                                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-xs font-medium line-clamp-2 uppercase">
+                                            {combo.productA.name}
+                                            <br />+ {combo.productB.name}
+                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-xs font-semibold tabular-nums">
+                                                {formatPrice(Number(combo.productA.sellingPrice) + Number(combo.productB.sellingPrice))}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                        {/* Then render related products */}
                         {(product.relatedProducts || []).map((related) => (
                             <Link key={related.id} href={`/product/${related.id}`} className="group flex-shrink-0 w-[200px] sm:w-[240px] snap-start">
                                 <div className="space-y-3">
                                     <div className="relative aspect-[3/4] overflow-hidden bg-muted/30">
                                         <BargainDiscountStrip maxBargainDiscount={related.maxBargainDiscount} className="z-10" />
                                         <Image
-                                            src={related.images?.[0] || "/clothes/placeholder.jpeg"}
+                                            src={normalizeProductImage(related.images?.[0])}
                                             alt={related.name}
                                             fill
                                             sizes="240px"

@@ -8,12 +8,12 @@ import { motion } from "framer-motion";
 
 const EASE_OUT_EXPO = [0.32, 0.72, 0, 1] as const;
 const HERO_IMAGES = [
-  "/hero/image.png",
-  "/hero/image(1).png",
-  "/hero/image(2).png",
-  "/hero/image(3).png",
-  "/hero/image(4).png",
-  "/hero/image(5).png",
+  "/hero/image.webp",
+  "/hero/image(1).webp",
+  "/hero/image(2).webp",
+  "/hero/image(3).webp",
+  "/hero/image(4).webp",
+  "/hero/image(5).webp",
 ];
 
 export function Hero() {

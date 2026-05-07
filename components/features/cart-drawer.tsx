@@ -9,6 +9,7 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useSession } from "@/lib/auth-client"
 import { useEffect, useRef } from "react"
+import { normalizeProductImage } from "@/lib/image"
 
 export function CartDrawer() {
     const { items, isOpen, setIsOpen, removeItem, updateQuantity, totalItems, totalPrice, clearCart } = useCart()
@@ -92,7 +93,7 @@ export function CartDrawer() {
                                 items.map((item) => (
                                     <div key={`${item.comboGroupId || "single"}-${item.id}-${item.size}-${item.color || ''}`} className="flex gap-4 pb-5 border-b border-border/40">
                                         <Image
-                                            src={item.image}
+                                            src={normalizeProductImage(item.image)}
                                             alt={item.name}
                                             width={80}
                                             height={96}

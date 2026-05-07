@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import Image from "next/image"
 import { Heart, ShoppingBag, Trash2 } from "lucide-react"
+import { normalizeProductImage } from "@/lib/image"
 
 export default function WishlistPage() {
     const { items, removeItem } = useWishlist()
@@ -51,7 +52,7 @@ export default function WishlistPage() {
                                 <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
                                     <Link href={`/product/${item.id}`}>
                                         <Image
-                                            src={item.image}
+                                            src={normalizeProductImage(item.image)}
                                             alt={item.name}
                                             fill
                                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"

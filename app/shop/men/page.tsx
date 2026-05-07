@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { ShopClient } from "@/components/features/shop-client"
+import { ComboSection } from "@/components/features/combo-section"
 import { JsonLd, breadcrumbJsonLd, collectionJsonLd } from "@/components/seo/structured-data"
 
 export const metadata: Metadata = {
@@ -37,6 +38,7 @@ export default function ShopMenPage() {
                 })}
             />
             <ShopClient genderFilter="men" title="Men" subtitle="Streetwear essentials for him" />
+            <ComboSection limit={6} interactive={false} />
         </>
     )
 }

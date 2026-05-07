@@ -36,8 +36,9 @@ export default function Home() {
       />
       <Hero />
       <ProductGrid title="Best Sellers" isFeatured />
-      <ComboSection />
+      <ComboSection limit={4} interactive={false} mobileLimit={3} />
       <ProductGrid title="New Arrivals" isNew />
+      <ProductGrid title="Accessories" fixedCategory="accessory" viewAllHref="/shop/accessories" />
     </div>
   );
 }

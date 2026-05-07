@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Plus, Pencil } from "lucide-react";
 import { DeleteProductButton } from "./delete-button";
+import { normalizeProductImage } from "@/lib/image";
 
 export default async function ProductsPage() {
   const products = await getProducts();
@@ -52,7 +53,7 @@ export default async function ProductsPage() {
                     <div className="flex items-center gap-3">
                       {product.images?.[0] && (
                         <Image
-                          src={product.images[0]}
+                          src={normalizeProductImage(product.images[0])}
                           alt={product.name}
                           width={48}
                           height={48}
@@ -98,6 +99,11 @@ export default async function ProductsPage() {
                     {product.isNew && (
                       <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary/10 text-primary">
                         New
+                      </span>
+                    )}
+                    {product.isFeatured && (
+                      <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-accent/10 text-red-accent">
+                        Best Seller
                       </span>
                     )}
                   </td>

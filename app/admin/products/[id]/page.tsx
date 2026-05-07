@@ -951,9 +951,12 @@ export default function EditProductPage() {
                   onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
                   className="w-4 h-4"
                 />
-                <span className="text-sm">Featured Product</span>
+                <span className="text-sm">Mark as Best Seller</span>
               </label>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Home page Best Sellers are controlled manually with this toggle.
+            </p>
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Display Order (Manual Merchandising)</label>

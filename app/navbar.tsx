@@ -17,6 +17,7 @@ const mobileLinks = [
   { href: "/shop", label: "Shop All" },
   { href: "/shop/men", label: "For Him" },
   { href: "/shop/women", label: "For Her" },
+  { href: "/shop/accessories", label: "Accessories" },
   { href: "/new", label: "New Drop" },
   { href: "/collections/essentials", label: "Collections" },
   { href: "/account", label: "Account" },
@@ -102,6 +103,7 @@ export function Navbar() {
             {[
               { href: "/shop/men", label: "For Him" },
               { href: "/shop/women", label: "For Her" },
+              { href: "/shop/accessories", label: "Accessories" },
               { href: "/new", label: "New Drop" },
               { href: "/collections/essentials", label: "Collections" },
             ].map((link) => (

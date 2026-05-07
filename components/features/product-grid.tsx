@@ -7,6 +7,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect } from "react"
 import { ArrowRight } from "lucide-react"
+import { normalizeProductImage } from "@/lib/image"
 
 interface Product {
     id: string
@@ -40,7 +41,25 @@ function ColorSwatches({ colors }: { colors: { name: string; hex: string }[] }) 
     )
 }
 
-export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNew, layout = "grid" }: { title?: string; gender?: "men" | "women" | "unisex"; isFeatured?: boolean; isNew?: boolean; layout?: "grid" | "scroll" }) {
+export function ProductGrid({
+    title = "Featured Drops",
+    gender,
+    isFeatured,
+    isNew,
+    layout = "grid",
+    fixedCategory,
+    mobileLimit = 6,
+    viewAllHref = "/shop",
+}: {
+    title?: string
+    gender?: "men" | "women" | "unisex"
+    isFeatured?: boolean
+    isNew?: boolean
+    layout?: "grid" | "scroll"
+    fixedCategory?: string
+    mobileLimit?: number
+    viewAllHref?: string
+}) {
     const [activeTab, setActiveTab] = useState<"men" | "women">(gender === "women" ? "women" : "men")
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
@@ -51,11 +70,16 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
                 setLoading(true)
                 const params = new URLSearchParams()
                 params.set("limit", "8")
-                if (activeTab === "men") {
-                    params.set("gender", "men")
-                } else {
-                    params.set("gender", "women")
+                if (gender) {
+                    params.set("gender", gender)
+                } else if (!fixedCategory) {
+                    if (activeTab === "men") {
+                        params.set("gender", "men")
+                    } else {
+                        params.set("gender", "women")
+                    }
                 }
+                if (fixedCategory) params.set("category", fixedCategory)
                 if (isFeatured) params.set("isFeatured", "true")
                 if (isNew) params.set("isNew", "true")
 
@@ -71,7 +95,7 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
             }
         }
         fetchProducts()
-    }, [activeTab, isFeatured, isNew, gender])
+    }, [activeTab, fixedCategory, isFeatured, isNew, gender])
 
     const formatPrice = (price: string) => {
         const num = parseFloat(price)
@@ -88,7 +112,7 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
                     )}
 
                     {/* FOR HIM / FOR HER Tabs */}
-                    {!gender && layout !== "scroll" && (
+                    {!gender && !fixedCategory && layout !== "scroll" && (
                         <div className="flex items-center gap-8 text-sm" role="tablist" aria-label="Shop by gender">
                             <button
                                 role="tab"
@@ -153,7 +177,7 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
                                                 <div className="absolute top-3 left-3 z-10 badge-sold-out">Sold Out</div>
                                             )}
                                             <Image
-                                                src={product.images?.[0] || "/clothes/placeholder.jpeg"}
+                                                src={normalizeProductImage(product.images?.[0])}
                                                 alt={product.name}
                                                 fill
                                                 sizes="240px"
@@ -178,8 +202,8 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
                     </div>
                 ) : (
                 <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-                    {products.map((product) => (
-                        <StaggerItem key={product.id}>
+                    {products.map((product, index) => (
+                        <StaggerItem key={product.id} className={index >= mobileLimit ? "hidden md:block" : undefined}>
                             <Link href={`/product/${product.id}`} className="group">
                                 <Card className="bg-transparent border-0 rounded-none hover-lift">
 <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
@@ -193,7 +217,7 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
 
                                         {/* Product Image */}
                                         <Image
-                                            src={product.images?.[0] || "/clothes/placeholder.jpeg"}
+                                            src={normalizeProductImage(product.images?.[0])}
                                             alt={product.name}
                                             fill
                                             sizes="(max-width: 640px) 50vw, 25vw"
@@ -237,7 +261,7 @@ export function ProductGrid({ title = "Featured Drops", gender, isFeatured, isNe
             <ScrollReveal delay={0.2}>
                 <div className="text-center mt-14">
                     <Link
-                        href="/shop"
+                        href={viewAllHref}
                         className="group inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground transition-colors duration-500"
                     >
                         View all products

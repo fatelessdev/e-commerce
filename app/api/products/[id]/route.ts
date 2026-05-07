@@ -58,43 +58,79 @@ export async function GET(
       .from(productVariants)
       .where(eq(productVariants.productId, id));
 
-    let comboLinkedProducts: Array<typeof product> = [];
+    // Fetch combos this product is in
+    let relatedCombos: any[] = [];
 
-    if (product.category === "shirt") {
-      const comboRows = await db
-        .select({
-          productAId: combos.productAId,
-          productBId: combos.productBId,
-        })
-        .from(combos)
-        .where(
-          and(
-            eq(combos.isActive, true),
-            or(eq(combos.productAId, id), eq(combos.productBId, id))
-          )
+    const comboRows = await db
+      .select()
+      .from(combos)
+      .where(
+        and(
+          eq(combos.isActive, true),
+          or(eq(combos.productAId, id), eq(combos.productBId, id))
         )
-        .orderBy(desc(combos.displayOrder), desc(combos.createdAt));
+      )
+      .orderBy(desc(combos.displayOrder), desc(combos.createdAt));
 
-      const linkedIds = Array.from(
-        new Set(
-          comboRows.map((combo) => (combo.productAId === id ? combo.productBId : combo.productAId))
-        )
+    if (comboRows.length > 0) {
+      // Fetch all products needed for these combos
+      const comboProductIds = Array.from(
+        new Set(comboRows.flatMap((combo) => [combo.productAId, combo.productBId]))
       );
 
-      if (linkedIds.length > 0) {
-        const linkedProducts = await db
-          .select()
-          .from(products)
-          .where(and(inArray(products.id, linkedIds), eq(products.isActive, true)));
+      const comboProducts = await db
+        .select()
+        .from(products)
+        .where(and(inArray(products.id, comboProductIds), eq(products.isActive, true)));
 
-        const linkedMap = new Map(linkedProducts.map((linkedProduct) => [linkedProduct.id, linkedProduct]));
-        comboLinkedProducts = linkedIds
-          .map((linkedId) => linkedMap.get(linkedId))
-          .filter((linkedProduct): linkedProduct is typeof product => Boolean(linkedProduct));
-      }
+      const comboVariants = await db
+        .select()
+        .from(productVariants)
+        .where(inArray(productVariants.productId, comboProductIds));
+
+      const productMap = new Map(comboProducts.map((p) => [p.id, p]));
+      const variantsByProductId = comboVariants.reduce<Map<string, typeof comboVariants>>(
+        (acc, variant) => {
+          const existing = acc.get(variant.productId) || [];
+          existing.push(variant);
+          acc.set(variant.productId, existing);
+          return acc;
+        },
+        new Map()
+      );
+
+      relatedCombos = comboRows
+        .map((combo) => {
+          const productA = productMap.get(combo.productAId);
+          const productB = productMap.get(combo.productBId);
+
+          if (!productA || !productB) return null;
+
+          return {
+            ...combo,
+            productA: {
+              ...productA,
+              images: productA.images || [],
+              sizes: productA.sizes || [],
+              colors: productA.colors || [],
+              variants: variantsByProductId.get(productA.id) || [],
+            },
+            productB: {
+              ...productB,
+              images: productB.images || [],
+              sizes: productB.sizes || [],
+              colors: productB.colors || [],
+              variants: variantsByProductId.get(productB.id) || [],
+            },
+          };
+        })
+        .filter((combo): combo is typeof relatedCombos[0] => combo !== null);
     }
 
-    const excludedIds = new Set([id, ...comboLinkedProducts.map((linkedProduct) => linkedProduct.id)]);
+    const excludedIds = new Set([
+      id,
+      ...comboRows.map((combo) => (combo.productAId === id ? combo.productBId : combo.productAId)),
+    ]);
 
     const candidateProducts = await db
       .select()
@@ -107,12 +143,9 @@ export async function GET(
       .filter((candidate) => !excludedIds.has(candidate.id))
       .sort((a, b) => getRelatedScore(product, b) - getRelatedScore(product, a));
 
-    const relatedProducts = [
-      ...comboLinkedProducts,
-      ...fallbackProducts,
-    ].slice(0, 8);
+    const relatedProducts = fallbackProducts.slice(0, 8);
 
-    return NextResponse.json({ ...product, variants, relatedProducts });
+    return NextResponse.json({ ...product, variants, relatedCombos, relatedProducts });
   } catch (error) {
     console.error("Failed to fetch product:", error);
     return NextResponse.json(

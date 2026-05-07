@@ -11,6 +11,7 @@ import { CheckoutBargain } from "@/components/features/checkout-bargain"
 import { useSession } from "@/lib/auth-client"
 import { getSavedShippingAddress } from "@/lib/actions/orders"
 import { FREE_SHIPPING_THRESHOLD, FREE_SHIPPING_THRESHOLD_DISPLAY, SHIPPING_FEE, COD_FEE, COD_ALLOWED_PINCODES } from "@/lib/constants"
+import { normalizeProductImage } from "@/lib/image"
 import Script from "next/script"
 
 const CHECKOUT_STORAGE_KEY = "xilar-checkout"
@@ -725,7 +726,7 @@ export default function CheckoutPage() {
                                 {items.map((item) => (
                                     <div key={`${item.comboGroupId || "single"}-${item.id}-${item.size}-${item.color || ""}`} className="flex gap-4 border-b border-border/60 pb-4">
                                         <Image
-                                            src={item.image}
+                                            src={normalizeProductImage(item.image)}
                                             alt={item.name}
                                             width={56}
                                             height={72}
