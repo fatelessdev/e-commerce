@@ -23,9 +23,6 @@ export function Sidebar({ className }: SidebarProps) {
                         <Link href="/shop/accessories" className="block px-3 py-2.5 text-sm font-medium hover:bg-accent/60 hover:text-accent-foreground transition-colors duration-300">
                             Accessories
                         </Link>
-                        <Link href="/shop/men" className="block px-3 py-2.5 text-sm font-medium hover:bg-accent/60 hover:text-accent-foreground transition-colors duration-300">
-                            Combos
-                        </Link>
                     </div>
                 </div>
                 <div className="px-4">
