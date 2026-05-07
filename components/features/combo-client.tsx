@@ -195,7 +195,7 @@ export function ComboClient({ id }: { id: string }) {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <div className="border-b border-border/60 px-6 md:px-12 py-14 md:py-20">
+      {/* <div className="border-b border-border/60 px-6 md:px-12 py-14 md:py-20">
         <div className="space-y-3">
           <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium">Bundle Deal</p>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tighter uppercase leading-tight">
@@ -209,7 +209,7 @@ export function ComboClient({ id }: { id: string }) {
             Choose sizes and colors for both items. Get up to {formatPrice(maxDiscount)} in bargaining power on checkout.
           </p>
         </div>
-      </div>
+      </div> */}
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">

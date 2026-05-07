@@ -16,7 +16,7 @@ async function getCombo(id: string) {
 
   if (!combo) return null
 
-  const [productA, productB] = await db
+  const comboProducts = await db
     .select()
     .from(products)
     .where(
@@ -26,12 +26,25 @@ async function getCombo(id: string) {
       )
     )
 
+  // Keep correct product order according to combo table
+  const productA = comboProducts.find(
+    (product) => product.id === combo.productAId
+  )
+
+  const productB = comboProducts.find(
+    (product) => product.id === combo.productBId
+  )
+
+  if (!productA || !productB) return null
+
   return { combo, productA, productB }
 }
 
-export async function generateMetadata(
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}): Promise<Metadata> {
   const { id } = await params
   const result = await getCombo(id)
 
@@ -47,13 +60,19 @@ export async function generateMetadata(
   }
 
   const { productA, productB } = result
-  const priceA = parseFloat(productA.sellingPrice)
-  const priceB = parseFloat(productB.sellingPrice)
+
+  const priceA = Number(productA.sellingPrice)
+  const priceB = Number(productB.sellingPrice)
   const totalPrice = priceA + priceB
-  const description = `Shop ${productA.name} + ${productB.name} combo from XILAR. Bundle deal starting at ₹${totalPrice.toLocaleString("en-IN")}.`
+
+  const title = `${productA.name} + ${productB.name} Combo | XILAR`
+
+  const description = `Shop ${productA.name} + ${productB.name} combo from XILAR. Bundle deal starting at ₹${totalPrice.toLocaleString(
+    "en-IN"
+  )}.`
 
   return {
-    title: `${productA.name} + ${productB.name} Combo | XILAR`,
+    title,
     description,
     alternates: {
       canonical: `/combo/${id}`,
@@ -83,6 +102,7 @@ export default async function ComboPage({
           { name: "Combo", url: `/combo/${id}` },
         ])}
       />
+
       <ComboClient id={id} />
     </>
   )
