@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ProductGrid } from "@/components/features/product-grid"
 import { BargainDiscountStrip } from "@/components/ui/bargain-discount-strip"
@@ -67,6 +67,20 @@ export function ProductClient({ id }: { id: string }) {
     const { addItem } = useCart()
     const { isInWishlist, toggleItem } = useWishlist()
 
+    // Memoize variant stock for O(1) lookup
+    // Composite key: "{size}_{color}" (or "{size}_null" for no color)
+    const variantStockMap = useMemo(() => {
+        const map = new Map<string, number>();
+        if (!product?.variants) return map;
+
+        for (const variant of product.variants) {
+            const key = `${variant.size}_${variant.color ?? 'null'}`;
+            map.set(key, variant.stock);
+        }
+        return map;
+    }, [product?.variants]);
+
+
     // Scroll to top on navigation
     useEffect(() => {
         window.scrollTo(0, 0)
@@ -100,10 +114,8 @@ export function ProductClient({ id }: { id: string }) {
             // Fallback to product-level stock if no variants
             return product?.stock ?? 0
         }
-        const variant = product.variants.find(
-            (v) => v.size === size && (v.color === color || (v.color === null && color === null))
-        )
-        return variant?.stock ?? 0
+        const key = `${size}_${color ?? 'null'}`;
+        return variantStockMap.get(key) ?? 0;
     }
 
     // Helper: check if a size is available for any color

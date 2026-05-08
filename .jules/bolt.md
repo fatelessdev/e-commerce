@@ -1,0 +1,3 @@
+## 2024-05-08 - O(1) Variant Lookup Optimization
+**Learning:** React components containing multiple dependent variant derivations (e.g. `getVariantStock`, `isColorAvailable`) inherently execute O(N) array traversals on every render or state change. In deeply nested React component logic, resolving a composite key check via `find()` introduces significant hidden overhead.
+**Action:** When working with structured variant attributes (e.g., product `size` and `color`), proactively memoize the data array into a `Map` or hashmap with composite keys via `useMemo`. This flattens repetitive array traversals into O(1) lookups during complex condition checks.
