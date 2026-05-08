@@ -11,9 +11,11 @@ const authBaseUrl =
   process.env.NEXT_PUBLIC_APP_URL ||
   "http://localhost:3000";
 
-const authSecret =
-  process.env.BETTER_AUTH_SECRET ||
-  "xilar-local-dev-secret-change-in-production";
+const authSecret = process.env.BETTER_AUTH_SECRET;
+
+if (!authSecret) {
+  throw new Error("BETTER_AUTH_SECRET environment variable is missing. It is required for authentication.");
+}
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;

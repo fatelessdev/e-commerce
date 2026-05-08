@@ -1,0 +1,4 @@
+## 2024-05-24 - Missing hardcoded secret restriction for authentication
+**Vulnerability:** `BETTER_AUTH_SECRET` had a hardcoded string fallback (`"xilar-local-dev-secret-change-in-production"`). If environment variables failed to load in production, the application would unknowingly use this insecure fallback for cryptographic operations (like session generation), resulting in a severe authentication vulnerability where session cookies could be forged by an attacker who knows the repository's code.
+**Learning:** Even with "change in production" warnings, default fallback secrets in code present a critical risk if a deployment occurs with misconfigured or missing environment variables.
+**Prevention:** Always enforce required cryptographic secrets to be set in the environment by throwing an error immediately at the module level if they are missing. Never provide insecure fallbacks for authentication secrets.
