@@ -37,6 +37,7 @@ export function DeleteCouponButton({
       onClick={handleDelete}
       disabled={isDeleting}
       className="text-destructive hover:text-destructive"
+      aria-label="Delete coupon"
     >
       {isDeleting ? (
         <Loader2 className="h-4 w-4 animate-spin" />
