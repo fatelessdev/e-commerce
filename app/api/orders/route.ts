@@ -4,7 +4,7 @@ import { validateCoupon } from "@/lib/actions/admin";
 import { getServerSession } from "@/lib/auth-server";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE, COD_FEE, COD_ALLOWED_PINCODES } from "@/lib/constants";
 
 export async function POST(_req: NextRequest) {
@@ -37,6 +37,14 @@ export async function POST(_req: NextRequest) {
     let subtotal = 0;
     const verifiedItems = [];
 
+    const productIds = body.items.map((item: any) => item.productId);
+    const productRows = productIds.length > 0 ? await db
+      .select({ id: products.id, sellingPrice: products.sellingPrice, name: products.name })
+      .from(products)
+      .where(inArray(products.id, productIds)) : [];
+
+    const productMap = new Map(productRows.map((p) => [p.id, p]));
+
     for (const item of body.items) {
       if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
         return NextResponse.json(
@@ -45,10 +53,7 @@ export async function POST(_req: NextRequest) {
         );
       }
 
-      const [product] = await db
-        .select({ sellingPrice: products.sellingPrice, name: products.name })
-        .from(products)
-        .where(eq(products.id, item.productId));
+      const product = productMap.get(item.productId);
 
       if (!product) {
         return NextResponse.json(
