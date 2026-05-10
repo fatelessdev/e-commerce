@@ -4,6 +4,7 @@ import { db, user, coupons, bargainSessions, products, combos } from "@/lib/db";
 import { and, eq, inArray } from "drizzle-orm";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { generateSecureCode } from "@/lib/utils";
 
 export const maxDuration = 30;
 const MAX_NEGOTIATION_ROUNDS = 10;
@@ -17,16 +18,6 @@ type BargainCartItem = {
   comboId?: string;
   comboGroupId?: string;
 };
-
-// Generate unique coupon code
-function generateCouponCode(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let code = "BRG-";
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
-}
 
 function calculateCartRuleCap(cartTotal: number, isFirstTimeUser: boolean): number {
   // First-time user with cart > ₹2000: 10% off (max ₹200)
@@ -344,7 +335,7 @@ export async function POST(req: Request) {
     const shouldGiveFinalCoupon = finalizeNow && Boolean(userId);
     
     // Generate coupon code (we'll save it if final offer is given)
-    const couponCode = generateCouponCode();
+    const couponCode = generateSecureCode("BRG-", 6);
     const finalDiscountAmount = Math.max(0, Math.min(maxDiscount, currentOffer));
     
     // Build cart context
