@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import { generateSecureCode } from "@/lib/utils"
 
 export interface CartItem {
     id: string
@@ -80,7 +81,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     const addCombo: CartContextType["addCombo"] = (combo) => {
-        const comboGroupId = `combo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+        const comboGroupId = `combo-${Date.now()}-${generateSecureCode("", 6)}`
         setItems((prev) => [
             ...prev,
             ...combo.items.map((item) => ({
