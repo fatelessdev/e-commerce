@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ProductGrid } from "@/components/features/product-grid"
 import { BargainDiscountStrip } from "@/components/ui/bargain-discount-strip"
@@ -94,16 +94,29 @@ export function ProductClient({ id }: { id: string }) {
         fetchProduct()
     }, [id])
 
+    // Memoize variants for O(1) lookups during render loop
+    const variantMap = useMemo(() => {
+        const map = new Map<string, number>()
+        if (!product?.variants) return map
+
+        product.variants.forEach(v => {
+            const key = `${v.size}|${v.color}`
+            map.set(key, v.stock)
+        })
+        return map
+    }, [product?.variants])
+
     // Helper: get stock for a specific variant (size + color combo)
     const getVariantStock = (size: string, color: string | null): number => {
         if (!product?.variants || product.variants.length === 0) {
             // Fallback to product-level stock if no variants
             return product?.stock ?? 0
         }
-        const variant = product.variants.find(
-            (v) => v.size === size && (v.color === color || (v.color === null && color === null))
-        )
-        return variant?.stock ?? 0
+
+        const exactKey = `${size}|${color}`
+        if (variantMap.has(exactKey)) return variantMap.get(exactKey)!
+
+        return 0
     }
 
     // Helper: check if a size is available for any color
