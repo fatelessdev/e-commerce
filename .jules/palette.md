@@ -1,0 +1,3 @@
+## 2024-05-24 - Accessibility for Icon-only Buttons
+**Learning:** Found a pattern in this application's components (e.g., `components/features/cart-drawer.tsx`) where icon-only buttons (using `size="icon"`) lacked `aria-label` attributes, creating accessibility issues for screen readers since they could only read the generic "button" role without context. Adding descriptive attributes like `aria-label={`Decrease quantity of ${item.name}`}` is necessary when text content is absent.
+**Action:** When implementing or modifying UI components, especially for actions represented by icons alone (like close, increase/decrease quantity, remove), always include a descriptive `aria-label` to provide context for assistive technologies.
