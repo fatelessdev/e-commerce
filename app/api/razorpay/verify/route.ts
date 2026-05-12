@@ -4,7 +4,7 @@ import { createOrder } from "@/lib/actions/orders";
 import razorpay from "@/lib/razorpay";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import { validateCoupon } from "@/lib/actions/admin";
 import { getServerSession } from "@/lib/auth-server";
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from "@/lib/constants";
@@ -60,6 +60,20 @@ export async function POST(req: NextRequest) {
     // Recalculate total from actual DB prices to prevent tampering
     let serverSubtotal = 0;
 
+    // Extract unique product IDs for batch querying
+    const productIds = [...new Set(orderData.items.map((item: { productId: string }) => item.productId))] as string[];
+
+    // Batch query to fix N+1 problem
+    const fetchedProducts = productIds.length > 0
+      ? await db
+          .select({ id: products.id, sellingPrice: products.sellingPrice, name: products.name })
+          .from(products)
+          .where(inArray(products.id, productIds))
+      : [];
+
+    // Create a Map for O(1) lookups
+    const productsMap = new Map(fetchedProducts.map(p => [p.id, p]));
+
     for (const item of orderData.items) {
       if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
         return NextResponse.json(
@@ -68,10 +82,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const [product] = await db
-        .select({ sellingPrice: products.sellingPrice, name: products.name })
-        .from(products)
-        .where(eq(products.id, item.productId));
+      const product = productsMap.get(item.productId);
 
       if (!product) {
         return NextResponse.json(
