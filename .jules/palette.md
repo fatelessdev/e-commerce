@@ -1,0 +1,3 @@
+## 2024-05-13 - Add ARIA Labels to Icon-Only Cart Drawer Buttons
+**Learning:** Icon-only buttons used for cart quantity adjustments (increase/decrease) and item removal inside the shopping cart drawer frequently lack `aria-label` attributes. This makes it impossible for screen reader users to identify the purpose of the buttons or the item they affect.
+**Action:** Always ensure that icon-only `<Button size="icon">` components, particularly those acting on specific items in a list (like a cart), have dynamic `aria-label`s that describe the action and include the item's context (e.g., `aria-label="Decrease quantity of {item.name}"`).
