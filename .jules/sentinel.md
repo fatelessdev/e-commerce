@@ -1,0 +1,4 @@
+## 2024-06-18 - Prevent Predictable Randomness (Math.random) in Secure Code Generation
+**Vulnerability:** Weak randomness used for token generation (e.g., `Math.random` used for generating discount coupons, store credits, and combo group identifiers). This could allow an attacker to predict generated codes and abuse systems.
+**Learning:** `Math.random` is not cryptographically secure and should never be used for sensitive tokens, passwords, or identifiers. It was found being used directly across several files for generating varying lengths of tokens (`app/api/bargain/route.ts`, `lib/actions/admin.ts`, `lib/cart-context.tsx`).
+**Prevention:** Always use the Web Crypto API (`globalThis.crypto.getRandomValues`) for cryptographically secure randomness. Created a reusable `generateSecureCode(prefix, length)` utility in `lib/utils.ts` and replaced all occurrences of `Math.random()` related to code/token generation with this secure function.
