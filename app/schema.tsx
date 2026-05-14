@@ -1,3 +1,5 @@
+import { safeJsonLdStringify } from "@/lib/safe-json";
+
 export default function Schema() {
   const jsonLd = {
     "@context": "https://schema.org",
@@ -35,7 +37,7 @@ export default function Schema() {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: safeJsonLdStringify(jsonLd) }}
     />
   );
 }
