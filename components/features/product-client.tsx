@@ -20,6 +20,19 @@ interface ProductVariant {
     stock: number;
 }
 
+interface RelatedComboProduct {
+    id: string
+    name: string
+    sellingPrice: string
+    images: string[]
+}
+
+interface RelatedCombo {
+    id: string
+    productA: RelatedComboProduct
+    productB: RelatedComboProduct
+}
+
 interface Product {
     id: string
     name: string
@@ -38,7 +51,7 @@ interface Product {
     gender: string
     stock: number
     variants?: ProductVariant[]
-    relatedCombos?: any[]
+    relatedCombos?: RelatedCombo[]
     relatedProducts?: {
         id: string
         name: string

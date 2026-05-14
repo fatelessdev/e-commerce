@@ -4,6 +4,15 @@ import { products, productVariants, combos } from "@/lib/db/schema";
 import { and, desc, eq, inArray, or } from "drizzle-orm";
 import { isAdmin } from "@/lib/auth-server";
 
+type ProductRow = typeof products.$inferSelect;
+type ProductVariantRow = typeof productVariants.$inferSelect;
+type ComboRow = typeof combos.$inferSelect;
+
+type RelatedCombo = ComboRow & {
+  productA: ProductRow & { variants: ProductVariantRow[] };
+  productB: ProductRow & { variants: ProductVariantRow[] };
+};
+
 function getRelatedScore(
   target: { category: string; gender: string },
   candidate: { category: string; gender: string }
@@ -59,7 +68,7 @@ export async function GET(
       .where(eq(productVariants.productId, id));
 
     // Fetch combos this product is in
-    let relatedCombos: any[] = [];
+    let relatedCombos: RelatedCombo[] = [];
 
     const comboRows = await db
       .select()
@@ -99,8 +108,8 @@ export async function GET(
         new Map()
       );
 
-      relatedCombos = comboRows
-        .map((combo) => {
+      const mappedCombos = comboRows
+        .map((combo): RelatedCombo | null => {
           const productA = productMap.get(combo.productAId);
           const productB = productMap.get(combo.productBId);
 
@@ -123,8 +132,9 @@ export async function GET(
               variants: variantsByProductId.get(productB.id) || [],
             },
           };
-        })
-        .filter((combo): combo is typeof relatedCombos[0] => combo !== null);
+        });
+
+      relatedCombos = mappedCombos.filter((combo): combo is RelatedCombo => combo !== null);
     }
 
     const excludedIds = new Set([

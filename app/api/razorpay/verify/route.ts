@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validatePaymentVerification } from "razorpay/dist/utils/razorpay-utils";
-import { createOrder } from "@/lib/actions/orders";
+import { createOrder, type OrderItemInput } from "@/lib/actions/orders";
 import razorpay from "@/lib/razorpay";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import { validateCoupon } from "@/lib/actions/admin";
 import { getServerSession } from "@/lib/auth-server";
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from "@/lib/constants";
+
+type IncomingOrderItem = Omit<OrderItemInput, "unitPrice" | "totalPrice"> & {
+  unitPrice?: unknown;
+  totalPrice?: unknown;
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -58,9 +63,11 @@ export async function POST(req: NextRequest) {
 
     // --- Server-side amount verification ---
     // Recalculate total from actual DB prices to prevent tampering
+    const incomingItems = orderData.items as IncomingOrderItem[];
     let serverSubtotal = 0;
+    const verifiedItems: OrderItemInput[] = [];
 
-    const productIds = orderData.items.map((item: any) => item.productId);
+    const productIds = [...new Set(incomingItems.map((item) => item.productId))];
     const productRows = productIds.length > 0 ? await db
       .select({ id: products.id, sellingPrice: products.sellingPrice, name: products.name })
       .from(products)
@@ -68,7 +75,7 @@ export async function POST(req: NextRequest) {
 
     const productMap = new Map(productRows.map((p) => [p.id, p]));
 
-    for (const item of orderData.items) {
+    for (const item of incomingItems) {
       if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
         return NextResponse.json(
           { success: false, error: "Invalid item quantity" },
@@ -88,6 +95,11 @@ export async function POST(req: NextRequest) {
       const realPrice = parseFloat(product.sellingPrice);
       const itemTotal = realPrice * item.quantity;
       serverSubtotal += itemTotal;
+      verifiedItems.push({
+        ...item,
+        unitPrice: realPrice,
+        totalPrice: itemTotal,
+      });
     }
 
     const serverShipping = serverSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
@@ -122,7 +134,7 @@ export async function POST(req: NextRequest) {
 
     // Payment verified & amount validated — create the order with server-computed values
     const result = await createOrder({
-      items: orderData.items,
+      items: verifiedItems,
       subtotal: serverSubtotal,
       shippingCost: serverShipping,
       discount: serverDiscount,

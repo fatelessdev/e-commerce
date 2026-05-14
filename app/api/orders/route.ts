@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createOrder } from "@/lib/actions/orders";
+import { createOrder, type OrderItemInput } from "@/lib/actions/orders";
 import { validateCoupon } from "@/lib/actions/admin";
 import { getServerSession } from "@/lib/auth-server";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE, COD_FEE, COD_ALLOWED_PINCODES } from "@/lib/constants";
+
+type IncomingOrderItem = Omit<OrderItemInput, "unitPrice" | "totalPrice"> & {
+  unitPrice?: unknown;
+  totalPrice?: unknown;
+};
 
 export async function POST(_req: NextRequest) {
   try {
@@ -34,10 +39,11 @@ export async function POST(_req: NextRequest) {
     }
 
     // Recompute totals from actual DB prices
+    const items = body.items as IncomingOrderItem[];
     let subtotal = 0;
-    const verifiedItems = [];
+    const verifiedItems: OrderItemInput[] = [];
 
-    const productIds = body.items.map((item: any) => item.productId);
+    const productIds = [...new Set(items.map((item) => item.productId))];
     const productRows = productIds.length > 0 ? await db
       .select({ id: products.id, sellingPrice: products.sellingPrice, name: products.name })
       .from(products)
@@ -45,7 +51,7 @@ export async function POST(_req: NextRequest) {
 
     const productMap = new Map(productRows.map((p) => [p.id, p]));
 
-    for (const item of body.items) {
+    for (const item of items) {
       if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
         return NextResponse.json(
           { success: false, error: "Invalid item quantity" },
