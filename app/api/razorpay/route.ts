@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import razorpay from "@/lib/razorpay";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import { validateCoupon } from "@/lib/actions/admin";
 import { getServerSession } from "@/lib/auth-server";
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from "@/lib/constants";
@@ -20,6 +20,19 @@ export async function POST(req: NextRequest) {
 
     // Compute total from actual DB prices
     let subtotal = 0;
+
+    // Batch fetch product prices to avoid N+1 queries
+    const productIds = items.map((item: { productId: string }) => item.productId);
+
+    const productsData = productIds.length > 0 ? await db
+      .select({ id: products.id, sellingPrice: products.sellingPrice })
+      .from(products)
+      .where(inArray(products.id, productIds)) : [];
+
+    const productPriceMap = new Map(
+      productsData.map(p => [p.id, parseFloat(p.sellingPrice)])
+    );
+
     for (const item of items) {
       if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
         return NextResponse.json(
@@ -28,19 +41,15 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const [product] = await db
-        .select({ sellingPrice: products.sellingPrice })
-        .from(products)
-        .where(eq(products.id, item.productId));
+      const unitPrice = productPriceMap.get(item.productId);
 
-      if (!product) {
+      if (unitPrice === undefined) {
         return NextResponse.json(
           { success: false, error: `Product not found: ${item.productId}` },
           { status: 400 }
         );
       }
 
-      const unitPrice = parseFloat(product.sellingPrice);
       subtotal += unitPrice * item.quantity;
     }
 
