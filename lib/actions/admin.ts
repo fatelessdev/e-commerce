@@ -507,34 +507,35 @@ export async function getDashboardStats() {
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  // Total products
-  const [{ count: totalProducts }] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(products)
-    .where(eq(products.isActive, true));
-
-  // Total orders (last 30 days)
-  const [{ count: totalOrders }] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(orders)
-    .where(gte(orders.createdAt, thirtyDaysAgo));
-
-  // Total revenue (last 30 days)
-  const [{ sum: totalRevenue }] = await db
-    .select({ sum: sql<string>`COALESCE(sum(total), 0)` })
-    .from(orders)
-    .where(
-      and(
-        gte(orders.createdAt, thirtyDaysAgo),
-        eq(orders.status, "delivered")
-      )
-    );
-
-  // Active coupons
-  const [{ count: activeCoupons }] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(coupons)
-    .where(eq(coupons.isActive, true));
+  // Run independent sequential queries concurrently to avoid waterfall requests
+  const [
+    [{ count: totalProducts }],
+    [{ count: totalOrders }],
+    [{ sum: totalRevenue }],
+    [{ count: activeCoupons }]
+  ] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(products)
+      .where(eq(products.isActive, true)),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(orders)
+      .where(gte(orders.createdAt, thirtyDaysAgo)),
+    db
+      .select({ sum: sql<string>`COALESCE(sum(total), 0)` })
+      .from(orders)
+      .where(
+        and(
+          gte(orders.createdAt, thirtyDaysAgo),
+          eq(orders.status, "delivered")
+        )
+      ),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(coupons)
+      .where(eq(coupons.isActive, true))
+  ]);
 
   return {
     totalProducts: Number(totalProducts),
