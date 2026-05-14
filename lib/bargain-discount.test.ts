@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { formatBargainDiscountLabel } from "./bargain-discount"
-import { BARGAIN_BOT_BANNER_MESSAGE } from "./constants"
+import { formatBargainDiscountLabel } from "./bargain-discount.ts"
+import { BARGAIN_BOT_BANNER_MESSAGE } from "./constants.ts"
 
 test("returns null label when max bargain discount is missing or zero", () => {
   assert.equal(formatBargainDiscountLabel(null), null)

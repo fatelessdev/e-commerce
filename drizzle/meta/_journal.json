@@ -57,6 +57,13 @@
       "when": 1776953338837,
       "tag": "0007_dear_caliban",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1778779929989,
+      "tag": "0008_hard_karen_page",
+      "breakpoints": true
     }
   ]
 }

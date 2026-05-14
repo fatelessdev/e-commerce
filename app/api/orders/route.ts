@@ -4,8 +4,9 @@ import { validateCoupon } from "@/lib/actions/admin";
 import { getServerSession } from "@/lib/auth-server";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
-import { inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE, COD_FEE, COD_ALLOWED_PINCODES } from "@/lib/constants";
+import { validateCartQuantities } from "@/lib/checkout-validation";
 
 type IncomingOrderItem = Omit<OrderItemInput, "unitPrice" | "totalPrice"> & {
   unitPrice?: unknown;
@@ -40,6 +41,13 @@ export async function POST(_req: NextRequest) {
 
     // Recompute totals from actual DB prices
     const items = body.items as IncomingOrderItem[];
+    if (!validateCartQuantities(items)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid item quantity" },
+        { status: 400 }
+      );
+    }
+
     let subtotal = 0;
     const verifiedItems: OrderItemInput[] = [];
 
@@ -47,18 +55,11 @@ export async function POST(_req: NextRequest) {
     const productRows = productIds.length > 0 ? await db
       .select({ id: products.id, sellingPrice: products.sellingPrice, name: products.name })
       .from(products)
-      .where(inArray(products.id, productIds)) : [];
+      .where(and(inArray(products.id, productIds), eq(products.isActive, true))) : [];
 
     const productMap = new Map(productRows.map((p) => [p.id, p]));
 
     for (const item of items) {
-      if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
-        return NextResponse.json(
-          { success: false, error: "Invalid item quantity" },
-          { status: 400 }
-        );
-      }
-
       const product = productMap.get(item.productId);
 
       if (!product) {

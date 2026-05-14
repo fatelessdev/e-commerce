@@ -227,6 +227,8 @@ export async function getProducts(options?: {
   limit?: number;
   offset?: number;
 }) {
+  await requireAdmin();
+
   const conditions = [];
 
   if (options?.category) {
@@ -251,6 +253,8 @@ export async function getProducts(options?: {
 }
 
 export async function getProductById(id: string) {
+  await requireAdmin();
+
   const [product] = await db
     .select()
     .from(products)
@@ -260,6 +264,8 @@ export async function getProductById(id: string) {
 }
 
 export async function getProductBySlug(slug: string) {
+  await requireAdmin();
+
   const [product] = await db
     .select()
     .from(products)
@@ -269,6 +275,8 @@ export async function getProductBySlug(slug: string) {
 }
 
 export async function getProductVariants(productId: string) {
+  await requireAdmin();
+
   const variants = await db
     .select()
     .from(productVariants)
@@ -347,6 +355,8 @@ export async function deleteCoupon(id: string) {
 }
 
 export async function getCoupons(options?: { isActive?: boolean }) {
+  await requireAdmin();
+
   const conditions = [];
 
   if (options?.isActive !== undefined) {
@@ -419,18 +429,6 @@ export async function validateCoupon(code: string, orderTotal: number, userId?: 
   };
 }
 
-export async function markCouponUsed(code: string) {
-  const [coupon] = await db
-    .update(coupons)
-    .set({ 
-      usedCount: sql`${coupons.usedCount} + 1`,
-    })
-    .where(eq(coupons.code, code.toUpperCase()))
-    .returning();
-
-  return coupon;
-}
-
 // ============================================
 // ORDER ACTIONS
 // ============================================
@@ -464,6 +462,8 @@ export async function getOrders(options?: {
 }
 
 export async function getOrderById(id: string) {
+  await requireAdmin();
+
   const [order] = await db
     .select()
     .from(orders)

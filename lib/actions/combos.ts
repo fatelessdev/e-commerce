@@ -125,6 +125,8 @@ export async function deleteCombo(id: string) {
 }
 
 export async function getAdminCombos() {
+  await requireAdmin();
+
   const comboRows = await db
     .select()
     .from(combos)

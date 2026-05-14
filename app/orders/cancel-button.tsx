@@ -7,7 +7,8 @@
 // import { Loader2, XCircle } from "lucide-react"
 // import { cancelOrder } from "@/lib/actions/orders"
 
-export function CancelOrderButton({ orderId: _orderId }: { orderId: string }) {
+export function CancelOrderButton({ orderId }: { orderId: string }) {
+    void orderId
     return null
 
     /* COD CANCEL BUTTON — temporarily commented out

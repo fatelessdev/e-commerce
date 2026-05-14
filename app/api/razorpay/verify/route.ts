@@ -3,11 +3,12 @@ import { validatePaymentVerification } from "razorpay/dist/utils/razorpay-utils"
 import { createOrder, type OrderItemInput } from "@/lib/actions/orders";
 import razorpay from "@/lib/razorpay";
 import { db } from "@/lib/db";
-import { products } from "@/lib/db/schema";
-import { inArray } from "drizzle-orm";
+import { orders, products } from "@/lib/db/schema";
+import { and, eq, inArray, or } from "drizzle-orm";
 import { validateCoupon } from "@/lib/actions/admin";
 import { getServerSession } from "@/lib/auth-server";
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from "@/lib/constants";
+import { validateCartQuantities } from "@/lib/checkout-validation";
 
 type IncomingOrderItem = Omit<OrderItemInput, "unitPrice" | "totalPrice"> & {
   unitPrice?: unknown;
@@ -61,9 +62,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const [existingOrder] = await db
+      .select({ id: orders.id })
+      .from(orders)
+      .where(
+        or(
+          eq(orders.razorpayPaymentId, razorpay_payment_id),
+          eq(orders.razorpayOrderId, razorpay_order_id)
+        )
+      );
+
+    if (existingOrder) {
+      return NextResponse.json({
+        success: true,
+        orderId: existingOrder.id,
+      });
+    }
+
     // --- Server-side amount verification ---
     // Recalculate total from actual DB prices to prevent tampering
     const incomingItems = orderData.items as IncomingOrderItem[];
+    if (!validateCartQuantities(incomingItems)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid item quantity" },
+        { status: 400 }
+      );
+    }
+
     let serverSubtotal = 0;
     const verifiedItems: OrderItemInput[] = [];
 
@@ -71,18 +96,11 @@ export async function POST(req: NextRequest) {
     const productRows = productIds.length > 0 ? await db
       .select({ id: products.id, sellingPrice: products.sellingPrice, name: products.name })
       .from(products)
-      .where(inArray(products.id, productIds)) : [];
+      .where(and(inArray(products.id, productIds), eq(products.isActive, true))) : [];
 
     const productMap = new Map(productRows.map((p) => [p.id, p]));
 
     for (const item of incomingItems) {
-      if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
-        return NextResponse.json(
-          { success: false, error: "Invalid item quantity" },
-          { status: 400 }
-        );
-      }
-
       const product = productMap.get(item.productId);
 
       if (!product) {
@@ -117,14 +135,30 @@ export async function POST(req: NextRequest) {
     const serverDiscount = couponDiscount;
     const serverTotal = serverSubtotal + serverShipping - serverDiscount;
 
+    const payment = await razorpay.payments.fetch(razorpay_payment_id);
+    if (
+      payment.order_id !== razorpay_order_id ||
+      payment.currency !== "INR" ||
+      payment.status !== "captured"
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Payment is not captured for this order" },
+        { status: 400 }
+      );
+    }
+
     // Fetch the Razorpay order to verify the paid amount matches
     const rzpOrder = await razorpay.orders.fetch(razorpay_order_id);
     const paidAmountInRupees = Number(rzpOrder.amount) / 100;
+    const capturedAmountInRupees = Number(payment.amount) / 100;
 
     // Allow ₹1 tolerance for rounding
-    if (Math.abs(paidAmountInRupees - serverTotal) > 1) {
+    if (
+      Math.abs(paidAmountInRupees - serverTotal) > 1 ||
+      Math.abs(capturedAmountInRupees - serverTotal) > 1
+    ) {
       console.error(
-        `Amount mismatch: paid ₹${paidAmountInRupees}, expected ₹${serverTotal}`
+        `Amount mismatch: order ₹${paidAmountInRupees}, captured ₹${capturedAmountInRupees}, expected ₹${serverTotal}`
       );
       return NextResponse.json(
         { success: false, error: "Payment amount mismatch. Please contact support." },

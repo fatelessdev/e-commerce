@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import { eq, and, desc, ilike, or, gte, lte, sql } from "drizzle-orm";
+import { parsePublicProductPagination } from "@/lib/checkout-validation";
 
 export async function GET(req: NextRequest) {
   try {
@@ -14,8 +15,10 @@ export async function GET(req: NextRequest) {
     const maxPrice = searchParams.get("maxPrice");
     const isNew = searchParams.get("isNew");
     const isFeatured = searchParams.get("isFeatured");
-    const limit = parseInt(searchParams.get("limit") || "50");
-    const offset = parseInt(searchParams.get("offset") || "0");
+    const { limit, offset } = parsePublicProductPagination(
+      searchParams.get("limit"),
+      searchParams.get("offset")
+    );
 
     const conditions = [eq(products.isActive, true)];
 

@@ -3,11 +3,9 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
-import Image from "next/image"
-import { Loader2, ChevronLeft, ChevronRight, Heart, Check } from "lucide-react"
+import { Loader2, ChevronLeft, ChevronRight, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/lib/cart-context"
-import { useWishlist } from "@/lib/wishlist-context"
 import { normalizeProductImage } from "@/lib/image"
 
 interface ProductVariant {
@@ -79,7 +77,6 @@ export function ComboClient({ id }: { id: string }) {
   const [selectedColorB, setSelectedColorB] = useState<string | null>(null)
   const [added, setAdded] = useState(false)
   const { addCombo } = useCart()
-  const { toggleItem } = useWishlist()
 
   useEffect(() => {
     window.scrollTo(0, 0)

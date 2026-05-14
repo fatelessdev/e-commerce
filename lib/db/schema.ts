@@ -9,6 +9,7 @@ import {
   uuid,
   pgEnum,
   uniqueIndex,
+  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -250,7 +251,12 @@ export const orders = pgTable("orders", {
   
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => [
+  uniqueIndex("orders_razorpay_order_id_unique").on(table.razorpayOrderId),
+  uniqueIndex("orders_razorpay_payment_id_unique").on(table.razorpayPaymentId),
+  index("orders_user_id_idx").on(table.userId),
+  index("orders_created_at_idx").on(table.createdAt),
+]);
 
 export const orderItems = pgTable("order_items", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -274,7 +280,10 @@ export const orderItems = pgTable("order_items", {
   totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
   
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("order_items_order_id_idx").on(table.orderId),
+  index("order_items_product_id_idx").on(table.productId),
+]);
 
 // ============================================
 // COUPON TABLES
@@ -312,7 +321,10 @@ export const coupons = pgTable("coupons", {
   
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("coupons_user_id_idx").on(table.userId),
+  index("coupons_active_validity_idx").on(table.isActive, table.validUntil),
+]);
 
 // ============================================
 // BARGAIN SESSIONS TABLE
@@ -327,7 +339,10 @@ export const bargainSessions = pgTable("bargain_sessions", {
   used: boolean("used").notNull().default(false),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("bargain_sessions_coupon_code_idx").on(table.couponCode),
+  index("bargain_sessions_user_id_idx").on(table.userId),
+]);
 
 // ============================================
 // WISHLIST TABLE
@@ -342,7 +357,10 @@ export const wishlist = pgTable("wishlist", {
     .notNull()
     .references(() => products.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  uniqueIndex("wishlist_user_product_unique").on(table.userId, table.productId),
+  index("wishlist_user_id_idx").on(table.userId),
+]);
 
 // ============================================
 // RELATIONS
