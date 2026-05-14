@@ -110,8 +110,8 @@ export default async function ProductsPage() {
                   <td className="p-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Link href={`/admin/products/${product.id}`}>
-                        <Button variant="ghost" size="icon">
-                          <Pencil className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" aria-label={`Edit ${product.name}`}>
+                          <Pencil className="h-4 w-4" aria-hidden="true" />
                         </Button>
                       </Link>
                       <DeleteProductButton productId={product.id} productName={product.name} />

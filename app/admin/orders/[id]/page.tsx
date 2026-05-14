@@ -32,8 +32,8 @@ export default async function AdminOrderDetailPage({
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/admin/orders">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
+          <Button variant="ghost" size="icon" aria-label="Back to Orders">
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Button>
         </Link>
         <div>
