@@ -293,10 +293,11 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                             <Button
                                 variant="ghost"
                                 size="icon"
+                                aria-label="Close Bargain AI chat"
                                 className="h-6 w-6 text-white hover:bg-white/10"
                                 onClick={() => setIsOpen(false)}
                             >
-                                <X className="h-3.5 w-3.5" />
+                                <X className="h-3.5 w-3.5" aria-hidden="true" />
                             </Button>
                         </div>
 
@@ -366,10 +367,11 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                         size="sm"
                                         variant="outline"
                                         className="rounded-none"
+                                        aria-label={copied ? "Coupon code copied" : "Copy coupon code"}
                                         onClick={handleCopyCode}
                                         disabled={couponExpired}
                                     >
-                                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                                        {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
                                     </Button>
                                 </div>
 
@@ -420,10 +422,11 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                     <Button
                                         type="submit"
                                         size="icon"
+                                        aria-label="Send message"
                                         className="rounded-none bg-red-accent text-white hover:bg-[#8E0000]"
                                         disabled={isLoading || !input.trim()}
                                     >
-                                        <Send className="h-4 w-4" />
+                                        <Send className="h-4 w-4" aria-hidden="true" />
                                     </Button>
                                 </div>
                             </form>
