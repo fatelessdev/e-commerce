@@ -43,22 +43,6 @@ function formatPrice(value: string | number) {
   return `₹${amount.toLocaleString("en-IN")}`;
 }
 
-function getVariantStock(product: ComboProduct, size: string, color: string | null) {
-  if (!product.variants || product.variants.length === 0) {
-    return 0;
-  }
-
-  const variant = product.variants.find(
-    (row) => row.size === size && (row.color === color || (row.color === null && color === null))
-  );
-  return variant?.stock ?? 0;
-}
-
-function isColorAvailable(product: ComboProduct, colorName: string, selectedSize: string | null) {
-  if (!selectedSize) return false;
-  return getVariantStock(product, selectedSize, colorName) > 0;
-}
-
 function sizeOptions(product: ComboProduct) {
   if (NUMBER_SIZE_CATEGORIES.includes(product.category)) {
     return product.sizes.filter((size) => /^\d+$/.test(size));
@@ -81,11 +65,44 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
   const requiredColorA = combo.productA.colors.length > 0;
   const requiredColorB = combo.productB.colors.length > 0;
 
+  // Memoize variants for O(1) lookups during render loop
+  const variantMapA = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!combo.productA.variants) return map;
+    combo.productA.variants.forEach((v) => {
+      const key = `${v.size}|${v.color}`;
+      map.set(key, v.stock);
+    });
+    return map;
+  }, [combo.productA.variants]);
+
+  const variantMapB = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!combo.productB.variants) return map;
+    combo.productB.variants.forEach((v) => {
+      const key = `${v.size}|${v.color}`;
+      map.set(key, v.stock);
+    });
+    return map;
+  }, [combo.productB.variants]);
+
+  const getVariantStockA = (size: string, color: string | null): number => {
+    if (!combo.productA.variants || combo.productA.variants.length === 0) return 0;
+    const exactKey = `${size}|${color}`;
+    return variantMapA.get(exactKey) ?? 0;
+  };
+
+  const getVariantStockB = (size: string, color: string | null): number => {
+    if (!combo.productB.variants || combo.productB.variants.length === 0) return 0;
+    const exactKey = `${size}|${color}`;
+    return variantMapB.get(exactKey) ?? 0;
+  };
+
   const selectedStockA = selectedSizeA
-    ? getVariantStock(combo.productA, selectedSizeA, requiredColorA ? selectedColorA : null)
+    ? getVariantStockA(selectedSizeA, requiredColorA ? selectedColorA : null)
     : null;
   const selectedStockB = selectedSizeB
-    ? getVariantStock(combo.productB, selectedSizeB, requiredColorB ? selectedColorB : null)
+    ? getVariantStockB(selectedSizeB, requiredColorB ? selectedColorB : null)
     : null;
 
   const canAdd = Boolean(
@@ -156,7 +173,7 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
             {requiredColorA && (
               <div className="flex flex-wrap gap-2">
                 {combo.productA.colors.map((color) => {
-                  const available = isColorAvailable(combo.productA, color.name, selectedSizeA);
+                  const available = selectedSizeA ? getVariantStockA(selectedSizeA, color.name) > 0 : false;
                   return (
                     <button
                       key={`a-${color.name}`}
@@ -196,7 +213,7 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
             {requiredColorB && (
               <div className="flex flex-wrap gap-2">
                 {combo.productB.colors.map((color) => {
-                  const available = isColorAvailable(combo.productB, color.name, selectedSizeB);
+                  const available = selectedSizeB ? getVariantStockB(selectedSizeB, color.name) > 0 : false;
                   return (
                     <button
                       key={`b-${color.name}`}
