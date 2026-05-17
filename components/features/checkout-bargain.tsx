@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { X, Send, Copy, Check, Sparkles, Clock } from "lucide-react"
+import { X, Send, Copy, Check, Sparkles, Clock, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface BargainMessage {
@@ -420,10 +420,15 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                     <Button
                                         type="submit"
                                         size="icon"
+                                        aria-label="Send message"
                                         className="rounded-none bg-red-accent text-white hover:bg-[#8E0000]"
                                         disabled={isLoading || !input.trim()}
                                     >
-                                        <Send className="h-4 w-4" />
+                                        {isLoading ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <Send className="h-4 w-4" />
+                                        )}
                                     </Button>
                                 </div>
                             </form>
