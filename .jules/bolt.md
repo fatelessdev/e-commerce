@@ -1,0 +1,3 @@
+## 2024-05-18 - Avoid O(N) array traversals in React render loops for product variants
+**Learning:** In e-commerce components like `ComboClient`, repeatedly checking variant stock (e.g., matching size and color) by using `.find()` over an array of `N` variants for every rendered item (like every color swatch) causes O(N*M) performance overhead per render.
+**Action:** Always map the array of objects into a `Map` using `useMemo` with composite string keys (e.g., `size|color`), then use `.get(key)` inside the render loop mapping for O(1) lookups. Ensure `useMemo` variables are extracted prior to avoid optional chaining inside the dependency array, adhering to the React Compiler memoization limitations.
