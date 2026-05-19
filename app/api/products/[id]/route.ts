@@ -61,25 +61,36 @@ export async function GET(
       }
     }
 
-    // Fetch variants for this product
-    const variants = await db
-      .select()
-      .from(productVariants)
-      .where(eq(productVariants.productId, id));
+    // Parallelize independent queries to reduce latency
+    const [variants, comboRows, candidateProducts] = await Promise.all([
+      // Fetch variants for this product
+      db
+        .select()
+        .from(productVariants)
+        .where(eq(productVariants.productId, id)),
 
-    // Fetch combos this product is in
-    let relatedCombos: RelatedCombo[] = [];
-
-    const comboRows = await db
-      .select()
-      .from(combos)
-      .where(
-        and(
-          eq(combos.isActive, true),
-          or(eq(combos.productAId, id), eq(combos.productBId, id))
+      // Fetch combos this product is in
+      db
+        .select()
+        .from(combos)
+        .where(
+          and(
+            eq(combos.isActive, true),
+            or(eq(combos.productAId, id), eq(combos.productBId, id))
+          )
         )
-      )
-      .orderBy(desc(combos.displayOrder), desc(combos.createdAt));
+        .orderBy(desc(combos.displayOrder), desc(combos.createdAt)),
+
+      // Fetch candidate products for related items
+      db
+        .select()
+        .from(products)
+        .where(eq(products.isActive, true))
+        .orderBy(desc(products.displayOrder), desc(products.createdAt))
+        .limit(80)
+    ]);
+
+    let relatedCombos: RelatedCombo[] = [];
 
     if (comboRows.length > 0) {
       // Fetch all products needed for these combos
@@ -87,15 +98,17 @@ export async function GET(
         new Set(comboRows.flatMap((combo) => [combo.productAId, combo.productBId]))
       );
 
-      const comboProducts = await db
-        .select()
-        .from(products)
-        .where(and(inArray(products.id, comboProductIds), eq(products.isActive, true)));
-
-      const comboVariants = await db
-        .select()
-        .from(productVariants)
-        .where(inArray(productVariants.productId, comboProductIds));
+      // Parallelize fetching combo products and their variants
+      const [comboProducts, comboVariants] = await Promise.all([
+        db
+          .select()
+          .from(products)
+          .where(and(inArray(products.id, comboProductIds), eq(products.isActive, true))),
+        db
+          .select()
+          .from(productVariants)
+          .where(inArray(productVariants.productId, comboProductIds))
+      ]);
 
       const productMap = new Map(comboProducts.map((p) => [p.id, p]));
       const variantsByProductId = comboVariants.reduce<Map<string, typeof comboVariants>>(
@@ -141,13 +154,6 @@ export async function GET(
       id,
       ...comboRows.map((combo) => (combo.productAId === id ? combo.productBId : combo.productAId)),
     ]);
-
-    const candidateProducts = await db
-      .select()
-      .from(products)
-      .where(eq(products.isActive, true))
-      .orderBy(desc(products.displayOrder), desc(products.createdAt))
-      .limit(80);
 
     const fallbackProducts = candidateProducts
       .filter((candidate) => !excludedIds.has(candidate.id))

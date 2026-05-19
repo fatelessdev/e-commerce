@@ -1,0 +1,6 @@
+## 2024-05-19 - Fast product map via inArray and early return
+**Learning:** Drizzle ORM arrays can be empty, so checking `length > 0` before making a query is a critical early return optimization, preventing SQL syntax errors and saving an unnecessary network request. Furthermore, constructing a JavaScript `Map` mapping product ids to product data after fetching reduces O(N^2) array lookup overhead to O(N) when cross-referencing user cart items with database prices.
+**Action:** Before executing `inArray` queries, verify the array is not empty. When matching items from multiple sources (e.g. database rows and incoming arrays), construct a Map using the primary key for O(1) lookups.
+## 2024-05-19 - Parallelize independent sequential DB queries
+**Learning:** Sequential database queries inside `app/api/products/[id]/route.ts` like fetching variants, related combos, and candidate fallback products introduce unnecessary TTFB latency due to serial blocking. Even nested relationships for combos (fetching their specific products and their variants) block each other when they can be run simultaneously.
+**Action:** Always map out data dependencies and combine independent Drizzle ORM queries using `Promise.all()` to decrease overall network latency.
