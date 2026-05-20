@@ -159,61 +159,72 @@ export async function createOrder(input: CreateOrderInput) {
     };
   }
 
-  // Validate per-variant stock for all items
-  for (const item of input.items) {
-    const [productState] = await db
-      .select({ stock: products.stock, isActive: products.isActive })
-      .from(products)
-      .where(eq(products.id, item.productId));
+  const productIds = Array.from(new Set(input.items.map(item => item.productId)));
+  const hasVariantsMap = new Map<string, boolean>();
 
-    if (!productState?.isActive) {
-      return {
-        success: false,
-        error: `Product is unavailable: ${item.productName}`,
-      };
+  // Validate per-variant stock for all items
+  if (productIds.length > 0) {
+    const [fetchedProducts, fetchedVariants] = await Promise.all([
+      db.select({ id: products.id, stock: products.stock, isActive: products.isActive })
+        .from(products)
+        .where(inArray(products.id, productIds)),
+      db.select({ productId: productVariants.productId, size: productVariants.size, color: productVariants.color, stock: productVariants.stock })
+        .from(productVariants)
+        .where(inArray(productVariants.productId, productIds))
+    ]);
+
+    const productMap = new Map(fetchedProducts.map(p => [p.id, p]));
+    const variantsByProductId = new Map<string, typeof fetchedVariants>();
+
+    for (const v of fetchedVariants) {
+      const list = variantsByProductId.get(v.productId) || [];
+      list.push(v);
+      variantsByProductId.set(v.productId, list);
     }
 
-    const [variantCountRow] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(productVariants)
-      .where(eq(productVariants.productId, item.productId));
-    const hasVariants = Number(variantCountRow?.count ?? 0) > 0;
+    for (const pid of productIds) {
+      hasVariantsMap.set(pid, (variantsByProductId.get(pid) || []).length > 0);
+    }
 
-    const colorCondition = item.color
-      ? eq(productVariants.color, item.color)
-      : isNull(productVariants.color);
+    for (const item of input.items) {
+      const productState = productMap.get(item.productId);
 
-    const [variant] = await db
-      .select({ stock: productVariants.stock })
-      .from(productVariants)
-      .where(
-        and(
-          eq(productVariants.productId, item.productId),
-          eq(productVariants.size, item.size),
-          colorCondition
-        )
-      );
-
-    if (!variant) {
-      if (hasVariants) {
+      if (!productState?.isActive) {
         return {
           success: false,
-          error: `Selected variant is unavailable for ${item.productName} (${item.size}${item.color ? `, ${item.color}` : ""})`,
+          error: `Product is unavailable: ${item.productName}`,
         };
       }
 
-      // Fallback: check product-level stock only for legacy products without variants
-      if (productState.stock < item.quantity) {
+      const productVariantList = variantsByProductId.get(item.productId) || [];
+      const hasVariants = productVariantList.length > 0;
+
+      const variant = productVariantList.find(v =>
+        v.size === item.size &&
+        (item.color ? v.color === item.color : v.color === null)
+      );
+
+      if (!variant) {
+        if (hasVariants) {
+          return {
+            success: false,
+            error: `Selected variant is unavailable for ${item.productName} (${item.size}${item.color ? `, ${item.color}` : ""})`,
+          };
+        }
+
+        // Fallback: check product-level stock only for legacy products without variants
+        if (productState.stock < item.quantity) {
+          return {
+            success: false,
+            error: `Insufficient stock for ${item.productName} (${item.size}${item.color ? `, ${item.color}` : ""})`,
+          };
+        }
+      } else if (variant.stock < item.quantity) {
         return {
           success: false,
           error: `Insufficient stock for ${item.productName} (${item.size}${item.color ? `, ${item.color}` : ""})`,
         };
       }
-    } else if (variant.stock < item.quantity) {
-      return {
-        success: false,
-        error: `Insufficient stock for ${item.productName} (${item.size}${item.color ? `, ${item.color}` : ""})`,
-      };
     }
   }
 
@@ -294,11 +305,7 @@ export async function createOrder(input: CreateOrderInput) {
           totalPrice: item.totalPrice.toString(),
         });
 
-        const [variantCountRow] = await tx
-          .select({ count: sql<number>`count(*)` })
-          .from(productVariants)
-          .where(eq(productVariants.productId, item.productId));
-        const hasVariants = Number(variantCountRow?.count ?? 0) > 0;
+        const hasVariants = hasVariantsMap.get(item.productId) ?? false;
 
         if (hasVariants) {
           const colorCondition = item.color
