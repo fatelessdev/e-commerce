@@ -295,8 +295,9 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                 size="icon"
                                 className="h-6 w-6 text-white hover:bg-white/10"
                                 onClick={() => setIsOpen(false)}
+                                aria-label="Close bargain modal"
                             >
-                                <X className="h-3.5 w-3.5" />
+                                <X className="h-3.5 w-3.5" aria-hidden="true" />
                             </Button>
                         </div>
 
@@ -368,8 +369,9 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                         className="rounded-none"
                                         onClick={handleCopyCode}
                                         disabled={couponExpired}
+                                        aria-label={copied ? "Copied" : "Copy coupon code"}
                                     >
-                                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                                        {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
                                     </Button>
                                 </div>
 
@@ -422,8 +424,9 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                         size="icon"
                                         className="rounded-none bg-red-accent text-white hover:bg-[#8E0000]"
                                         disabled={isLoading || !input.trim()}
+                                        aria-label="Send message"
                                     >
-                                        <Send className="h-4 w-4" />
+                                        <Send className="h-4 w-4" aria-hidden="true" />
                                     </Button>
                                 </div>
                             </form>
