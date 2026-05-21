@@ -473,6 +473,7 @@ export function ProductClient({ id }: { id: string }) {
                                     size="lg"
                                     className="h-13 w-13 rounded-none"
                                     onClick={handleWishlist}
+                                    aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
                                 >
                                     <Heart className={`h-4 w-4 ${inWishlist ? "fill-current" : ""}`} />
                                 </Button>
