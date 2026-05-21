@@ -159,61 +159,78 @@ export async function createOrder(input: CreateOrderInput) {
     };
   }
 
-  // Validate per-variant stock for all items
-  for (const item of input.items) {
-    const [productState] = await db
-      .select({ stock: products.stock, isActive: products.isActive })
+  // Validate per-variant stock for all items (Batched O(1) lookups)
+  const productIds = input.items.map((item) => item.productId);
+  if (productIds.length > 0) {
+    // 1. Fetch all products at once
+    const allProducts = await db
+      .select({ id: products.id, stock: products.stock, isActive: products.isActive })
       .from(products)
-      .where(eq(products.id, item.productId));
+      .where(inArray(products.id, productIds));
 
-    if (!productState?.isActive) {
-      return {
-        success: false,
-        error: `Product is unavailable: ${item.productName}`,
-      };
+    const productMap = new Map<string, typeof allProducts[0]>();
+    for (const p of allProducts) {
+      productMap.set(p.id, p);
     }
 
-    const [variantCountRow] = await db
-      .select({ count: sql<number>`count(*)` })
+    // 2. Fetch all variants at once
+    const allVariants = await db
+      .select({
+        productId: productVariants.productId,
+        size: productVariants.size,
+        color: productVariants.color,
+        stock: productVariants.stock
+      })
       .from(productVariants)
-      .where(eq(productVariants.productId, item.productId));
-    const hasVariants = Number(variantCountRow?.count ?? 0) > 0;
+      .where(inArray(productVariants.productId, productIds));
 
-    const colorCondition = item.color
-      ? eq(productVariants.color, item.color)
-      : isNull(productVariants.color);
+    // Group variants by productId
+    const variantsMap = new Map<string, typeof allVariants>();
+    for (const v of allVariants) {
+      const existing = variantsMap.get(v.productId) || [];
+      existing.push(v);
+      variantsMap.set(v.productId, existing);
+    }
 
-    const [variant] = await db
-      .select({ stock: productVariants.stock })
-      .from(productVariants)
-      .where(
-        and(
-          eq(productVariants.productId, item.productId),
-          eq(productVariants.size, item.size),
-          colorCondition
-        )
-      );
+    // Validate using mapped data instead of N+1 DB queries
+    for (const item of input.items) {
+      const productState = productMap.get(item.productId);
 
-    if (!variant) {
-      if (hasVariants) {
+      if (!productState?.isActive) {
         return {
           success: false,
-          error: `Selected variant is unavailable for ${item.productName} (${item.size}${item.color ? `, ${item.color}` : ""})`,
+          error: `Product is unavailable: ${item.productName}`,
         };
       }
 
-      // Fallback: check product-level stock only for legacy products without variants
-      if (productState.stock < item.quantity) {
+      const variantsForProduct = variantsMap.get(item.productId) || [];
+      const hasVariants = variantsForProduct.length > 0;
+
+      const variant = variantsForProduct.find(
+        v => v.size === item.size && (item.color ? v.color === item.color : v.color === null)
+      );
+
+      if (!variant) {
+        if (hasVariants) {
+          return {
+            success: false,
+            error: `Selected variant is unavailable for ${item.productName} (${item.size}${item.color ? `, ${item.color}` : ""})`,
+          };
+        }
+
+        // Fallback: check product-level stock only for legacy products without variants
+        if (productState.stock < item.quantity) {
+          return {
+            success: false,
+            error: `Insufficient stock for ${item.productName} (${item.size}${item.color ? `, ${item.color}` : ""})`,
+          };
+        }
+      } else if (variant.stock < item.quantity) {
         return {
           success: false,
           error: `Insufficient stock for ${item.productName} (${item.size}${item.color ? `, ${item.color}` : ""})`,
         };
       }
-    } else if (variant.stock < item.quantity) {
-      return {
-        success: false,
-        error: `Insufficient stock for ${item.productName} (${item.size}${item.color ? `, ${item.color}` : ""})`,
-      };
     }
   }
 
