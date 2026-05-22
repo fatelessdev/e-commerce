@@ -295,8 +295,9 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                 size="icon"
                                 className="h-6 w-6 text-white hover:bg-white/10"
                                 onClick={() => setIsOpen(false)}
+                                aria-label="Close bargain chat"
                             >
-                                <X className="h-3.5 w-3.5" />
+                                <X aria-hidden="true" className="h-3.5 w-3.5" />
                             </Button>
                         </div>
 
@@ -340,7 +341,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                         "flex items-center justify-center gap-2 text-sm font-medium",
                                         couponExpired ? "text-red-500" : timeRemaining <= 60 ? "text-orange-500" : "text-green-600"
                                     )}>
-                                        <Clock className="h-4 w-4" />
+                                        <Clock aria-hidden="true" className="h-4 w-4" />
                                         {couponExpired ? (
                                             <span>Code expired!</span>
                                         ) : (
@@ -368,8 +369,9 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                         className="rounded-none"
                                         onClick={handleCopyCode}
                                         disabled={couponExpired}
+                                        aria-label={copied ? "Code copied" : "Copy code"}
                                     >
-                                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                                        {copied ? <Check aria-hidden="true" className="h-4 w-4" /> : <Copy aria-hidden="true" className="h-4 w-4" />}
                                     </Button>
                                 </div>
 
@@ -422,8 +424,9 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                         size="icon"
                                         className="rounded-none bg-red-accent text-white hover:bg-[#8E0000]"
                                         disabled={isLoading || !input.trim()}
+                                        aria-label="Send message"
                                     >
-                                        <Send className="h-4 w-4" />
+                                        <Send aria-hidden="true" className="h-4 w-4" />
                                     </Button>
                                 </div>
                             </form>
