@@ -30,15 +30,17 @@ export async function getActiveCombosWithProducts(limit = 6) {
     new Set(activeCombos.flatMap((combo) => [combo.productAId, combo.productBId]))
   );
 
-  const comboProducts = await db
-    .select()
-    .from(products)
-    .where(inArray(products.id, productIds));
-
-  const variants = await db
-    .select()
-    .from(productVariants)
-    .where(inArray(productVariants.productId, productIds));
+  // ⚡ Bolt: Execute independent queries concurrently to reduce total database roundtrip latency
+  const [comboProducts, variants] = await Promise.all([
+    db
+      .select()
+      .from(products)
+      .where(inArray(products.id, productIds)),
+    db
+      .select()
+      .from(productVariants)
+      .where(inArray(productVariants.productId, productIds)),
+  ]);
 
   const productMap = new Map(comboProducts.map((product) => [product.id, product]));
   const variantsByProductId = variants.reduce<Map<string, typeof variants>>((acc, variant) => {
