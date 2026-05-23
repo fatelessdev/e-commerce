@@ -293,6 +293,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                             <Button
                                 variant="ghost"
                                 size="icon"
+                                aria-label="Close Bargain AI"
                                 className="h-6 w-6 text-white hover:bg-white/10"
                                 onClick={() => setIsOpen(false)}
                             >
@@ -365,6 +366,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                     <Button
                                         size="sm"
                                         variant="outline"
+                                        aria-label="Copy coupon code"
                                         className="rounded-none"
                                         onClick={handleCopyCode}
                                         disabled={couponExpired}
@@ -420,6 +422,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                     <Button
                                         type="submit"
                                         size="icon"
+                                        aria-label="Send message"
                                         className="rounded-none bg-red-accent text-white hover:bg-[#8E0000]"
                                         disabled={isLoading || !input.trim()}
                                     >
