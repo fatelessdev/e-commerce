@@ -25,17 +25,37 @@ export function ShopTheReels() {
     const scrollerRef = useRef<HTMLDivElement>(null)
     const videoRefs = useRef(new Map<string, HTMLVideoElement>())
 
-    const { data: products = [] } = useQuery({
-        queryKey: ["shop-the-reels"],
-        queryFn: async () => {
-            const params = new URLSearchParams({ limit: "4", isFeatured: "true" })
-            const res = await fetch(`/api/products?${params.toString()}`)
-            if (!res.ok) throw new Error("Failed to fetch reels products")
-            const data = await res.json()
-            return (data.products || []) as ReelProduct[]
+    // const { data: products = [] } = useQuery({
+    //     queryKey: ["shop-the-reels"],
+    //     queryFn: async () => {
+    //         const params = new URLSearchParams({ limit: "4", isFeatured: "true" })
+    //         const res = await fetch(`/api/products?${params.toString()}`)
+    //         if (!res.ok) throw new Error("Failed to fetch reels products")
+    //         const data = await res.json()
+    //         return (data.products || []) as ReelProduct[]
+    //     },
+    //     staleTime: 1000 * 60 * 5,
+    // })
+
+    const products = [
+        {
+            id: "f8964c87-0a46-4fb9-98c4-cc7cac816c4b",
+            name: "Xilar HypeRiot",
+            sellingPrice: "799",
+            mrp: "1199",
+            src: "/hero/reels/reel2.mp4",
+            images: "https://res.cloudinary.com/du44kbibc/image/upload/v1773689124/xilar/products/jfo39kv36zcksesbeccn.webp"
         },
-        staleTime: 1000 * 60 * 5,
-    })
+        {
+            id: "249fb306-8f60-4f67-8e48-3c6085c2b1fc",
+            name: "Xilar InkDistort",
+            sellingPrice: "799",
+            mrp: "1,498.97",
+            src: "/hero/reels/reel1.mp4",
+            images: "https://res.cloudinary.com/du44kbibc/image/upload/v1773690782/xilar/products/nw9hmqyoc0ul5jcqblw5.webp"
+        },
+
+    ];
 
     const scrollByCard = (direction: 1 | -1) => {
         scrollerRef.current?.scrollBy({
@@ -92,7 +112,7 @@ export function ShopTheReels() {
                                         }
                                     }}
                                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-[1.025]"
-                                    src="/hero/reels/reel1.mp4"
+                                    src={product.src}
                                     autoPlay
                                     muted={audibleProductId !== product.id}
                                     loop
@@ -114,7 +134,7 @@ export function ShopTheReels() {
                                 >
                                     <div className="relative h-12 w-12 flex-none overflow-hidden rounded bg-white/10">
                                         <Image
-                                            src={normalizeProductImage(product.images?.[0])}
+                                            src={normalizeProductImage(product.images)}
                                             alt={product.name}
                                             fill
                                             sizes="48px"
