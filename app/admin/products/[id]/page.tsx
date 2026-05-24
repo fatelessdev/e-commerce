@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,9 +64,8 @@ export default function EditProductPage() {
   const productId = params.id as string;
 
   const [isLoading, setIsLoading] = useState(false);
-  const [isFetching, setIsFetching] = useState(true);
   const [error, setError] = useState("");
-  const [notFound, setNotFound] = useState(false);
+  const hydratedProductId = useRef<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -100,17 +100,23 @@ export default function EditProductPage() {
   const [variantStock, setVariantStock] = useState<Record<string, number>>({});
   const isAccessory = formData.category === "accessory";
 
-  // Fetch product data on mount
-  useEffect(() => {
-    async function fetchProduct() {
-      try {
-        const res = await fetch(`/api/products/${productId}`);
-        if (!res.ok) {
-          setNotFound(true);
-          return;
-        }
-        const product: ProductData = await res.json();
+  const queryClient = useQueryClient();
+  const {
+    data: product,
+    isLoading: isFetching,
+    error: fetchError,
+  } = useQuery({
+    queryKey: ["admin-product", productId],
+    queryFn: async () => {
+      const res = await fetch(`/api/products/${productId}`);
+      if (!res.ok) throw new Error("Product not found");
+      return (await res.json()) as ProductData;
+    },
+  });
 
+  useEffect(() => {
+    if (!product || hydratedProductId.current === product.id) return;
+    hydratedProductId.current = product.id;
         setFormData({
           name: product.name,
           slug: product.slug,
@@ -144,15 +150,7 @@ export default function EditProductPage() {
           }
           setVariantStock(stockMap);
         }
-      } catch {
-        setError("Failed to load product");
-      } finally {
-        setIsFetching(false);
-      }
-    }
-
-    fetchProduct();
-  }, [productId]);
+  }, [product]);
 
   const handleNameChange = (name: string) => {
     setFormData({
@@ -238,6 +236,15 @@ export default function EditProductPage() {
       };
 
       await updateProduct(productId, productData);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin-products"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-product", productId] }),
+        queryClient.invalidateQueries({ queryKey: ["product", productId] }),
+        queryClient.invalidateQueries({ queryKey: ["products"] }),
+        queryClient.invalidateQueries({ queryKey: ["shop-products"] }),
+        queryClient.invalidateQueries({ queryKey: ["shop-the-reels"] }),
+        queryClient.invalidateQueries({ queryKey: ["combos"] }),
+      ]);
       router.push("/admin/products");
     } catch (err) {
       console.error("Failed to update product:", err);
@@ -255,7 +262,7 @@ export default function EditProductPage() {
     );
   }
 
-  if (notFound) {
+  if (fetchError) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <h1 className="text-2xl font-bold">Product Not Found</h1>

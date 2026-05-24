@@ -5,9 +5,10 @@ import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/scr
 import { BargainDiscountStrip } from "@/components/ui/bargain-discount-strip"
 import Link from "next/link"
 import Image from "next/image"
-import { useState, useEffect } from "react"
+import { useMemo, useState } from "react"
 import { ArrowRight } from "lucide-react"
 import { normalizeProductImage } from "@/lib/image"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
 interface Product {
     id: string
@@ -20,6 +21,7 @@ interface Product {
     category: string
     gender: string
     stock: number
+    sizes: string[]
     colors: { name: string; hex: string }[]
 }
 
@@ -36,6 +38,23 @@ function ColorSwatches({ colors }: { colors: { name: string; hex: string }[] }) 
                     role="img"
                     aria-label={`Color: ${color.name}`}
                 />
+            ))}
+        </div>
+    )
+}
+
+function SizeChips({ sizes }: { sizes?: string[] }) {
+    if (!sizes || sizes.length === 0) return null
+
+    return (
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            {sizes.slice(0, 5).map((size) => (
+                <span
+                    key={size}
+                    className="border border-border/70 px-2 py-1 text-[10px] uppercase leading-none text-muted-foreground"
+                >
+                    {size}
+                </span>
             ))}
         </div>
     )
@@ -61,45 +80,42 @@ export function ProductGrid({
     viewAllHref?: string
 }) {
     const [activeTab, setActiveTab] = useState<"men" | "women">(gender === "women" ? "women" : "men")
-    const [products, setProducts] = useState<Product[]>([])
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        async function fetchProducts() {
-            try {
-                setLoading(true)
-                const params = new URLSearchParams()
-                params.set("limit", "8")
-                if (gender) {
-                    params.set("gender", gender)
-                } else if (!fixedCategory) {
-                    if (activeTab === "men") {
-                        params.set("gender", "men")
-                    } else {
-                        params.set("gender", "women")
-                    }
-                }
-                if (fixedCategory) params.set("category", fixedCategory)
-                if (isFeatured) params.set("isFeatured", "true")
-                if (isNew) params.set("isNew", "true")
-
-                const res = await fetch(`/api/products?${params.toString()}`)
-                if (res.ok) {
-                    const data = await res.json()
-                    setProducts(data.products || data)
-                }
-            } catch (error) {
-                console.error("Failed to fetch products:", error)
-            } finally {
-                setLoading(false)
-            }
+    const productParams = useMemo(() => {
+        const params = new URLSearchParams()
+        params.set("limit", "8")
+        if (gender) {
+            params.set("gender", gender)
+        } else if (!fixedCategory) {
+            params.set("gender", activeTab)
         }
-        fetchProducts()
-    }, [activeTab, fixedCategory, isFeatured, isNew, gender])
+        if (fixedCategory) params.set("category", fixedCategory)
+        if (isFeatured) params.set("isFeatured", "true")
+        if (isNew) params.set("isNew", "true")
+        return params.toString()
+    }, [activeTab, fixedCategory, gender, isFeatured, isNew])
+
+    const { data: products = [], isLoading: loading } = useQuery({
+        queryKey: ["products", productParams],
+        queryFn: async () => {
+            const res = await fetch(`/api/products?${productParams}`)
+            if (!res.ok) throw new Error("Failed to fetch products")
+            const data = await res.json()
+            return (data.products || data) as Product[]
+        },
+        staleTime: 1000 * 60 * 5,
+        placeholderData: keepPreviousData,
+    })
 
     const formatPrice = (price: string) => {
         const num = parseFloat(price)
         return `₹${num.toLocaleString("en-IN")}`
+    }
+
+    const discountPercent = (product: Product) => {
+        const mrp = parseFloat(product.mrp)
+        const price = parseFloat(product.sellingPrice)
+        if (!Number.isFinite(mrp) || !Number.isFinite(price) || mrp <= price) return null
+        return Math.round(((mrp - price) / mrp) * 100)
     }
 
     return (
@@ -169,10 +185,12 @@ export function ProductGrid({
                     <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-6 px-6 md:-mx-12 md:px-12">
                         {products.map((product) => (
                             <div key={product.id} className="flex-shrink-0 w-[200px] sm:w-[240px] snap-start">
-                                <Link href={`/product/${product.id}`} className="group">
+                                <Link href={`/product/${product.id}`}>
                                     <Card className="bg-transparent border-0 rounded-none hover-lift">
-<CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
-                                            <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-10" />
+                                        <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
+                                            {product.stock > 0 && (
+                                                <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-10" />
+                                            )}
                                             {product.stock === 0 && (
                                                 <div className="absolute top-3 left-3 z-10 badge-sold-out">Sold Out</div>
                                             )}
@@ -192,7 +210,13 @@ export function ProductGrid({
                                                 {parseFloat(product.mrp) > parseFloat(product.sellingPrice) && (
                                                     <p className="text-[10px] text-muted-foreground line-through tabular-nums">{formatPrice(product.mrp)}</p>
                                                 )}
+                                                {discountPercent(product) !== null && (
+                                                    <span className="bg-foreground px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-background">
+                                                        {discountPercent(product)}% off
+                                                    </span>
+                                                )}
                                             </div>
+                                            <SizeChips sizes={product.sizes} />
                                             <ColorSwatches colors={product.colors} />
                                         </CardFooter>
                                     </Card>
@@ -201,74 +225,82 @@ export function ProductGrid({
                         ))}
                     </div>
                 ) : (
-                <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-                    {products.map((product, index) => (
-                        <StaggerItem key={product.id} className={index >= mobileLimit ? "hidden md:block" : undefined}>
-                            <Link href={`/product/${product.id}`} className="group">
-                                <Card className="bg-transparent border-0 rounded-none hover-lift">
-<CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
-                                        <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-10" />
-                                        {/* Sold Out Badge */}
-                                        {product.stock === 0 && (
-                                            <div className="absolute top-3 left-3 z-10 badge-sold-out">
-                                                Sold Out
+                    <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                        {products.map((product, index) => (
+                            <StaggerItem key={product.id} className={index >= mobileLimit ? "hidden md:block" : undefined}>
+                                <Link href={`/product/${product.id}`}>
+                                    <Card className="bg-transparent border-0 rounded-none hover-lift">
+                                        <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
+                                            {product.stock > 0 && (
+                                                <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-10" />
+                                            )}
+                                            {/* Sold Out Badge */}
+                                            {product.stock === 0 && (
+                                                <div className="absolute top-3 left-3 z-10 badge-sold-out">
+                                                    Sold Out
+                                                </div>
+                                            )}
+
+                                            {/* Product Image */}
+                                            <Image
+                                                src={normalizeProductImage(product.images?.[0])}
+                                                alt={product.name}
+                                                fill
+                                                sizes="(max-width: 640px) 50vw, 25vw"
+                                                className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
+                                            />
+
+                                            {/* Hover Overlay */}
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500" />
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
+                                                <div className="w-9 h-9 rounded-full bg-white/90 dark:bg-neutral-900/90 flex items-center justify-center shadow-lg shadow-black/5">
+                                                    <ArrowRight className="h-4 w-4 text-foreground" />
+                                                </div>
                                             </div>
-                                        )}
+                                        </CardContent>
 
-                                        {/* Product Image */}
-                                        <Image
-                                            src={normalizeProductImage(product.images?.[0])}
-                                            alt={product.name}
-                                            fill
-                                            sizes="(max-width: 640px) 50vw, 25vw"
-                                            className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
-                                        />
-
-                                        {/* Hover Overlay */}
-                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500" />
-                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
-                                            <div className="w-9 h-9 rounded-full bg-white/90 dark:bg-neutral-900/90 flex items-center justify-center shadow-lg shadow-black/5">
-                                                <ArrowRight className="h-4 w-4 text-foreground" />
+                                        <CardFooter className="flex flex-col items-start px-1 sm:px-2 pt-4 pb-2 space-y-1.5">
+                                            <div className="w-full">
+                                                <h3 className="font-medium tracking-tight text-sm uppercase leading-tight line-clamp-1">
+                                                    {product.name}
+                                                </h3>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <p className="text-sm font-semibold tabular-nums">{formatPrice(product.sellingPrice)}</p>
+                                                    {parseFloat(product.mrp) > parseFloat(product.sellingPrice) && (
+                                                        <p className="text-[10px] text-muted-foreground line-through tabular-nums">{formatPrice(product.mrp)}</p>
+                                                    )}
+                                                    {discountPercent(product) !== null && (
+                                                        <span className="bg-foreground px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-background">
+                                                            {discountPercent(product)}% off
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    </CardContent>
 
-                                    <CardFooter className="flex flex-col items-start px-1 sm:px-2 pt-4 pb-2 space-y-1.5">
-                                        <div className="w-full">
-                                            <h3 className="font-medium tracking-tight text-sm uppercase leading-tight">
-                                                {product.name}
-                                            </h3>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <p className="text-sm font-semibold tabular-nums">{formatPrice(product.sellingPrice)}</p>
-                                                {parseFloat(product.mrp) > parseFloat(product.sellingPrice) && (
-                                                    <p className="text-[10px] text-muted-foreground line-through tabular-nums">{formatPrice(product.mrp)}</p>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <ColorSwatches colors={product.colors} />
-                                    </CardFooter>
-                                </Card>
-                            </Link>
-                        </StaggerItem>
-                    ))}
-                </StaggerContainer>
+                                            <SizeChips sizes={product.sizes} />
+                                            <ColorSwatches colors={product.colors} />
+                                        </CardFooter>
+                                    </Card>
+                                </Link>
+                            </StaggerItem>
+                        ))}
+                    </StaggerContainer>
                 )
             )}
 
             {/* View All Link */}
             {layout !== "scroll" && (
-            <ScrollReveal delay={0.2}>
-                <div className="text-center mt-14">
-                    <Link
-                        href={viewAllHref}
-                        className="group inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground transition-colors duration-500"
-                    >
-                        View all products
-                        <ArrowRight className="h-3.5 w-3.5 transition-transform duration-500 group-hover:translate-x-1" />
-                    </Link>
-                </div>
-            </ScrollReveal>
+                <ScrollReveal delay={0.2}>
+                    <div className="text-center mt-14">
+                        <Link
+                            href={viewAllHref}
+                            className="group inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground transition-colors duration-500"
+                        >
+                            View all products
+                            <ArrowRight className="h-3.5 w-3.5 transition-transform duration-500 group-hover:translate-x-1" />
+                        </Link>
+                    </div>
+                </ScrollReveal>
             )}
         </section>
     )

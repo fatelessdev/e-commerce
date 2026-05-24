@@ -1,8 +1,6 @@
 import type { Metadata } from "next"
 import { ProductClient } from "@/components/features/product-client"
-import { db } from "@/lib/db"
-import { products } from "@/lib/db/schema"
-import { eq } from "drizzle-orm"
+import { getProductDetails } from "@/lib/product-detail"
 import {
     JsonLd,
     productJsonLd,
@@ -10,12 +8,7 @@ import {
 } from "@/components/seo/structured-data"
 
 async function getProduct(id: string) {
-    const [product] = await db
-        .select()
-        .from(products)
-        .where(eq(products.id, id))
-
-    return product
+    return getProductDetails(id)
 }
 
 export async function generateMetadata(
@@ -113,7 +106,7 @@ export default async function ProductPage({
                     />
                 </>
             )}
-            <ProductClient id={id} />
+            <ProductClient id={id} initialProduct={product ?? undefined} />
         </>
     )
 }

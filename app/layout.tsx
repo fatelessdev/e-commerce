@@ -9,6 +9,7 @@ import { Footer } from "@/components/layout/footer";
 import { CartProvider } from "@/lib/cart-context";
 import { WishlistProvider } from "@/lib/wishlist-context";
 import { ThemeProvider } from "@/components/ui/theme-provider";
+import { QueryProvider } from "@/components/ui/query-provider";
 import { Analytics } from "@vercel/analytics/next"
 
 const outfit = Outfit({
@@ -120,27 +121,29 @@ export default function RootLayout({
       >
         <Analytics />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <CartProvider>
-            <WishlistProvider>
-              <Navbar />
-              <div className="flex flex-1">
-                <Sidebar />
-                <main className="flex-1 overflow-x-hidden relative">
-                  {children}
-                  {/* <BargainAI /> */}
-                </main>
-              </div>
-              <Footer />
-              <CartDrawer />
-              {/* Grain overlay for premium texture */}
-              <div
-                className="pointer-events-none fixed inset-0 z-[60] opacity-[0.025] dark:opacity-[0.03]"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                }}
-              />
-            </WishlistProvider>
-          </CartProvider>
+          <QueryProvider>
+            <CartProvider>
+              <WishlistProvider>
+                <Navbar />
+                <div className="flex flex-1">
+                  <Sidebar />
+                  <main className="flex-1 overflow-x-hidden relative">
+                    {children}
+                    {/* <BargainAI /> */}
+                  </main>
+                </div>
+                <Footer />
+                <CartDrawer />
+                {/* Grain overlay for premium texture */}
+                <div
+                  className="pointer-events-none fixed inset-0 z-[60] opacity-[0.025] dark:opacity-[0.03]"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+                  }}
+                />
+              </WishlistProvider>
+            </CartProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

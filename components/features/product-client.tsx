@@ -1,66 +1,20 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useQuery } from "@tanstack/react-query"
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { ProductGrid } from "@/components/features/product-grid"
 import { BargainDiscountStrip } from "@/components/ui/bargain-discount-strip"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/lib/cart-context"
 import { useWishlist } from "@/lib/wishlist-context"
-import { Heart, Check, Loader2, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { Heart, Check, X, ChevronLeft, ChevronRight, Eye, Star, Timer } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { normalizeProductImage } from "@/lib/image"
+import type { ProductDetails } from "@/lib/product-detail"
 
-interface ProductVariant {
-    id: string;
-    productId: string;
-    size: string;
-    color: string | null;
-    stock: number;
-}
-
-interface RelatedComboProduct {
-    id: string
-    name: string
-    sellingPrice: string
-    images: string[]
-}
-
-interface RelatedCombo {
-    id: string
-    productA: RelatedComboProduct
-    productB: RelatedComboProduct
-}
-
-interface Product {
-    id: string
-    name: string
-    slug: string
-    description: string | null
-    mrp: string
-    sellingPrice: string
-    maxBargainDiscount: string
-    images: string[]
-    sizes: string[]
-    colors: { name: string; hex: string; images?: string[] }[]
-    fabric: string | null
-    gsm: number | null
-    features: string[]
-    category: string
-    gender: string
-    stock: number
-    variants?: ProductVariant[]
-    relatedCombos?: RelatedCombo[]
-    relatedProducts?: {
-        id: string
-        name: string
-        sellingPrice: string
-        mrp: string
-        maxBargainDiscount: string
-        images: string[]
-    }[]
-}
+type Product = ProductDetails
 
 const NUMBER_SIZE_CATEGORIES = ["jogger", "jeans", "cargo", "shorts"]
 
@@ -69,16 +23,90 @@ function formatPrice(value: string | number) {
     return `₹${amount.toLocaleString("en-IN")}`
 }
 
-export function ProductClient({ id }: { id: string }) {
-    const [product, setProduct] = useState<Product | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+function seededNumber(seed: string) {
+    let hash = 0
+    for (let i = 0; i < seed.length; i++) {
+        hash = (hash * 31 + seed.charCodeAt(i)) >>> 0
+    }
+    return hash
+}
+
+function getMockProductStats(seed: string) {
+    const value = seededNumber(seed)
+    return {
+        rating: (4.6 + (value % 4) / 10).toFixed(1),
+        reviews: 86 + (value % 58),
+        viewers: 12 + (value % 9),
+    }
+}
+
+function getViewerSequence(seed: string) {
+    const value = seededNumber(seed)
+    const anchor = 14 + (value % 8)
+    return [
+        anchor,
+        anchor + 1 + (value % 3),
+        anchor + 4 + (value % 5),
+        Math.max(8, anchor - 2 - (value % 4)),
+        anchor + 2,
+        anchor - 1,
+    ]
+}
+
+function ProductDetailSkeleton() {
+    return (
+        <div className="min-h-screen bg-background pb-24">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+                <div className="relative overflow-hidden bg-muted/30">
+                    <div className="aspect-[4/5] w-full animate-pulse bg-muted" />
+                </div>
+                <div className="lg:h-[calc(100vh-4rem)] lg:sticky lg:top-16 p-8 lg:p-14 flex flex-col justify-center space-y-8">
+                    <div className="space-y-5">
+                        <div className="h-3 w-32 animate-pulse bg-muted" />
+                        <div className="space-y-3">
+                            <div className="h-10 w-4/5 animate-pulse bg-muted md:h-16" />
+                            <div className="h-10 w-3/5 animate-pulse bg-muted md:h-16" />
+                        </div>
+                        <div className="h-5 w-48 animate-pulse bg-muted" />
+                        <div className="space-y-2">
+                            <div className="h-3 w-full max-w-md animate-pulse bg-muted" />
+                            <div className="h-3 w-3/4 max-w-md animate-pulse bg-muted" />
+                        </div>
+                    </div>
+                    <div className="grid gap-3 rounded-sm border border-border/70 bg-background/60 p-4">
+                        <div className="h-8 w-56 animate-pulse bg-muted" />
+                        <div className="h-8 w-64 animate-pulse bg-muted" />
+                        <div className="h-8 w-60 animate-pulse bg-muted" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+export function ProductClient({ id, initialProduct }: { id: string; initialProduct?: Product }) {
     const [selectedSize, setSelectedSize] = useState<string | null>(null)
     const [selectedColor, setSelectedColor] = useState<string | null>(null)
     const [selectedImage, setSelectedImage] = useState(0)
     const [added, setAdded] = useState(false)
+    const [viewerCount, setViewerCount] = useState<number | null>(null)
     const { addItem } = useCart()
     const { isInWishlist, toggleItem } = useWishlist()
+    const shouldReduceMotion = useReducedMotion()
+    const {
+        data: product,
+        isLoading: loading,
+        error,
+    } = useQuery({
+        queryKey: ["product", id],
+        queryFn: async () => {
+            const res = await fetch(`/api/products/${id}`)
+            if (!res.ok) throw new Error("Product not found")
+            return (await res.json()) as Product
+        },
+        initialData: initialProduct,
+        staleTime: 1000 * 60 * 5,
+    })
 
     // Scroll to top on navigation
     useEffect(() => {
@@ -86,26 +114,35 @@ export function ProductClient({ id }: { id: string }) {
     }, [id])
 
     useEffect(() => {
-        async function fetchProduct() {
-            try {
-                setLoading(true)
-                setSelectedSize(null)
-                setSelectedColor(null)
-                setSelectedImage(0)
-                const res = await fetch(`/api/products/${id}`)
-                if (!res.ok) {
-                    throw new Error("Product not found")
-                }
-                const data = await res.json()
-                setProduct(data)
-            } catch (err) {
-                setError(err instanceof Error ? err.message : "Failed to load product")
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchProduct()
+        const timer = window.setTimeout(() => {
+            setSelectedSize(null)
+            setSelectedColor(null)
+            setSelectedImage(0)
+            setViewerCount(null)
+        }, 0)
+
+        return () => window.clearTimeout(timer)
     }, [id])
+
+    useEffect(() => {
+        if (!product) return
+
+        const sequence = getViewerSequence(`${product.slug}-${Date.now()}-${Math.random()}`)
+        let index = Math.floor(Math.random() * sequence.length)
+        const initialTimer = window.setTimeout(() => {
+            setViewerCount(sequence[index])
+        }, 0)
+
+        const timer = window.setInterval(() => {
+            index = (index + 1 + Math.floor(Math.random() * 2)) % sequence.length
+            setViewerCount(sequence[index])
+        }, 10000 + Math.floor(Math.random() * 5000))
+
+        return () => {
+            window.clearTimeout(initialTimer)
+            window.clearInterval(timer)
+        }
+    }, [product])
 
     // Memoize variants for O(1) lookups during render loop
     const variantMap = useMemo(() => {
@@ -117,7 +154,7 @@ export function ProductClient({ id }: { id: string }) {
             map.set(key, v.stock)
         })
         return map
-    }, [product?.variants])
+    }, [product])
 
     // Helper: get stock for a specific variant (size + color combo)
     const getVariantStock = (size: string, color: string | null): number => {
@@ -153,27 +190,22 @@ export function ProductClient({ id }: { id: string }) {
             return getVariantStock(resolvedSize, colorName) > 0
         }
         // No size selected: color is available if ANY size has stock for this color
-        return product.sizes.some((s) => getVariantStock(s, colorName) > 0)
+        return (product.sizes || []).some((s) => getVariantStock(s, colorName) > 0)
     }
 
     // Currently selected variant stock
     const selectedVariantStock = (): number | null => {
         const resolvedSize = selectedSize || (product?.category === "accessory" ? "One Size" : null)
         if (!resolvedSize) return null
-        if (product?.colors?.length && product.colors.length > 0 && !selectedColor) return null
+        if ((product?.colors || []).length > 0 && !selectedColor) return null
         const color = selectedColor || null
         return getVariantStock(resolvedSize, color)
     }
 
     const currentStock = selectedVariantStock()
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-                <Loader2 className="h-6 w-6 animate-spin text-red-accent" />
-                <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Loading product</p>
-            </div>
-        )
+    if (loading && !product) {
+        return <ProductDetailSkeleton />
     }
 
     if (error || !product) {
@@ -181,7 +213,7 @@ export function ProductClient({ id }: { id: string }) {
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center space-y-4">
                     <h1 className="text-2xl font-bold">Product Not Found</h1>
-                    <p className="text-muted-foreground">{error || "This product doesn't exist."}</p>
+                    <p className="text-muted-foreground">{error instanceof Error ? error.message : "This product doesn't exist."}</p>
                     <Button asChild variant="outline" className="rounded-none">
                         <a href="/shop">Back to Shop</a>
                     </Button>
@@ -198,17 +230,48 @@ export function ProductClient({ id }: { id: string }) {
     const hasDiscount = mrp > price
     const displayPrice = `₹${price.toLocaleString("en-IN")}`
     const displayMrp = `₹${mrp.toLocaleString("en-IN")}`
-    const images = product.images.length > 0
-        ? product.images.map((image) => normalizeProductImage(image))
+    const productImages = product.images || []
+    const productSizes = product.sizes || []
+    const productColors = product.colors || []
+    const productFeatures = product.features || []
+    const images = productImages.length > 0
+        ? productImages.map((image) => normalizeProductImage(image))
         : [normalizeProductImage()]
 
     const inWishlist = isInWishlist(product.id)
     const hasRelatedContent = (product.relatedCombos?.length || 0) > 0 || (product.relatedProducts?.length || 0) > 0
     const shouldUseComboRelated = hasRelatedContent
+    const mockStats = getMockProductStats(product.slug || product.id)
+    const realRemainingStock = currentStock ?? product.stock
+    const middleImageIndex = Math.floor(images.length / 2)
+    const spotlightAttributes = [
+        product.fabric ? `Fabric: ${product.fabric}` : null,
+        product.gsm ? `${product.gsm} GSM` : null,
+        ...productFeatures.slice(0, 2),
+    ].filter(Boolean) as string[]
+    const shouldShowSpotlight = selectedImage === middleImageIndex && spotlightAttributes.length > 0
+    const relatedDiscountPercent = (related: { mrp: string; sellingPrice: string }) => {
+        const relatedMrp = Number(related.mrp)
+        const relatedPrice = Number(related.sellingPrice)
+        if (!Number.isFinite(relatedMrp) || !Number.isFinite(relatedPrice) || relatedMrp <= relatedPrice) return null
+        return Math.round(((relatedMrp - relatedPrice) / relatedMrp) * 100)
+    }
+    const relatedSizeChips = (sizes?: string[]) => {
+        if (!sizes || sizes.length === 0) return null
+        return (
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                {sizes.slice(0, 5).map((size) => (
+                    <span key={size} className="border border-border/70 px-2 py-1 text-[10px] uppercase leading-none text-muted-foreground">
+                        {size}
+                    </span>
+                ))}
+            </div>
+        )
+    }
 
     const handleAddToCart = () => {
         if (!effectiveSelectedSize) return
-        if (!isAccessory && product.colors.length > 0 && !selectedColor) return
+        if (!isAccessory && productColors.length > 0 && !selectedColor) return
         const stock = currentStock
         if (stock !== null && stock <= 0) return
         if (product.stock === 0) return
@@ -242,7 +305,9 @@ export function ProductClient({ id }: { id: string }) {
                 {/* Gallery Section — Horizontal Slider */}
                 <div className="relative bg-white/5 overflow-hidden group">
 <div className="aspect-[4/5] w-full relative">
-                        <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-20" />
+                        {product.stock > 0 && (
+                            <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-20" />
+                        )}
                         <AnimatePresence initial={false} mode="popLayout">
                             <motion.img
                                 key={selectedImage}
@@ -255,6 +320,46 @@ export function ProductClient({ id }: { id: string }) {
                                 transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
                                 draggable={false}
                             />
+                        </AnimatePresence>
+
+                        <AnimatePresence>
+                            {shouldShowSpotlight && (
+                                <motion.div
+                                    key="style-spotlight"
+                                    className="pointer-events-none absolute left-6 top-1/2 z-20 max-w-[70%] -translate-y-1/2 text-white drop-shadow-[0_2px_18px_rgba(0,0,0,0.45)] md:left-8"
+                                    initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: shouldReduceMotion ? 0.01 : 0.35, ease: [0.32, 0.72, 0, 1] }}
+                                >
+                                    <motion.p
+                                        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: -22, filter: "blur(6px)" }}
+                                        animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+                                        transition={{ duration: shouldReduceMotion ? 0.01 : 0.58, ease: [0.32, 0.72, 0, 1] }}
+                                        className="text-2xl font-semibold tracking-tight md:text-3xl"
+                                    >
+                                        Style Spotlight
+                                    </motion.p>
+                                    <div className="mt-7 flex flex-col gap-x-8 gap-y-4">
+                                        {spotlightAttributes.map((attribute, index) => (
+                                            <motion.p
+                                                key={attribute}
+                                                initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 16, filter: "blur(5px)" }}
+                                                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                                                transition={{
+                                                    duration: shouldReduceMotion ? 0.01 : 0.52,
+                                                    delay: shouldReduceMotion ? 0 : 0.16 + index * 0.12,
+                                                    ease: [0.32, 0.72, 0, 1],
+                                                }}
+                                                className="text-sm font-bold md:text-base"
+                                            >
+                                                {attribute}
+                                            </motion.p>
+                                            
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
                         </AnimatePresence>
 
                         {/* Swipe overlay — invisible drag target */}
@@ -344,11 +449,45 @@ export function ProductClient({ id }: { id: string }) {
                         {product.description && (
                             <p className="text-sm text-muted-foreground leading-relaxed max-w-md">{product.description}</p>
                         )}
-                        {product.fabric && (
-                            <p className="text-xs text-muted-foreground">
-                                <span className="font-medium text-foreground">Fabric:</span> {product.fabric} {product.gsm && `(${product.gsm} GSM)`}
-                            </p>
+                        {(product.fabric || product.gsm) && (
+                            <div className="space-y-1 text-xs text-muted-foreground">
+                                {product.fabric && (
+                                    <p>
+                                        <span className="font-medium text-foreground">Fabric:</span> {product.fabric}
+                                    </p>
+                                )}
+                                {product.gsm && (
+                                    <p>
+                                        <span className="font-medium text-foreground">GSM:</span> {product.gsm}
+                                    </p>
+                                )}
+                            </div>
                         )}
+                    </div>
+
+                    <div className="grid gap-3 rounded-sm border border-border/70 bg-background/60 p-4 text-sm shadow-sm">
+                        <div className="flex items-center gap-3 font-semibold">
+                            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d7b464]/40 bg-[#d7b464]/10 text-[#c99b35]">
+                                <Star className="h-4 w-4 fill-current" />
+                            </span>
+                            <span>{mockStats.rating}/5 <span className="text-muted-foreground">({mockStats.reviews}+ reviews)</span></span>
+                        </div>
+                        <div className="flex items-center gap-3 font-semibold">
+                            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-600/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                                <Eye className="h-4 w-4" />
+                            </span>
+                            <span>{viewerCount ?? mockStats.viewers} people viewing right now</span>
+                        </div>
+                        <div className="flex items-center gap-3 font-semibold">
+                            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-orange-500/25 bg-orange-500/10 text-orange-600 dark:text-orange-300">
+                                <Timer className="h-4 w-4" />
+                            </span>
+                            {realRemainingStock > 0 ? (
+                                <span>Only {realRemainingStock} left in stock <span className="text-muted-foreground">— selling fast</span></span>
+                            ) : (
+                                <span className="text-destructive">Out of stock</span>
+                            )}
+                        </div>
                     </div>
 
                     <div className="space-y-6">
@@ -361,15 +500,15 @@ export function ProductClient({ id }: { id: string }) {
                                 </label>
                                 <div className="flex gap-2 flex-wrap">
                                     {(NUMBER_SIZE_CATEGORIES.includes(product.category)
-                                        ? product.sizes.filter((s) => /^\d+$/.test(s))
-                                        : product.sizes
+                                        ? productSizes.filter((s) => /^\d+$/.test(s))
+                                        : productSizes
                                     ).map((size) => {
                                         const available = isSizeAvailable(size)
                                         return (
                                             <Button
                                                 key={size}
                                                 variant={selectedSize === size ? "default" : "outline"}
-                                                className={`w-12 h-12 rounded-none border-input transition-all duration-300 relative text-xs ${
+                                                className={`w-12 h-12 rounded-none border-input transition-all duration-300 relative text-xs disabled:cursor-not-allowed ${
                                                     !available
                                                         ? "opacity-30 cursor-not-allowed line-through"
                                                         : "hover:border-foreground"
@@ -394,14 +533,14 @@ export function ProductClient({ id }: { id: string }) {
                         )}
 
                         {/* Color Selection */}
-                        {product.colors && product.colors.length > 0 && (
+                        {productColors.length > 0 && (
                             <div className="space-y-3">
                                 <label className="text-[10px] font-semibold uppercase tracking-[0.2em] flex items-center justify-between">
                                     <span>Select color</span>
                                     {selectedColor && <span className="text-muted-foreground font-normal normal-case text-[10px]">{selectedColor}</span>}
                                 </label>
                                 <div className="flex gap-3 flex-wrap">
-                                    {product.colors.map((color) => {
+                                    {productColors.map((color) => {
                                         const available = isColorAvailable(color.name)
                                         return (
                                             <button
@@ -452,9 +591,9 @@ export function ProductClient({ id }: { id: string }) {
                             <div className="flex gap-3">
                                 <Button
                                     size="lg"
-                                    className="flex-1 h-13 rounded-none text-xs uppercase tracking-[0.2em] font-semibold disabled:opacity-40"
+                                    className="flex-1 h-13 rounded-none text-xs uppercase tracking-[0.2em] font-semibold disabled:cursor-not-allowed disabled:opacity-40"
                                     onClick={handleAddToCart}
-                                    disabled={!effectiveSelectedSize || (!isAccessory && product.colors.length > 0 && !selectedColor) || product.stock === 0 || (currentStock !== null && currentStock === 0)}
+                                    disabled={!effectiveSelectedSize || (!isAccessory && productColors.length > 0 && !selectedColor) || product.stock === 0 || (currentStock !== null && currentStock === 0)}
                                 >
                                     {product.stock === 0 ? (
                                         "Out of stock"
@@ -481,11 +620,11 @@ export function ProductClient({ id }: { id: string }) {
                         </div>
 
                         {/* Features */}
-                        {product.features.length > 0 && (
+                        {productFeatures.length > 0 && (
                             <div className="pt-6 border-t border-border/60 space-y-3">
                                 <h4 className="text-[10px] font-semibold uppercase tracking-[0.2em]">Features</h4>
                                 <ul className="space-y-1.5">
-                                    {product.features.map((feature, i) => (
+                                    {productFeatures.map((feature, i) => (
                                         <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
                                             <span className="text-red-accent mt-0.5">·</span> {feature}
                                         </li>
@@ -542,10 +681,12 @@ export function ProductClient({ id }: { id: string }) {
                         ))}
                         {/* Then render related products */}
                         {(product.relatedProducts || []).map((related) => (
-                            <Link key={related.id} href={`/product/${related.id}`} className="group flex-shrink-0 w-[200px] sm:w-[240px] snap-start">
+                            <Link key={related.id} href={`/product/${related.id}`} className={`group flex-shrink-0 w-[200px] sm:w-[240px] snap-start ${related.stock <= 0 ? "cursor-not-allowed" : ""}`}>
                                 <div className="space-y-3">
                                     <div className="relative aspect-[3/4] overflow-hidden bg-muted/30">
-                                        <BargainDiscountStrip maxBargainDiscount={related.maxBargainDiscount} className="z-10" />
+                                        {related.stock > 0 && (
+                                            <BargainDiscountStrip maxBargainDiscount={related.maxBargainDiscount} className="z-10" />
+                                        )}
                                         <Image
                                             src={normalizeProductImage(related.images?.[0])}
                                             alt={related.name}
@@ -561,7 +702,13 @@ export function ProductClient({ id }: { id: string }) {
                                             {Number(related.mrp) > Number(related.sellingPrice) && (
                                                 <p className="text-[10px] text-muted-foreground line-through tabular-nums">₹{Number(related.mrp).toLocaleString("en-IN")}</p>
                                             )}
+                                            {relatedDiscountPercent(related) !== null && (
+                                                <span className="bg-foreground px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-background">
+                                                    {relatedDiscountPercent(related)}% off
+                                                </span>
+                                            )}
                                         </div>
+                                        {relatedSizeChips(related.sizes || undefined)}
                                     </div>
                                 </div>
                             </Link>

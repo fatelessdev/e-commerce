@@ -2,7 +2,7 @@
 
 import { useCart } from "@/lib/cart-context"
 import { Button } from "@/components/ui/button"
-import { X, Minus, Plus, ShoppingBag } from "lucide-react"
+import { X, Minus, Plus, ShoppingBag, Check } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation"
 import { useSession } from "@/lib/auth-client"
 import { useEffect, useRef } from "react"
 import { normalizeProductImage } from "@/lib/image"
+import { FREE_SHIPPING_THRESHOLD } from "@/lib/constants"
 
 export function CartDrawer() {
     const { items, isOpen, setIsOpen, removeItem, updateQuantity, totalItems, totalPrice, clearCart } = useCart()
@@ -17,6 +18,8 @@ export function CartDrawer() {
     const router = useRouter()
     const drawerRef = useRef<HTMLDivElement>(null)
     const closeButtonRef = useRef<HTMLButtonElement>(null)
+    const freeShippingUnlocked = totalPrice >= FREE_SHIPPING_THRESHOLD
+    const freeShippingRemaining = Math.max(0, FREE_SHIPPING_THRESHOLD - totalPrice)
 
     // Focus trap: focus close button when drawer opens
     useEffect(() => {
@@ -151,6 +154,24 @@ export function CartDrawer() {
                         {/* Footer */}
                         {items.length > 0 && (
                             <div className="p-6 border-t border-border/60 space-y-4">
+                                <div
+                                    className={`border px-4 py-3 text-sm font-semibold ${
+                                        freeShippingUnlocked
+                                            ? "border-emerald-700/20 bg-emerald-50 text-emerald-800 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-300"
+                                            : "border-border/70 bg-secondary/20 text-foreground"
+                                    }`}
+                                >
+                                    {freeShippingUnlocked ? (
+                                        <span className="flex items-center gap-2">
+                                            <Check className="h-4 w-4" />
+                                            You’ve unlocked free shipping!
+                                        </span>
+                                    ) : (
+                                        <span className="block">
+                                            Add ₹{freeShippingRemaining.toLocaleString("en-IN")} more to unlock free shipping
+                                        </span>
+                                    )}
+                                </div>
                                 <div className="flex justify-between text-sm font-semibold uppercase tracking-[0.1em]">
                                     <span>Total</span>
                                     <span className="tabular-nums">₹{totalPrice.toLocaleString("en-IN")}</span>

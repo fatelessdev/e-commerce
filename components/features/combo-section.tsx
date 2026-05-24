@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useCart } from "@/lib/cart-context";
@@ -291,28 +291,15 @@ export function ComboSection({
   interactive?: boolean;
   mobileLimit?: number;
 }) {
-  const [combos, setCombos] = useState<Combo[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadCombos() {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/combos?limit=${limit}`);
-        if (!response.ok) {
-          throw new Error("Failed to load combos");
-        }
-        const data = await response.json();
-        setCombos(data.combos || []);
-      } catch (error) {
-        console.error("Failed to fetch combos:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadCombos();
-  }, [limit]);
+  const { data: combos = [], isLoading: loading } = useQuery({
+    queryKey: ["combos", limit],
+    queryFn: async () => {
+      const response = await fetch(`/api/combos?limit=${limit}`);
+      if (!response.ok) throw new Error("Failed to load combos");
+      const data = await response.json();
+      return (data.combos || []) as Combo[];
+    },
+  });
 
   const hasCombos = useMemo(() => combos.length > 0, [combos.length]);
 
@@ -328,8 +315,19 @@ export function ComboSection({
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[...Array(Math.min(limit, 2))].map((_, index) => (
+            <div key={index} className="rounded-none border border-border/60 p-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="aspect-[3/4] animate-pulse bg-muted" />
+                <div className="aspect-[3/4] animate-pulse bg-muted" />
+              </div>
+              <div className="mt-4 space-y-2">
+                <div className="h-3 w-2/3 animate-pulse bg-muted" />
+                <div className="h-3 w-1/2 animate-pulse bg-muted" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

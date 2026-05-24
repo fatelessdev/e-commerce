@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
-import { Loader2, ChevronLeft, ChevronRight, Check } from "lucide-react"
+import { ChevronLeft, ChevronRight, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/lib/cart-context"
 import { normalizeProductImage } from "@/lib/image"
@@ -66,9 +67,6 @@ function isColorAvailable(product: ComboProduct, colorName: string, selectedSize
 }
 
 export function ComboClient({ id }: { id: string }) {
-  const [combo, setCombo] = useState<Combo | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [selectedImageA, setSelectedImageA] = useState(0)
   const [selectedImageB, setSelectedImageB] = useState(0)
   const [selectedSizeA, setSelectedSizeA] = useState<string | null>(null)
@@ -82,24 +80,18 @@ export function ComboClient({ id }: { id: string }) {
     window.scrollTo(0, 0)
   }, [id])
 
-  useEffect(() => {
-    async function fetchCombo() {
-      try {
-        setLoading(true)
-        const res = await fetch(`/api/combo/${id}`)
-        if (!res.ok) {
-          throw new Error("Combo not found")
-        }
-        const data = await res.json()
-        setCombo(data)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load combo")
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchCombo()
-  }, [id])
+  const {
+    data: combo,
+    isLoading: loading,
+    error,
+  } = useQuery({
+    queryKey: ["combo", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/combo/${id}`)
+      if (!res.ok) throw new Error("Combo not found")
+      return (await res.json()) as Combo
+    },
+  })
 
   const requiredColorA = combo?.productA.colors.length ? true : false
   const requiredColorB = combo?.productB.colors.length ? true : false
@@ -160,9 +152,25 @@ export function ComboClient({ id }: { id: string }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <Loader2 className="h-6 w-6 animate-spin text-red-accent" />
-        <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Loading combo</p>
+      <div className="min-h-screen bg-background pb-24">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+          <div className="aspect-[4/5] animate-pulse bg-muted" />
+          <div className="aspect-[4/5] animate-pulse bg-muted/70" />
+        </div>
+        <div className="border-t border-border/60 px-6 md:px-12 py-14 md:py-20">
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-12 md:grid-cols-2">
+            <div className="space-y-4">
+              <div className="h-3 w-28 animate-pulse bg-muted" />
+              <div className="h-7 w-3/4 animate-pulse bg-muted" />
+              <div className="h-5 w-32 animate-pulse bg-muted" />
+            </div>
+            <div className="space-y-4">
+              <div className="h-3 w-28 animate-pulse bg-muted" />
+              <div className="h-7 w-3/4 animate-pulse bg-muted" />
+              <div className="h-5 w-32 animate-pulse bg-muted" />
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -172,7 +180,7 @@ export function ComboClient({ id }: { id: string }) {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold">Combo Not Found</h1>
-          <p className="text-muted-foreground">{error || "This combo doesn't exist."}</p>
+          <p className="text-muted-foreground">{error instanceof Error ? error.message : "This combo doesn't exist."}</p>
           <Button asChild variant="outline" className="rounded-none">
             <Link href="/shop/men">Back to Shop</Link>
           </Button>

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Hero } from "@/components/features/hero";
 import { ComboSection } from "@/components/features/combo-section";
 import { ProductGrid } from "@/components/features/product-grid";
+import { ShopTheReels } from "@/components/features/shop-the-reels";
+import { RealReviews } from "@/components/features/real-reviews";
 import {
   JsonLd,
   organizationJsonLd,
@@ -38,7 +40,9 @@ export default function Home() {
       <ProductGrid title="Best Sellers" isFeatured />
       <ComboSection limit={4} interactive={false} mobileLimit={3} />
       <ProductGrid title="New Arrivals" isNew />
+      <ShopTheReels />
       <ProductGrid title="Accessories" fixedCategory="accessory" viewAllHref="/shop/accessories" />
+      <RealReviews />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { BargainDiscountStrip } from "@/components/ui/bargain-discount-strip"
@@ -56,8 +57,6 @@ interface ShopClientProps {
 }
 
 export function ShopClient({ genderFilter = "all", title = "All Products", subtitle, initialSearch = "", fixedCategory }: ShopClientProps) {
-    const [products, setProducts] = useState<Product[]>([])
-    const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState(initialSearch)
     const [selectedCategory, setSelectedCategory] = useState(fixedCategory || "All")
     const [selectedSize, setSelectedSize] = useState<string | null>(null)
@@ -65,49 +64,39 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
     const [showFilters, setShowFilters] = useState(false)
     const [visibleCount, setVisibleCount] = useState(8)
 
-    useEffect(() => {
+    const productParams = useMemo(() => {
+        const params = new URLSearchParams()
+        params.set("limit", "100")
+        if (genderFilter !== "all") {
+            params.set("gender", genderFilter)
+        }
         if (fixedCategory) {
-            setSelectedCategory(fixedCategory)
-            setSelectedSize(null)
+            params.set("category", fixedCategory)
         }
-    }, [fixedCategory])
+        return params.toString()
+    }, [fixedCategory, genderFilter])
 
-    // Fetch products from API
-    useEffect(() => {
-        async function fetchProducts() {
-            try {
-                setLoading(true)
-                const params = new URLSearchParams()
-                params.set("limit", "100")
-                if (genderFilter !== "all") {
-                    params.set("gender", genderFilter)
-                }
-                if (fixedCategory) {
-                    params.set("category", fixedCategory)
-                }
-                
-                const res = await fetch(`/api/products?${params.toString()}`)
-                if (res.ok) {
-                    const data = await res.json()
-                    setProducts(data.products || [])
-                }
-            } catch (error) {
-                console.error("Failed to fetch products:", error)
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchProducts()
-    }, [genderFilter, fixedCategory])
+    const { data: products = [], isLoading: loading } = useQuery({
+        queryKey: ["shop-products", productParams],
+        queryFn: async () => {
+            const res = await fetch(`/api/products?${productParams}`)
+            if (!res.ok) throw new Error("Failed to fetch products")
+            const data = await res.json()
+            return (data.products || []) as Product[]
+        },
+        staleTime: 1000 * 60 * 5,
+        placeholderData: keepPreviousData,
+    })
 
     const filteredProducts = useMemo(() => {
+        const effectiveSelectedCategory = fixedCategory || selectedCategory
         return products.filter((product) => {
             // Search
             if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) {
                 return false
             }
             // Category
-            if (selectedCategory !== "All" && product.category !== selectedCategory) {
+            if (effectiveSelectedCategory !== "All" && product.category !== effectiveSelectedCategory) {
                 return false
             }
             // Size
@@ -121,7 +110,7 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
             }
             return true
         })
-    }, [products, searchQuery, selectedCategory, selectedSize, selectedPriceRange])
+    }, [fixedCategory, products, searchQuery, selectedCategory, selectedSize, selectedPriceRange])
 
     const visibleProducts = filteredProducts.slice(0, visibleCount)
     const hasMore = visibleCount < filteredProducts.length
@@ -155,10 +144,18 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
         selectedSize !== null,
         selectedPriceRange !== PRICE_RANGES[0],
     ].filter(Boolean).length
+    const effectiveSelectedCategory = fixedCategory || selectedCategory
 
     const formatPrice = (price: string) => {
         const num = parseFloat(price)
         return `₹${num.toLocaleString("en-IN")}`
+    }
+
+    const discountPercent = (product: Product) => {
+        const mrp = parseFloat(product.mrp)
+        const price = parseFloat(product.sellingPrice)
+        if (!Number.isFinite(mrp) || !Number.isFinite(price) || mrp <= price) return null
+        return Math.round(((mrp - price) / mrp) * 100)
     }
 
     return (
@@ -230,11 +227,11 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                     )}
 
                     {/* Size */}
-                    {selectedCategory !== "accessory" && (
+                    {effectiveSelectedCategory !== "accessory" && (
                         <div className="space-y-2.5">
                             <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Size</label>
                             <div className="flex flex-wrap gap-1.5">
-                                {(NUMBER_SIZE_CATEGORIES.includes(selectedCategory) ? NUMBER_SIZES : selectedCategory === "All" ? [...DEFAULT_SIZES, ...NUMBER_SIZES] : DEFAULT_SIZES).map((size) => (
+                                {(NUMBER_SIZE_CATEGORIES.includes(effectiveSelectedCategory) ? NUMBER_SIZES : effectiveSelectedCategory === "All" ? [...DEFAULT_SIZES, ...NUMBER_SIZES] : DEFAULT_SIZES).map((size) => (
                                     <Button
                                         key={size}
                                         variant={selectedSize === size ? "default" : "outline"}
@@ -289,10 +286,12 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                         {visibleProducts.length > 0 ? (
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                                 {visibleProducts.map((product) => (
-                                    <Link href={`/product/${product.id}`} key={product.id} className="group">
+                                    <Link href={`/product/${product.id}`} key={product.id} className={`group ${product.stock === 0 ? "cursor-not-allowed" : ""}`}>
                                         <Card className="bg-transparent border-0 rounded-none hover-lift">
 <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
-                                                <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-10" />
+                                                {product.stock > 0 && (
+                                                    <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-10" />
+                                                )}
                                                 <Image
                                                     src={normalizeProductImage(product.images?.[0])}
                                                     alt={product.name}
@@ -317,15 +316,32 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                                                 </p>
                                                 <div className="flex w-full flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5">
                                                     <h3 className="font-medium tracking-tight text-sm line-clamp-1">{product.name}</h3>
-                                                    <div className="text-left sm:text-right">
+                                                    <div className="flex flex-wrap items-center gap-1.5 text-left sm:justify-end sm:text-right">
                                                         <span className="font-semibold text-sm tabular-nums">{formatPrice(product.sellingPrice)}</span>
                                                         {parseFloat(product.mrp) > parseFloat(product.sellingPrice) && (
-                                                            <span className="text-[10px] text-muted-foreground line-through ml-1 sm:ml-2 tabular-nums">
+                                                            <span className="text-[10px] text-muted-foreground line-through tabular-nums">
                                                                 {formatPrice(product.mrp)}
+                                                            </span>
+                                                        )}
+                                                        {discountPercent(product) !== null && (
+                                                            <span className="bg-foreground px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-background">
+                                                                {discountPercent(product)}% off
                                                             </span>
                                                         )}
                                                     </div>
                                                 </div>
+                                                {product.sizes.length > 0 && (
+                                                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                                                        {product.sizes.slice(0, 5).map((size) => (
+                                                            <span
+                                                                key={size}
+                                                                className="border border-border/70 px-2 py-1 text-[10px] uppercase leading-none text-muted-foreground"
+                                                            >
+                                                                {size}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </CardFooter>
                                         </Card>
                                     </Link>

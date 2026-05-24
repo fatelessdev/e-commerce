@@ -214,7 +214,11 @@ export async function deleteProduct(id: string) {
   await db.delete(products).where(eq(products.id, id));
 
   revalidatePath("/admin/products");
+  revalidatePath(`/product/${id}`);
   revalidatePath("/shop");
+  revalidatePath("/shop/men");
+  revalidatePath("/shop/women");
+  revalidatePath("/shop/accessories");
   revalidatePath("/");
 
   return { success: true };

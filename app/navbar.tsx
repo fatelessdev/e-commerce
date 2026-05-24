@@ -2,14 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { ShoppingBag, Heart, Menu, X, User, Package, Bot } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
+import { ShoppingBag, Heart, Menu, X, User, Package, ChevronLeft, ChevronRight, Bot } from "lucide-react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
 import ThemeToggleButton from "@/components/ui/theme-toggle-button";
-import { BARGAIN_BOT_BANNER_MESSAGE, CONTACT_PHONE } from "@/lib/constants";
+import { ANNOUNCEMENT_MESSAGES, CONTACT_PHONE } from "@/lib/constants";
 
 const EASE_OUT_EXPO = [0.32, 0.72, 0, 1] as const;
 
@@ -29,14 +29,61 @@ export function Navbar() {
   const { totalItems, setIsOpen } = useCart();
   const { items: wishlistItems } = useWishlist();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [announcementIndex, setAnnouncementIndex] = useState(0);
+  const shouldReduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setAnnouncementIndex((current) => (current + 1) % ANNOUNCEMENT_MESSAGES.length);
+    }, 5000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const rotateAnnouncement = (direction: 1 | -1) => {
+    setAnnouncementIndex((current) => (
+      current + direction + ANNOUNCEMENT_MESSAGES.length
+    ) % ANNOUNCEMENT_MESSAGES.length);
+  };
 
   return (
     <>
-      {/* Bargain Bot Banner */}
-      <div className="w-full bg-red-accent/8 border-b border-red-accent/10 py-1.5">
-        <div className="flex items-center justify-center gap-2 text-[10px] tracking-[0.15em] uppercase text-red-accent font-medium">
-          <Bot className="h-3 w-3" />
-          <span>{BARGAIN_BOT_BANNER_MESSAGE}</span>
+      {/* Rotating announcement bar */}
+      <div className="w-full bg-red-accent/8 border-b border-red-accent/10 py-1">
+        <div className="relative mx-auto flex max-w-7xl items-center justify-between px-5 md:px-8">
+          <button
+            type="button"
+            className="z-10 flex h-8 w-8 items-center justify-center text-red-accent/70 transition-colors duration-300 hover:text-red-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-accent/70"
+            onClick={() => rotateAnnouncement(-1)}
+            aria-label="Previous announcement"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+
+          <div className="absolute left-1/2 top-1/2 h-7 w-[calc(100%-6rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden text-center">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.p
+                key={announcementIndex}
+                initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 12, filter: "blur(4px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -12, filter: "blur(4px)" }}
+                transition={{ duration: shouldReduceMotion ? 0.01 : 0.45, ease: EASE_OUT_EXPO }}
+                className="flex h-7 w-full min-w-0 items-center justify-center gap-2 text-[9px] font-medium uppercase tracking-[0.12em] text-red-accent sm:text-[10px] md:text-xs md:tracking-[0.15em]"
+              >
+                <Bot className="h-3 w-3 flex-none" />
+                <span className="truncate">{ANNOUNCEMENT_MESSAGES[announcementIndex]}</span>
+              </motion.p>
+            </AnimatePresence>
+          </div>
+
+          <button
+            type="button"
+            className="z-10 flex h-8 w-8 items-center justify-center text-red-accent/70 transition-colors duration-300 hover:text-red-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-accent/70"
+            onClick={() => rotateAnnouncement(1)}
+            aria-label="Next announcement"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
       </div>
 
