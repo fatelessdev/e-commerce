@@ -39,14 +39,6 @@ export function ShopTheReels() {
 
     const products = [
         {
-            id: "f8964c87-0a46-4fb9-98c4-cc7cac816c4b",
-            name: "Xilar HypeRiot",
-            sellingPrice: "799",
-            mrp: "1199",
-            src: "/hero/reels/reel2.mp4",
-            images: "https://res.cloudinary.com/du44kbibc/image/upload/v1773689124/xilar/products/jfo39kv36zcksesbeccn.webp"
-        },
-        {
             id: "249fb306-8f60-4f67-8e48-3c6085c2b1fc",
             name: "Xilar InkDistort",
             sellingPrice: "799",
@@ -54,6 +46,14 @@ export function ShopTheReels() {
             src: "/hero/reels/reel1.mp4",
             images: "https://res.cloudinary.com/du44kbibc/image/upload/v1773690782/xilar/products/nw9hmqyoc0ul5jcqblw5.webp"
         },
+        {
+            id: "f8964c87-0a46-4fb9-98c4-cc7cac816c4b",
+            name: "Xilar HypeRiot",
+            sellingPrice: "799",
+            mrp: "1199",
+            src: "/hero/reels/reel2.mp4",
+            images: "https://res.cloudinary.com/du44kbibc/image/upload/v1773689124/xilar/products/jfo39kv36zcksesbeccn.webp"
+        }
 
     ];
 
