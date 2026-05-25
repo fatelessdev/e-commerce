@@ -159,12 +159,40 @@ export async function createOrder(input: CreateOrderInput) {
     };
   }
 
-  // Validate per-variant stock for all items
+  if (!input.items || input.items.length === 0) {
+    return {
+      success: false,
+      error: "Cart is empty.",
+    };
+  }
+
+  // Bolt ⚡: Batch queries to prevent N+1 query problem during checkout validation
+  const productIds = Array.from(new Set(input.items.map((i) => i.productId)));
+
+  // Fetch all related products in 1 query
+  const productsData = await db
+    .select({ id: products.id, stock: products.stock, isActive: products.isActive })
+    .from(products)
+    .where(inArray(products.id, productIds));
+
+  const productMap = new Map(productsData.map((p) => [p.id, p]));
+
+  // Fetch all related variants in 1 query
+  const variantsData = await db
+    .select({ productId: productVariants.productId, size: productVariants.size, color: productVariants.color, stock: productVariants.stock })
+    .from(productVariants)
+    .where(inArray(productVariants.productId, productIds));
+
+  // O(1) map for quick lookup: productId -> array of variants
+  const variantsMap = new Map<string, typeof variantsData>();
+  for (const v of variantsData) {
+    if (!variantsMap.has(v.productId)) variantsMap.set(v.productId, []);
+    variantsMap.get(v.productId)!.push(v);
+  }
+
+  // Validate per-variant stock for all items using in-memory O(1) lookups
   for (const item of input.items) {
-    const [productState] = await db
-      .select({ stock: products.stock, isActive: products.isActive })
-      .from(products)
-      .where(eq(products.id, item.productId));
+    const productState = productMap.get(item.productId);
 
     if (!productState?.isActive) {
       return {
@@ -173,26 +201,12 @@ export async function createOrder(input: CreateOrderInput) {
       };
     }
 
-    const [variantCountRow] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(productVariants)
-      .where(eq(productVariants.productId, item.productId));
-    const hasVariants = Number(variantCountRow?.count ?? 0) > 0;
+    const itemVariants = variantsMap.get(item.productId) || [];
+    const hasVariants = itemVariants.length > 0;
 
-    const colorCondition = item.color
-      ? eq(productVariants.color, item.color)
-      : isNull(productVariants.color);
-
-    const [variant] = await db
-      .select({ stock: productVariants.stock })
-      .from(productVariants)
-      .where(
-        and(
-          eq(productVariants.productId, item.productId),
-          eq(productVariants.size, item.size),
-          colorCondition
-        )
-      );
+    const variant = itemVariants.find(
+      (v) => v.size === item.size && (item.color ? v.color === item.color : v.color === null)
+    );
 
     if (!variant) {
       if (hasVariants) {
