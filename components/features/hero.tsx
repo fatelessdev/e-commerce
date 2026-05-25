@@ -36,7 +36,7 @@ const HERO_IMAGES = [
   {
     src: "/hero/image(4).webp",
     eyebrow: "For him",
-    title: "Premium shirts",
+    title: "Premium polos",
     href: "/shop/men",
   },
   {
@@ -57,7 +57,7 @@ export function Hero() {
     const timer = window.setInterval(() => {
       setSlideDirection(1);
       setActiveIndex((current) => (current + 1) % HERO_IMAGES.length);
-    }, 5500);
+    }, 2000);
 
     return () => window.clearInterval(timer);
   }, []);
@@ -118,7 +118,21 @@ export function Hero() {
                   initial={false}
                   animate={{ scale: 1 }}
                   transition={{ duration: shouldReduceMotion ? 0.01 : 0.82, ease: EASE_OUT_EXPO }}
-                  drag={isActive ? "x" : false}
+                >
+                  <Image
+                    src={slide.src}
+                    alt={slide.title}
+                    fill
+                    sizes={isActive ? "(max-width: 768px) 100vw, 56vw" : "22vw"}
+                    className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-[1.025]"
+                    priority={isActive}
+                  />
+                </motion.div>
+              <div className={`absolute inset-0 z-10 ${isActive ? "bg-gradient-to-t from-black/76 via-black/24 to-black/8" : "bg-black/20"}`} />
+              {isActive && (
+                <motion.div
+                  className="absolute inset-0 z-20 touch-pan-y"
+                  drag="x"
                   dragConstraints={{ left: 0, right: 0 }}
                   dragElastic={0.12}
                   onDragEnd={(_event, info) => {
@@ -131,17 +145,9 @@ export function Hero() {
                       goToSlide(activeIndex - 1);
                     }
                   }}
-                >
-                  <Image
-                    src={slide.src}
-                    alt={slide.title}
-                    fill
-                    sizes={isActive ? "(max-width: 768px) 100vw, 56vw" : "22vw"}
-                    className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-[1.025]"
-                    priority={isActive}
-                  />
-                </motion.div>
-              <div className={`absolute inset-0 z-10 ${isActive ? "bg-gradient-to-t from-black/76 via-black/24 to-black/8" : "bg-black/20"}`} />
+                  aria-hidden="true"
+                />
+              )}
 
               {isActive ? (
                 <div className="absolute inset-x-0 bottom-0 z-30 px-6 pb-10 text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.45)] md:px-12 md:pb-14">

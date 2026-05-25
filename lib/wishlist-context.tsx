@@ -16,17 +16,22 @@ interface WishlistContextType {
     removeItem: (id: string) => void
     isInWishlist: (id: string) => boolean
     toggleItem: (item: WishlistItem) => void
+    isHydrated: boolean
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined)
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
-    const [items, setItems] = useState<WishlistItem[]>(() => {
-        if (typeof window === "undefined") return []
-        const stored = localStorage.getItem("xilar-wishlist")
-        return stored ? JSON.parse(stored) : []
-    })
-    const [isHydrated] = useState(() => typeof window !== "undefined")
+    const [items, setItems] = useState<WishlistItem[]>([])
+    const [isHydrated, setIsHydrated] = useState(false)
+
+    useEffect(() => {
+        queueMicrotask(() => {
+            const stored = localStorage.getItem("xilar-wishlist")
+            setItems(stored ? JSON.parse(stored) : [])
+            setIsHydrated(true)
+        })
+    }, [])
 
     useEffect(() => {
         if (isHydrated) {
@@ -56,7 +61,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     }
 
     return (
-        <WishlistContext.Provider value={{ items, addItem, removeItem, isInWishlist, toggleItem }}>
+        <WishlistContext.Provider value={{ items, addItem, removeItem, isInWishlist, toggleItem, isHydrated }}>
             {children}
         </WishlistContext.Provider>
     )

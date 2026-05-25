@@ -35,6 +35,7 @@ interface CartContextType {
     clearCart: () => void
     totalItems: number
     totalPrice: number
+    isHydrated: boolean
     isOpen: boolean
     setIsOpen: (open: boolean) => void
 }
@@ -42,13 +43,17 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: ReactNode }) {
-    const [items, setItems] = useState<CartItem[]>(() => {
-        if (typeof window === "undefined") return []
-        const stored = localStorage.getItem("xilar-cart")
-        return stored ? JSON.parse(stored) : []
-    })
+    const [items, setItems] = useState<CartItem[]>([])
     const [isOpen, setIsOpen] = useState(false)
-    const [isHydrated] = useState(() => typeof window !== "undefined")
+    const [isHydrated, setIsHydrated] = useState(false)
+
+    useEffect(() => {
+        queueMicrotask(() => {
+            const stored = localStorage.getItem("xilar-cart")
+            setItems(stored ? JSON.parse(stored) : [])
+            setIsHydrated(true)
+        })
+    }, [])
 
     // Save to localStorage on change
     useEffect(() => {
@@ -162,6 +167,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 clearCart,
                 totalItems,
                 totalPrice,
+                isHydrated,
                 isOpen,
                 setIsOpen,
             }}

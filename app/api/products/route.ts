@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { products } from "@/lib/db/schema";
-import { eq, and, desc, ilike, or, gte, lte, sql } from "drizzle-orm";
+import { productVariants, products } from "@/lib/db/schema";
+import { eq, and, desc, ilike, or, gte, lte, sql, inArray, gt } from "drizzle-orm";
 import { parsePublicProductPagination } from "@/lib/checkout-validation";
 
 export async function GET(req: NextRequest) {
@@ -76,8 +76,46 @@ export async function GET(req: NextRequest) {
         .where(and(...conditions))
     ]);
 
+    const productIds = result.map((product) => product.id);
+    const availableVariantRows = productIds.length > 0
+      ? await db
+          .select({
+            productId: productVariants.productId,
+            size: productVariants.size,
+          })
+          .from(productVariants)
+          .where(
+            and(
+              inArray(productVariants.productId, productIds),
+              gt(productVariants.stock, 0)
+            )
+          )
+      : [];
+
+    const availableSizesByProductId = availableVariantRows.reduce<Map<string, Set<string>>>(
+      (acc, variant) => {
+        const sizes = acc.get(variant.productId) || new Set<string>();
+        sizes.add(variant.size);
+        acc.set(variant.productId, sizes);
+        return acc;
+      },
+      new Map()
+    );
+
+    const productsWithAvailableSizes = result.map((product) => {
+      const availableSizes = Array.from(availableSizesByProductId.get(product.id) || []);
+      return {
+        ...product,
+        availableSizes: availableSizes.length > 0
+          ? availableSizes
+          : product.stock > 0
+            ? product.sizes || []
+            : [],
+      };
+    });
+
     return NextResponse.json({
-      products: result,
+      products: productsWithAvailableSizes,
       total: Number(count),
       limit,
       offset,

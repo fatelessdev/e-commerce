@@ -242,6 +242,7 @@ export default function EditProductPage() {
         queryClient.invalidateQueries({ queryKey: ["product", productId] }),
         queryClient.invalidateQueries({ queryKey: ["products"] }),
         queryClient.invalidateQueries({ queryKey: ["shop-products"] }),
+        queryClient.invalidateQueries({ queryKey: ["shop-catalog"] }),
         queryClient.invalidateQueries({ queryKey: ["shop-the-reels"] }),
         queryClient.invalidateQueries({ queryKey: ["combos"] }),
       ]);

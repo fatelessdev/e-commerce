@@ -14,14 +14,17 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-    const [theme, setThemeState] = useState<Theme>(() => {
-        if (typeof window === "undefined") return "dark"
-        const stored = localStorage.getItem("xilar-theme") as Theme | null
-        if (stored) return stored
-        if (window.matchMedia("(prefers-color-scheme: light)").matches) return "light"
-        return "dark"
-    })
-    const [mounted] = useState(() => typeof window !== "undefined")
+    const [theme, setThemeState] = useState<Theme>("dark")
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        queueMicrotask(() => {
+            const stored = localStorage.getItem("xilar-theme") as Theme | null
+            const preferredTheme = stored || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark")
+            setThemeState(preferredTheme)
+            setMounted(true)
+        })
+    }, [])
 
     useEffect(() => {
         if (!mounted) return
@@ -45,7 +48,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         setThemeState(newTheme)
     }
 
-    // Always wrap children in provider - just use default theme before mount
     return (
         <ThemeContext.Provider value={{ theme, toggleTheme, setTheme, mounted }}>
             {children}

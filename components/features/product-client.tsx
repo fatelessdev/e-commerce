@@ -708,7 +708,7 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                                                 </span>
                                             )}
                                         </div>
-                                        {relatedSizeChips(related.sizes || undefined)}
+                                        {relatedSizeChips(related.availableSizes || related.sizes || undefined)}
                                     </div>
                                 </div>
                             </Link>

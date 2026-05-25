@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { combos, products, productVariants } from "@/lib/db/schema";
-import { and, desc, eq, inArray, or } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, or } from "drizzle-orm";
 
 type ProductRow = typeof products.$inferSelect;
 type ProductVariantRow = typeof productVariants.$inferSelect;
@@ -14,7 +14,7 @@ type RelatedCombo = ComboRow & {
 export type ProductDetails = ProductRow & {
   variants: ProductVariantRow[];
   relatedCombos: RelatedCombo[];
-  relatedProducts: ProductRow[];
+  relatedProducts: (ProductRow & { availableSizes: string[] })[];
 };
 
 function getRelatedScore(
@@ -143,6 +143,36 @@ export async function getProductDetails(
     .filter((candidate) => !excludedIds.has(candidate.id))
     .sort((a, b) => getRelatedScore(product, b) - getRelatedScore(product, a))
     .slice(0, 8);
+  const relatedProductIds = relatedProducts.map((row) => row.id);
+  const relatedAvailableVariantRows = relatedProductIds.length > 0
+    ? await db
+        .select({
+          productId: productVariants.productId,
+          size: productVariants.size,
+        })
+        .from(productVariants)
+        .where(and(inArray(productVariants.productId, relatedProductIds), gt(productVariants.stock, 0)))
+    : [];
+  const relatedSizesByProductId = relatedAvailableVariantRows.reduce<Map<string, Set<string>>>(
+    (acc, variant) => {
+      const sizes = acc.get(variant.productId) || new Set<string>();
+      sizes.add(variant.size);
+      acc.set(variant.productId, sizes);
+      return acc;
+    },
+    new Map()
+  );
+  const relatedProductsWithAvailableSizes = relatedProducts.map((row) => {
+    const availableSizes = Array.from(relatedSizesByProductId.get(row.id) || []);
+    return {
+      ...row,
+      availableSizes: availableSizes.length > 0
+        ? availableSizes
+        : row.stock > 0
+          ? row.sizes || []
+          : [],
+    };
+  });
 
-  return { ...product, variants, relatedCombos, relatedProducts };
+  return { ...product, variants, relatedCombos, relatedProducts: relatedProductsWithAvailableSizes };
 }

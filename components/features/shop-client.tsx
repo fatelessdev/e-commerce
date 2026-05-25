@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react"
-import { keepPreviousData, useQuery } from "@tanstack/react-query"
+import { usePathname } from "next/navigation"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { BargainDiscountStrip } from "@/components/ui/bargain-discount-strip"
@@ -9,21 +9,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react"
 import { normalizeProductImage } from "@/lib/image"
-
-interface Product {
-    id: string
-    name: string
-    slug: string
-    sellingPrice: string
-    mrp: string
-    maxBargainDiscount: string
-    images: string[]
-    category: string
-    gender: "men" | "women" | "unisex"
-    sizes: string[]
-    isNew?: boolean
-    stock: number
-}
+import { getDisplaySizes, productMatchesGender, useShopCatalog, type CatalogProduct } from "@/components/features/use-shop-catalog"
 
 const CATEGORIES = ["All", "tshirt", "shirt", "cargo", "jogger", "jeans", "hoodie", "jacket", "shorts", "accessory"]
 const CATEGORY_LABELS: Record<string, string> = {
@@ -48,6 +34,19 @@ const PRICE_RANGES = [
     { label: "Over ₹2000", min: 2000, max: Infinity },
 ]
 
+type ShopRestoreState = {
+    scrollY: number
+    visibleCount: number
+    historyIndex: number | null
+    searchQuery: string
+    selectedCategory: string
+    selectedSize: string | null
+    selectedPriceRangeLabel: string
+    clickedProductId: string
+}
+
+const SHOP_SCROLL_PREFIX = "xilar-shop-scroll:"
+
 interface ShopClientProps {
     genderFilter?: "men" | "women" | "unisex" | "all"
     title?: string
@@ -57,40 +56,24 @@ interface ShopClientProps {
 }
 
 export function ShopClient({ genderFilter = "all", title = "All Products", subtitle, initialSearch = "", fixedCategory }: ShopClientProps) {
+    const pathname = usePathname()
     const [searchQuery, setSearchQuery] = useState(initialSearch)
     const [selectedCategory, setSelectedCategory] = useState(fixedCategory || "All")
     const [selectedSize, setSelectedSize] = useState<string | null>(null)
     const [selectedPriceRange, setSelectedPriceRange] = useState(PRICE_RANGES[0])
     const [showFilters, setShowFilters] = useState(false)
     const [visibleCount, setVisibleCount] = useState(8)
+    const pendingRestoreRef = useRef<ShopRestoreState | null>(null)
+    const restoredRef = useRef(false)
 
-    const productParams = useMemo(() => {
-        const params = new URLSearchParams()
-        params.set("limit", "100")
-        if (genderFilter !== "all") {
-            params.set("gender", genderFilter)
-        }
-        if (fixedCategory) {
-            params.set("category", fixedCategory)
-        }
-        return params.toString()
-    }, [fixedCategory, genderFilter])
-
-    const { data: products = [], isLoading: loading } = useQuery({
-        queryKey: ["shop-products", productParams],
-        queryFn: async () => {
-            const res = await fetch(`/api/products?${productParams}`)
-            if (!res.ok) throw new Error("Failed to fetch products")
-            const data = await res.json()
-            return (data.products || []) as Product[]
-        },
-        staleTime: 1000 * 60 * 5,
-        placeholderData: keepPreviousData,
-    })
+    const { data: products = [], isLoading: loading } = useShopCatalog()
 
     const filteredProducts = useMemo(() => {
         const effectiveSelectedCategory = fixedCategory || selectedCategory
         return products.filter((product) => {
+            if (!productMatchesGender(product, genderFilter)) {
+                return false
+            }
             // Search
             if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) {
                 return false
@@ -100,7 +83,7 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                 return false
             }
             // Size
-            if (selectedSize && !product.sizes.includes(selectedSize)) {
+            if (selectedSize && !getDisplaySizes(product).includes(selectedSize)) {
                 return false
             }
             // Price
@@ -110,7 +93,7 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
             }
             return true
         })
-    }, [fixedCategory, products, searchQuery, selectedCategory, selectedSize, selectedPriceRange])
+    }, [fixedCategory, genderFilter, products, searchQuery, selectedCategory, selectedSize, selectedPriceRange])
 
     const visibleProducts = filteredProducts.slice(0, visibleCount)
     const hasMore = visibleCount < filteredProducts.length
@@ -132,11 +115,90 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
         return () => { if (el) observer.unobserve(el) }
     }, [hasMore, loading, filteredProducts.length])
 
+    useEffect(() => {
+        if (restoredRef.current || typeof window === "undefined") return
+        restoredRef.current = true
+
+        const raw = window.sessionStorage.getItem(`${SHOP_SCROLL_PREFIX}${pathname}`)
+        if (!raw) return
+
+        try {
+            const saved = JSON.parse(raw) as ShopRestoreState
+            const currentHistoryIndex = typeof window.history.state?.idx === "number" ? window.history.state.idx : null
+            const shouldRestore =
+                saved.historyIndex === null ||
+                currentHistoryIndex === null ||
+                currentHistoryIndex <= saved.historyIndex
+
+            if (!shouldRestore) {
+                window.sessionStorage.removeItem(`${SHOP_SCROLL_PREFIX}${pathname}`)
+                return
+            }
+
+            pendingRestoreRef.current = saved
+            const timer = window.setTimeout(() => {
+                setSearchQuery(saved.searchQuery)
+                setSelectedCategory(fixedCategory || saved.selectedCategory || "All")
+                setSelectedSize(saved.selectedSize)
+                setSelectedPriceRange(
+                    PRICE_RANGES.find((range) => range.label === saved.selectedPriceRangeLabel) || PRICE_RANGES[0]
+                )
+                setVisibleCount(Math.max(8, saved.visibleCount))
+            }, 0)
+            return () => window.clearTimeout(timer)
+        } catch {
+            window.sessionStorage.removeItem(`${SHOP_SCROLL_PREFIX}${pathname}`)
+        }
+    }, [fixedCategory, pathname])
+
+    useEffect(() => {
+        const saved = pendingRestoreRef.current
+        if (!saved || loading || filteredProducts.length === 0) return
+
+        const clickedIndex = filteredProducts.findIndex((product) => product.id === saved.clickedProductId)
+        const requiredVisibleCount = Math.max(saved.visibleCount, clickedIndex >= 0 ? clickedIndex + 1 : 8)
+
+        if (visibleCount < requiredVisibleCount) {
+            setVisibleCount(requiredVisibleCount)
+            return
+        }
+
+        let attempts = 0
+        const restore = () => {
+            attempts += 1
+            const maxReachableScroll = document.documentElement.scrollHeight - window.innerHeight
+            if (maxReachableScroll >= saved.scrollY || attempts > 24) {
+                window.scrollTo({ top: saved.scrollY, behavior: "smooth" })
+                pendingRestoreRef.current = null
+                return
+            }
+            window.requestAnimationFrame(restore)
+        }
+
+        window.requestAnimationFrame(restore)
+    }, [filteredProducts, loading, visibleCount])
+
+    const saveScrollState = (clickedProductId: string) => {
+        if (typeof window === "undefined") return
+        const state: ShopRestoreState = {
+            scrollY: window.scrollY,
+            visibleCount,
+            historyIndex: typeof window.history.state?.idx === "number" ? window.history.state.idx : null,
+            searchQuery,
+            selectedCategory,
+            selectedSize,
+            selectedPriceRangeLabel: selectedPriceRange.label,
+            clickedProductId,
+        }
+        window.sessionStorage.setItem(`${SHOP_SCROLL_PREFIX}${pathname}`, JSON.stringify(state))
+    }
+
     const clearFilters = () => {
         setSearchQuery("")
         setSelectedCategory(fixedCategory || "All")
         setSelectedSize(null)
         setSelectedPriceRange(PRICE_RANGES[0])
+        setVisibleCount(8)
     }
 
     const activeFilterCount = [
@@ -151,7 +213,7 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
         return `₹${num.toLocaleString("en-IN")}`
     }
 
-    const discountPercent = (product: Product) => {
+    const discountPercent = (product: CatalogProduct) => {
         const mrp = parseFloat(product.mrp)
         const price = parseFloat(product.sellingPrice)
         if (!Number.isFinite(mrp) || !Number.isFinite(price) || mrp <= price) return null
@@ -176,7 +238,10 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                         type="text"
                         placeholder="Search products..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value)
+                            setVisibleCount(8)
+                        }}
                         className="w-full h-10 pl-10 pr-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
                     />
                 </div>
@@ -217,6 +282,7 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                                         onClick={() => {
                                             setSelectedCategory(cat)
                                             setSelectedSize(null)
+                                            setVisibleCount(8)
                                         }}
                                     >
                                         {CATEGORY_LABELS[cat] || cat}
@@ -237,7 +303,10 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                                         variant={selectedSize === size ? "default" : "outline"}
                                         size="sm"
                                         className="rounded-none h-8 text-[10px] tracking-wide"
-                                        onClick={() => setSelectedSize(selectedSize === size ? null : size)}
+                                        onClick={() => {
+                                            setSelectedSize(selectedSize === size ? null : size)
+                                            setVisibleCount(8)
+                                        }}
                                     >
                                         {size}
                                     </Button>
@@ -256,7 +325,10 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                                     variant={selectedPriceRange === range ? "default" : "outline"}
                                     size="sm"
                                     className="rounded-none h-8 text-[10px] tracking-wide"
-                                    onClick={() => setSelectedPriceRange(range)}
+                                    onClick={() => {
+                                        setSelectedPriceRange(range)
+                                        setVisibleCount(8)
+                                    }}
                                 >
                                     {range.label}
                                 </Button>
@@ -286,7 +358,11 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                         {visibleProducts.length > 0 ? (
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                                 {visibleProducts.map((product) => (
-                                    <Link href={`/product/${product.id}`} key={product.id} className={`group ${product.stock === 0 ? "cursor-not-allowed" : ""}`}>
+                                    <Link
+                                        href={`/product/${product.id}`}
+                                        key={product.id}
+                                        onClick={() => saveScrollState(product.id)}
+                                    >
                                         <Card className="bg-transparent border-0 rounded-none hover-lift">
 <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
                                                 {product.stock > 0 && (
@@ -330,9 +406,9 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                                                         )}
                                                     </div>
                                                 </div>
-                                                {product.sizes.length > 0 && (
+                                                {getDisplaySizes(product).length > 0 && (
                                                     <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                                                        {product.sizes.slice(0, 5).map((size) => (
+                                                        {getDisplaySizes(product).slice(0, 5).map((size) => (
                                                             <span
                                                                 key={size}
                                                                 className="border border-border/70 px-2 py-1 text-[10px] uppercase leading-none text-muted-foreground"

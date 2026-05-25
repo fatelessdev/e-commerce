@@ -18,6 +18,7 @@ function invalidateProductSurfaces(queryClient: ReturnType<typeof useQueryClient
       return (
         scope === "products" ||
         scope === "shop-products" ||
+        scope === "shop-catalog" ||
         scope === "shop-the-reels" ||
         scope === "combos" ||
         scope === "combo" ||

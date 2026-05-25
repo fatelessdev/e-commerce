@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { updateOrderStatus } from "@/lib/actions/admin";
 
 const statuses = [
@@ -21,6 +22,7 @@ export function OrderStatusSelect({
 }) {
   const [status, setStatus] = useState(currentStatus);
   const [isUpdating, setIsUpdating] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleChange = async (newStatus: string) => {
     setIsUpdating(true);
@@ -30,6 +32,8 @@ export function OrderStatusSelect({
         newStatus as "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled"
       );
       setStatus(newStatus);
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
     } catch (error) {
       console.error("Failed to update status:", error);
       alert("Failed to update order status");

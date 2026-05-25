@@ -26,8 +26,8 @@ const mobileLinks = [
 ];
 
 export function Navbar() {
-  const { totalItems, setIsOpen } = useCart();
-  const { items: wishlistItems } = useWishlist();
+  const { totalItems, setIsOpen, isHydrated: isCartHydrated } = useCart();
+  const { items: wishlistItems, isHydrated: isWishlistHydrated } = useWishlist();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [announcementIndex, setAnnouncementIndex] = useState(0);
   const shouldReduceMotion = useReducedMotion();
@@ -189,7 +189,7 @@ export function Navbar() {
             <Link href="/wishlist">
               <Button variant="ghost" size="icon" className="h-9 w-9 relative text-muted-foreground hover:text-foreground transition-colors duration-300">
                 <Heart className="h-4 w-4" />
-                {wishlistItems.length > 0 && (
+                {isWishlistHydrated && wishlistItems.length > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-accent text-white text-[10px] flex items-center justify-center font-semibold">
                     {wishlistItems.length}
                   </span>
@@ -205,7 +205,7 @@ export function Navbar() {
               onClick={() => setIsOpen(true)}
             >
               <ShoppingBag className="h-4 w-4" />
-              {totalItems > 0 && (
+              {isCartHydrated && totalItems > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-accent text-white text-[10px] flex items-center justify-center font-semibold">
                   {totalItems}
                 </span>

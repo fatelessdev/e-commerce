@@ -8,22 +8,7 @@ import Image from "next/image"
 import { useMemo, useState } from "react"
 import { ArrowRight } from "lucide-react"
 import { normalizeProductImage } from "@/lib/image"
-import { keepPreviousData, useQuery } from "@tanstack/react-query"
-
-interface Product {
-    id: string
-    name: string
-    slug: string
-    sellingPrice: string
-    mrp: string
-    maxBargainDiscount: string
-    images: string[]
-    category: string
-    gender: string
-    stock: number
-    sizes: string[]
-    colors: { name: string; hex: string }[]
-}
+import { getDisplaySizes, productMatchesGender, useShopCatalog, type CatalogProduct } from "@/components/features/use-shop-catalog"
 
 function ColorSwatches({ colors }: { colors: { name: string; hex: string }[] }) {
     if (!colors || colors.length === 0) return null
@@ -80,38 +65,30 @@ export function ProductGrid({
     viewAllHref?: string
 }) {
     const [activeTab, setActiveTab] = useState<"men" | "women">(gender === "women" ? "women" : "men")
-    const productParams = useMemo(() => {
-        const params = new URLSearchParams()
-        params.set("limit", "8")
-        if (gender) {
-            params.set("gender", gender)
-        } else if (!fixedCategory) {
-            params.set("gender", activeTab)
-        }
-        if (fixedCategory) params.set("category", fixedCategory)
-        if (isFeatured) params.set("isFeatured", "true")
-        if (isNew) params.set("isNew", "true")
-        return params.toString()
-    }, [activeTab, fixedCategory, gender, isFeatured, isNew])
-
-    const { data: products = [], isLoading: loading } = useQuery({
-        queryKey: ["products", productParams],
-        queryFn: async () => {
-            const res = await fetch(`/api/products?${productParams}`)
-            if (!res.ok) throw new Error("Failed to fetch products")
-            const data = await res.json()
-            return (data.products || data) as Product[]
-        },
-        staleTime: 1000 * 60 * 5,
-        placeholderData: keepPreviousData,
-    })
+    const { data: catalogProducts = [], isLoading: loading } = useShopCatalog()
+    const products = useMemo(() => {
+        const resolvedGender = gender || (!fixedCategory ? activeTab : "all")
+        return catalogProducts
+            .filter((product) => productMatchesGender(product, resolvedGender))
+            .filter((product) => !fixedCategory || product.category === fixedCategory)
+            .filter((product) => !isFeatured || product.isFeatured)
+            .filter((product) => !isNew || product.isNew)
+            .slice(0, 8)
+    }, [activeTab, catalogProducts, fixedCategory, gender, isFeatured, isNew])
+    const gridAnimationKey = [
+        layout,
+        gender || activeTab,
+        fixedCategory || "all",
+        isFeatured ? "featured" : "regular",
+        isNew ? "new" : "all",
+    ].join(":")
 
     const formatPrice = (price: string) => {
         const num = parseFloat(price)
         return `₹${num.toLocaleString("en-IN")}`
     }
 
-    const discountPercent = (product: Product) => {
+    const discountPercent = (product: CatalogProduct) => {
         const mrp = parseFloat(product.mrp)
         const price = parseFloat(product.sellingPrice)
         if (!Number.isFinite(mrp) || !Number.isFinite(price) || mrp <= price) return null
@@ -216,7 +193,7 @@ export function ProductGrid({
                                                     </span>
                                                 )}
                                             </div>
-                                            <SizeChips sizes={product.sizes} />
+                                            <SizeChips sizes={getDisplaySizes(product)} />
                                             <ColorSwatches colors={product.colors} />
                                         </CardFooter>
                                     </Card>
@@ -225,7 +202,11 @@ export function ProductGrid({
                         ))}
                     </div>
                 ) : (
-                    <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                    <StaggerContainer
+                        key={gridAnimationKey}
+                        once={false}
+                        className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6"
+                    >
                         {products.map((product, index) => (
                             <StaggerItem key={product.id} className={index >= mobileLimit ? "hidden md:block" : undefined}>
                                 <Link href={`/product/${product.id}`}>
@@ -277,7 +258,7 @@ export function ProductGrid({
                                                 </div>
                                             </div>
 
-                                            <SizeChips sizes={product.sizes} />
+                                            <SizeChips sizes={getDisplaySizes(product)} />
                                             <ColorSwatches colors={product.colors} />
                                         </CardFooter>
                                     </Card>
