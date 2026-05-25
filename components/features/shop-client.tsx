@@ -53,9 +53,10 @@ interface ShopClientProps {
     subtitle?: string
     initialSearch?: string
     fixedCategory?: string
+    initialProducts?: CatalogProduct[]
 }
 
-export function ShopClient({ genderFilter = "all", title = "All Products", subtitle, initialSearch = "", fixedCategory }: ShopClientProps) {
+export function ShopClient({ genderFilter = "all", title = "All Products", subtitle, initialSearch = "", fixedCategory, initialProducts }: ShopClientProps) {
     const pathname = usePathname()
     const [searchQuery, setSearchQuery] = useState(initialSearch)
     const [selectedCategory, setSelectedCategory] = useState(fixedCategory || "All")
@@ -66,7 +67,7 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
     const pendingRestoreRef = useRef<ShopRestoreState | null>(null)
     const restoredRef = useRef(false)
 
-    const { data: products = [], isLoading: loading } = useShopCatalog()
+    const { data: products = [], isLoading: loading } = useShopCatalog(initialProducts)
 
     const filteredProducts = useMemo(() => {
         const effectiveSelectedCategory = fixedCategory || selectedCategory
@@ -119,8 +120,19 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
         if (restoredRef.current || typeof window === "undefined") return
         restoredRef.current = true
 
+        const applyUrlSearch = () => {
+            const urlSearch = new URLSearchParams(window.location.search).get("search")
+            if (urlSearch) {
+                setSearchQuery(urlSearch)
+                setVisibleCount(8)
+            }
+        }
+
         const raw = window.sessionStorage.getItem(`${SHOP_SCROLL_PREFIX}${pathname}`)
-        if (!raw) return
+        if (!raw) {
+            applyUrlSearch()
+            return
+        }
 
         try {
             const saved = JSON.parse(raw) as ShopRestoreState
@@ -132,6 +144,7 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
 
             if (!shouldRestore) {
                 window.sessionStorage.removeItem(`${SHOP_SCROLL_PREFIX}${pathname}`)
+                applyUrlSearch()
                 return
             }
 

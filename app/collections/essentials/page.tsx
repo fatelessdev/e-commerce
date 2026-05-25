@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { ProductGrid } from "@/components/features/product-grid"
 import { JsonLd, breadcrumbJsonLd, collectionJsonLd } from "@/components/seo/structured-data"
+import { getCatalogProducts } from "@/lib/product-catalog"
 
 export const metadata: Metadata = {
     title: "Essentials Collection — Timeless Streetwear Basics",
@@ -17,8 +18,9 @@ export const metadata: Metadata = {
     },
 }
 
-export default function EssentialsPage() {
+export default async function EssentialsPage() {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+    const { products } = await getCatalogProducts()
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -41,7 +43,7 @@ export default function EssentialsPage() {
                 <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tighter uppercase">Essentials</h1>
                 <p className="text-sm text-muted-foreground mt-2">The foundation of your wardrobe. Versatile. Timeless. Essential.</p>
             </div>
-            <ProductGrid title="" />
+            <ProductGrid title="" initialProducts={products} />
         </div>
     )
 }

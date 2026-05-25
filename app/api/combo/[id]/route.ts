@@ -22,24 +22,21 @@ export async function GET(
       );
     }
 
-    // Fetch both products
-    const comboProducts = await db
-      .select()
-      .from(products)
-      .where(
-        and(
-          inArray(products.id, [combo.productAId, combo.productBId]),
-          eq(products.isActive, true)
-        )
-      );
-
-    // Fetch variants for both products
-    const variants = await db
-      .select()
-      .from(productVariants)
-      .where(
-        inArray(productVariants.productId, [combo.productAId, combo.productBId])
-      );
+    const [comboProducts, variants] = await Promise.all([
+      db
+        .select()
+        .from(products)
+        .where(
+          and(
+            inArray(products.id, [combo.productAId, combo.productBId]),
+            eq(products.isActive, true)
+          )
+        ),
+      db
+        .select()
+        .from(productVariants)
+        .where(inArray(productVariants.productId, [combo.productAId, combo.productBId])),
+    ]);
 
     // Build product map
     const productMap = new Map(comboProducts.map((product) => [product.id, product]));

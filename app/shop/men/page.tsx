@@ -2,6 +2,8 @@ import type { Metadata } from "next"
 import { ShopClient } from "@/components/features/shop-client"
 import { ComboSection } from "@/components/features/combo-section"
 import { JsonLd, breadcrumbJsonLd, collectionJsonLd } from "@/components/seo/structured-data"
+import { getActiveCombosWithProducts } from "@/lib/combos"
+import { getCatalogProducts } from "@/lib/product-catalog"
 
 export const metadata: Metadata = {
     title: "Men's Streetwear",
@@ -18,8 +20,12 @@ export const metadata: Metadata = {
     },
 }
 
-export default function ShopMenPage() {
+export default async function ShopMenPage() {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+    const [{ products }, combos] = await Promise.all([
+        getCatalogProducts(),
+        getActiveCombosWithProducts(6),
+    ])
 
     return (
         <>
@@ -37,8 +43,8 @@ export default function ShopMenPage() {
                     url: "/shop/men",
                 })}
             />
-            <ShopClient genderFilter="men" title="Men" subtitle="Streetwear essentials for him" />
-            <ComboSection limit={6} interactive={false} />
+            <ShopClient genderFilter="men" title="Men" subtitle="Streetwear essentials for him" initialProducts={products} />
+            <ComboSection limit={6} interactive={false} initialCombos={combos} />
         </>
     )
 }

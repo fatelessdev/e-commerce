@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { ComboClient } from "@/components/features/combo-client"
 import { db } from "@/lib/db"
-import { combos, products } from "@/lib/db/schema"
+import { combos, products, productVariants } from "@/lib/db/schema"
 import { and, eq, inArray } from "drizzle-orm"
 import {
   JsonLd,
@@ -16,15 +16,21 @@ async function getCombo(id: string) {
 
   if (!combo) return null
 
-  const comboProducts = await db
-    .select()
-    .from(products)
-    .where(
-      and(
-        inArray(products.id, [combo.productAId, combo.productBId]),
-        eq(products.isActive, true)
-      )
-    )
+  const [comboProducts, variants] = await Promise.all([
+    db
+      .select()
+      .from(products)
+      .where(
+        and(
+          inArray(products.id, [combo.productAId, combo.productBId]),
+          eq(products.isActive, true)
+        )
+      ),
+    db
+      .select()
+      .from(productVariants)
+      .where(inArray(productVariants.productId, [combo.productAId, combo.productBId])),
+  ])
 
   // Keep correct product order according to combo table
   const productA = comboProducts.find(
@@ -37,7 +43,30 @@ async function getCombo(id: string) {
 
   if (!productA || !productB) return null
 
-  return { combo, productA, productB }
+  const variantsByProductId = variants.reduce<Map<string, typeof variants>>((acc, variant) => {
+    const existing = acc.get(variant.productId) || []
+    existing.push(variant)
+    acc.set(variant.productId, existing)
+    return acc
+  }, new Map())
+
+  return {
+    ...combo,
+    productA: {
+      ...productA,
+      images: productA.images || [],
+      sizes: productA.sizes || [],
+      colors: productA.colors || [],
+      variants: variantsByProductId.get(productA.id) || [],
+    },
+    productB: {
+      ...productB,
+      images: productB.images || [],
+      sizes: productB.sizes || [],
+      colors: productB.colors || [],
+      variants: variantsByProductId.get(productB.id) || [],
+    },
+  }
 }
 
 export async function generateMetadata({
@@ -91,6 +120,7 @@ export default async function ComboPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
+  const combo = await getCombo(id)
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
 
   return (
@@ -103,7 +133,7 @@ export default async function ComboPage({
         ])}
       />
 
-      <ComboClient id={id} />
+      <ComboClient id={id} initialCombo={combo ?? undefined} />
     </>
   )
 }

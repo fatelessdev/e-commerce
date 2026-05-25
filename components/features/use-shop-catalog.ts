@@ -1,24 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import type { CatalogProduct } from "@/lib/product-catalog";
 
-export type CatalogProduct = {
-  id: string;
-  name: string;
-  slug: string;
-  sellingPrice: string;
-  mrp: string;
-  maxBargainDiscount: string;
-  images: string[];
-  category: string;
-  gender: "men" | "women" | "unisex";
-  sizes: string[];
-  availableSizes: string[];
-  colors: { name: string; hex: string }[];
-  isNew?: boolean;
-  isFeatured?: boolean;
-  stock: number;
-};
+export type { CatalogProduct };
 
 type ProductPageResponse = {
   products: CatalogProduct[];
@@ -30,35 +15,37 @@ type ProductPageResponse = {
 export const SHOP_CATALOG_QUERY_KEY = ["shop-catalog"] as const;
 
 async function fetchShopCatalog() {
-  const allProducts: CatalogProduct[] = [];
-  let offset = 0;
-  let total = Number.POSITIVE_INFINITY;
   const limit = 50;
+  const firstPage = await fetchProductPage(0, limit);
+  const allProducts = [...(firstPage.products || [])];
+  const total = Number(firstPage.total || allProducts.length);
+  const remainingOffsets: number[] = [];
 
-  while (offset < total) {
-    const params = new URLSearchParams({
-      limit: String(limit),
-      offset: String(offset),
-    });
-    const response = await fetch(`/api/products?${params.toString()}`);
-    if (!response.ok) throw new Error("Failed to fetch product catalog");
-    const data = (await response.json()) as ProductPageResponse;
-    const products = data.products || [];
-
-    allProducts.push(...products);
-    total = Number(data.total || products.length);
-    offset += Number(data.limit || limit);
-
-    if (products.length === 0) break;
+  for (let offset = Number(firstPage.limit || limit); offset < total; offset += limit) {
+    remainingOffsets.push(offset);
   }
+
+  const remainingPages = await Promise.all(remainingOffsets.map((offset) => fetchProductPage(offset, limit)));
+  remainingPages.forEach((page) => allProducts.push(...(page.products || [])));
 
   return allProducts;
 }
 
-export function useShopCatalog() {
+async function fetchProductPage(offset: number, limit: number) {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+  });
+  const response = await fetch(`/api/products?${params.toString()}`);
+  if (!response.ok) throw new Error("Failed to fetch product catalog");
+  return (await response.json()) as ProductPageResponse;
+}
+
+export function useShopCatalog(initialData?: CatalogProduct[]) {
   return useQuery({
     queryKey: SHOP_CATALOG_QUERY_KEY,
     queryFn: fetchShopCatalog,
+    initialData,
     staleTime: 1000 * 60 * 5,
   });
 }

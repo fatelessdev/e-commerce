@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { motion, AnimatePresence } from "framer-motion"
+import Image from "next/image"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -66,7 +67,7 @@ function isColorAvailable(product: ComboProduct, colorName: string, selectedSize
   return getVariantStock(product, selectedSize, colorName) > 0
 }
 
-export function ComboClient({ id }: { id: string }) {
+export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: Combo }) {
   const [selectedImageA, setSelectedImageA] = useState(0)
   const [selectedImageB, setSelectedImageB] = useState(0)
   const [selectedSizeA, setSelectedSizeA] = useState<string | null>(null)
@@ -91,6 +92,7 @@ export function ComboClient({ id }: { id: string }) {
       if (!res.ok) throw new Error("Combo not found")
       return (await res.json()) as Combo
     },
+    initialData: initialCombo,
   })
 
   const requiredColorA = combo?.productA.colors.length ? true : false
@@ -222,17 +224,24 @@ export function ComboClient({ id }: { id: string }) {
         <div className="relative bg-white/5 overflow-hidden group border-r border-border/60">
           <div className="aspect-[4/5] w-full relative">
             <AnimatePresence initial={false} mode="popLayout">
-              <motion.img
+              <motion.div
                 key={selectedImageA}
-                src={imagesA[selectedImageA]}
-                alt={`${combo.productA.name} — image ${selectedImageA + 1}`}
                 className="absolute inset-0 w-full h-full object-cover object-center"
                 initial={{ opacity: 0.4 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0.4 }}
                 transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
-                draggable={false}
-              />
+              >
+                <Image
+                  src={imagesA[selectedImageA]}
+                  alt={`${combo.productA.name} — image ${selectedImageA + 1}`}
+                  fill
+                  priority={selectedImageA === 0}
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover object-center"
+                  draggable={false}
+                />
+              </motion.div>
             </AnimatePresence>
 
             {/* Swipe overlay */}
@@ -301,17 +310,24 @@ export function ComboClient({ id }: { id: string }) {
         <div className="relative bg-white/5 overflow-hidden group">
           <div className="aspect-[4/5] w-full relative">
             <AnimatePresence initial={false} mode="popLayout">
-              <motion.img
+              <motion.div
                 key={selectedImageB}
-                src={imagesB[selectedImageB]}
-                alt={`${combo.productB.name} — image ${selectedImageB + 1}`}
                 className="absolute inset-0 w-full h-full object-cover object-center"
                 initial={{ opacity: 0.4 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0.4 }}
                 transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
-                draggable={false}
-              />
+              >
+                <Image
+                  src={imagesB[selectedImageB]}
+                  alt={`${combo.productB.name} — image ${selectedImageB + 1}`}
+                  fill
+                  priority={selectedImageB === 0}
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover object-center"
+                  draggable={false}
+                />
+              </motion.div>
             </AnimatePresence>
 
             {/* Swipe overlay */}

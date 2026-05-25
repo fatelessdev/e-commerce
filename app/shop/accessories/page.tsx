@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { ShopClient } from "@/components/features/shop-client"
 import { JsonLd, breadcrumbJsonLd, collectionJsonLd } from "@/components/seo/structured-data"
+import { getCatalogProducts } from "@/lib/product-catalog"
 
 export const metadata: Metadata = {
     title: "Accessories",
@@ -17,8 +18,9 @@ export const metadata: Metadata = {
     },
 }
 
-export default function AccessoriesPage() {
+export default async function AccessoriesPage() {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+    const { products } = await getCatalogProducts({ category: "accessory" })
 
     return (
         <>
@@ -41,6 +43,7 @@ export default function AccessoriesPage() {
                 fixedCategory="accessory"
                 title="Accessories"
                 subtitle="Perfume and selected essentials"
+                initialProducts={products}
             />
         </>
     )

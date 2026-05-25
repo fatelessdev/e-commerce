@@ -309,17 +309,24 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                             <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-20" />
                         )}
                         <AnimatePresence initial={false} mode="popLayout">
-                            <motion.img
+                            <motion.div
                                 key={selectedImage}
-                                src={images[selectedImage]}
-                                alt={`${product.name} — image ${selectedImage + 1}`}
                                 className="absolute inset-0 w-full h-full object-cover object-center"
                                 initial={{ opacity: 0.4 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0.4 }}
                                 transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
-                                draggable={false}
-                            />
+                            >
+                                <Image
+                                    src={images[selectedImage]}
+                                    alt={`${product.name} — image ${selectedImage + 1}`}
+                                    fill
+                                    priority={selectedImage === 0}
+                                    sizes="(max-width: 1024px) 100vw, 50vw"
+                                    className="object-cover object-center"
+                                    draggable={false}
+                                />
+                            </motion.div>
                         </AnimatePresence>
 
                         <AnimatePresence>

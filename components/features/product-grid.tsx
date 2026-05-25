@@ -54,6 +54,7 @@ export function ProductGrid({
     fixedCategory,
     mobileLimit = 6,
     viewAllHref = "/shop",
+    initialProducts,
 }: {
     title?: string
     gender?: "men" | "women" | "unisex"
@@ -63,9 +64,10 @@ export function ProductGrid({
     fixedCategory?: string
     mobileLimit?: number
     viewAllHref?: string
+    initialProducts?: CatalogProduct[]
 }) {
     const [activeTab, setActiveTab] = useState<"men" | "women">(gender === "women" ? "women" : "men")
-    const { data: catalogProducts = [], isLoading: loading } = useShopCatalog()
+    const { data: catalogProducts = [], isLoading: loading } = useShopCatalog(initialProducts)
     const products = useMemo(() => {
         const resolvedGender = gender || (!fixedCategory ? activeTab : "all")
         return catalogProducts

@@ -4,6 +4,8 @@ import { ComboSection } from "@/components/features/combo-section";
 import { ProductGrid } from "@/components/features/product-grid";
 import { ShopTheReels } from "@/components/features/shop-the-reels";
 import { RealReviews } from "@/components/features/real-reviews";
+import { getActiveCombosWithProducts } from "@/lib/combos";
+import { getCatalogProducts } from "@/lib/product-catalog";
 import {
   JsonLd,
   organizationJsonLd,
@@ -25,8 +27,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Home() {
+export default async function Home() {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const [{ products }, combos] = await Promise.all([
+    getCatalogProducts(),
+    getActiveCombosWithProducts(4),
+  ]);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -37,11 +43,11 @@ export default function Home() {
         }}
       />
       <Hero />
-      <ProductGrid title="Best Sellers" isFeatured />
-      <ComboSection limit={4} interactive={false} mobileLimit={3} />
-      <ProductGrid title="New Arrivals" isNew />
+      <ProductGrid title="Best Sellers" isFeatured initialProducts={products} />
+      <ComboSection limit={4} interactive={false} mobileLimit={3} initialCombos={combos} />
+      <ProductGrid title="New Arrivals" isNew initialProducts={products} />
       <ShopTheReels />
-      <ProductGrid title="Accessories" fixedCategory="accessory" viewAllHref="/shop/accessories" />
+      <ProductGrid title="Accessories" fixedCategory="accessory" viewAllHref="/shop/accessories" initialProducts={products} />
       <RealReviews />
     </div>
   );

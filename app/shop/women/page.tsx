@@ -3,6 +3,8 @@ import { JsonLd, breadcrumbJsonLd } from "@/components/seo/structured-data"
 import { ShopClient } from "@/components/features/shop-client"
 import { ComboSection } from "@/components/features/combo-section"
 import { collectionJsonLd } from "@/components/seo/structured-data"
+import { getActiveCombosWithProducts } from "@/lib/combos"
+import { getCatalogProducts } from "@/lib/product-catalog"
 
 export const metadata: Metadata = {
     title: "Women's Streetwear",
@@ -19,8 +21,12 @@ export const metadata: Metadata = {
     },
 }
 
-export default function ShopWomenPage() {
+export default async function ShopWomenPage() {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+    const [{ products }, combos] = await Promise.all([
+        getCatalogProducts(),
+        getActiveCombosWithProducts(6),
+    ])
 
     return (
         <>
@@ -38,8 +44,8 @@ export default function ShopWomenPage() {
                     url: "/shop/women",
                 })}
             />
-            <ShopClient genderFilter="women" title="Women" subtitle="Streetwear essentials for her" />
-            <ComboSection limit={6} interactive={false} />
+            <ShopClient genderFilter="women" title="Women" subtitle="Streetwear essentials for her" initialProducts={products} />
+            <ComboSection limit={6} interactive={false} initialCombos={combos} />
         </>
     )
 }

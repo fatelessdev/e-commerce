@@ -286,10 +286,12 @@ export function ComboSection({
   limit = 6,
   interactive = true,
   mobileLimit = 3,
+  initialCombos,
 }: {
   limit?: number;
   interactive?: boolean;
   mobileLimit?: number;
+  initialCombos?: Combo[];
 }) {
   const { data: combos = [], isLoading: loading } = useQuery({
     queryKey: ["combos", limit],
@@ -299,6 +301,7 @@ export function ComboSection({
       const data = await response.json();
       return (data.combos || []) as Combo[];
     },
+    initialData: initialCombos,
   });
 
   const hasCombos = useMemo(() => combos.length > 0, [combos.length]);
