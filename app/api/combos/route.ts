@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { connection } from "next/server";
 import { getActiveCombosWithProducts } from "@/lib/combos";
 
 export async function GET(req: NextRequest) {
+  await connection();
+
   try {
     const { searchParams } = new URL(req.url);
     const limitParam = Number(searchParams.get("limit") || "6");

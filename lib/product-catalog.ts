@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
 import { products, productVariants } from "@/lib/db/schema";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { and, desc, eq, gt, gte, ilike, inArray, lte, or, sql } from "drizzle-orm";
+import { cacheLife, cacheTag } from "next/cache";
 
 export type CatalogProduct = Pick<
   typeof products.$inferSelect,
@@ -133,6 +135,12 @@ async function addAvailableSizes(productRows: CatalogProductRow[]): Promise<Cata
 }
 
 export async function getCatalogProducts(query: CatalogQuery = {}) {
+  "use cache";
+
+  cacheLife("hours");
+  cacheTag(CACHE_TAGS.catalog);
+  cacheTag(CACHE_TAGS.products);
+
   const where = buildCatalogConditions(query);
   const productQuery = db
     .select(catalogProductColumns)
@@ -161,4 +169,17 @@ export async function getCatalogProducts(query: CatalogQuery = {}) {
     limit: query.limit,
     offset: query.offset || 0,
   };
+}
+
+export async function getActiveProductIds() {
+  "use cache";
+
+  cacheLife("hours");
+  cacheTag(CACHE_TAGS.products);
+
+  return db
+    .select({ id: products.id })
+    .from(products)
+    .where(eq(products.isActive, true))
+    .orderBy(desc(products.displayOrder), desc(products.createdAt));
 }

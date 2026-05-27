@@ -2,19 +2,10 @@
 
 import { useRef, useState } from "react"
 import Image from "next/image"
-import Link from "next/link"
 import { ChevronLeft, ChevronRight, Volume2, VolumeX, ShoppingBag } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { normalizeProductImage } from "@/lib/image"
-import { useQuery } from "@tanstack/react-query"
-
-interface ReelProduct {
-    id: string
-    name: string
-    sellingPrice: string
-    mrp: string
-    images: string[]
-}
+import { ViewportPrefetchLink } from "@/components/ui/viewport-prefetch-link"
 
 function formatPrice(price: string) {
     return `₹${Number(price).toLocaleString("en-IN")}`
@@ -117,7 +108,7 @@ export function ShopTheReels() {
                                     muted={audibleProductId !== product.id}
                                     loop
                                     playsInline
-                                    preload="metadata"
+                                    preload="none"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-black/10" />
                                 <button
@@ -128,7 +119,7 @@ export function ShopTheReels() {
                                 >
                                     {audibleProductId === product.id ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
                                 </button>
-                                <Link
+                                <ViewportPrefetchLink
                                     href={`/product/${product.id}`}
                                     className="absolute inset-x-3 bottom-3 z-10 flex items-center gap-2 rounded-md bg-black/45 p-2 text-white shadow-2xl backdrop-blur-md"
                                 >
@@ -153,8 +144,8 @@ export function ShopTheReels() {
                                     <div className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-white text-neutral-950">
                                         <ShoppingBag className="h-4 w-4" />
                                     </div>
-                                </Link>
-                                <Link href={`/product/${product.id}`} className="absolute inset-0 z-0" aria-label={`Shop ${product.name}`} />
+                                </ViewportPrefetchLink>
+                                <ViewportPrefetchLink href={`/product/${product.id}`} className="absolute inset-0 z-0" aria-label={`Shop ${product.name}`} />
                             </div>
                         ))}
                     </div>

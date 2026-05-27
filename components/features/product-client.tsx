@@ -9,10 +9,10 @@ import { Button } from "@/components/ui/button"
 import { useCart } from "@/lib/cart-context"
 import { useWishlist } from "@/lib/wishlist-context"
 import { Heart, Check, X, ChevronLeft, ChevronRight, Eye, Star, Timer } from "lucide-react"
-import Link from "next/link"
 import Image from "next/image"
 import { normalizeProductImage } from "@/lib/image"
 import type { ProductDetails } from "@/lib/product-detail"
+import { ViewportPrefetchLink } from "@/components/ui/viewport-prefetch-link"
 
 type Product = ProductDetails
 
@@ -105,6 +105,7 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
             return (await res.json()) as Product
         },
         initialData: initialProduct,
+        enabled: initialProduct === undefined,
         staleTime: 1000 * 60 * 5,
     })
 
@@ -650,7 +651,7 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                     <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
                         {/* Render combos first */}
                         {(product.relatedCombos || []).map((combo) => (
-                            <Link key={combo.id} href={`/combo/${combo.id}`} className="group flex-shrink-0 w-[200px] sm:w-[240px] snap-start">
+                            <ViewportPrefetchLink key={combo.id} href={`/combo/${combo.id}`} className="group flex-shrink-0 w-[200px] sm:w-[240px] snap-start">
                                 <div className="space-y-3">
                                     <div className="relative aspect-[3/4] overflow-hidden bg-muted/30 grid grid-cols-2 gap-px">
                                         <div className="relative">
@@ -684,11 +685,11 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                                         </div>
                                     </div>
                                 </div>
-                            </Link>
+                            </ViewportPrefetchLink>
                         ))}
                         {/* Then render related products */}
                         {(product.relatedProducts || []).map((related) => (
-                            <Link key={related.id} href={`/product/${related.id}`} className={`group flex-shrink-0 w-[200px] sm:w-[240px] snap-start ${related.stock <= 0 ? "cursor-not-allowed" : ""}`}>
+                            <ViewportPrefetchLink key={related.id} href={`/product/${related.id}`} className={`group flex-shrink-0 w-[200px] sm:w-[240px] snap-start ${related.stock <= 0 ? "cursor-not-allowed" : ""}`}>
                                 <div className="space-y-3">
                                     <div className="relative aspect-[3/4] overflow-hidden bg-muted/30">
                                         {related.stock > 0 && (
@@ -718,7 +719,7 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                                         {relatedSizeChips(related.availableSizes || related.sizes || undefined)}
                                     </div>
                                 </div>
-                            </Link>
+                            </ViewportPrefetchLink>
                         ))}
                     </div>
                 ) : (

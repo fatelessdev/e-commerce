@@ -1,16 +1,21 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { Outfit } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { Navbar } from "@/app/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
-// import { BargainAI } from "@/components/features/bargain-ai";
-import { CartDrawer } from "@/components/features/cart-drawer";
 import { Footer } from "@/components/layout/footer";
 import { CartProvider } from "@/lib/cart-context";
 import { WishlistProvider } from "@/lib/wishlist-context";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { QueryProvider } from "@/components/ui/query-provider";
 import { Analytics } from "@vercel/analytics/next"
+
+const CartDrawer = dynamic(() =>
+  import("@/components/features/cart-drawer").then((mod) => mod.CartDrawer),
+  { loading: () => null }
+);
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -128,7 +133,7 @@ export default function RootLayout({
                 <div className="flex flex-1">
                   <Sidebar />
                   <main className="flex-1 overflow-x-hidden relative">
-                    {children}
+                    <Suspense fallback={null}>{children}</Suspense>
                     {/* <BargainAI /> */}
                   </main>
                 </div>

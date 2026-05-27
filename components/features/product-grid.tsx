@@ -9,6 +9,7 @@ import { useMemo, useState } from "react"
 import { ArrowRight } from "lucide-react"
 import { normalizeProductImage } from "@/lib/image"
 import { getDisplaySizes, productMatchesGender, useShopCatalog, type CatalogProduct } from "@/components/features/use-shop-catalog"
+import { ViewportPrefetchLink } from "@/components/ui/viewport-prefetch-link"
 
 function ColorSwatches({ colors }: { colors: { name: string; hex: string }[] }) {
     if (!colors || colors.length === 0) return null
@@ -164,7 +165,7 @@ export function ProductGrid({
                     <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-6 px-6 md:-mx-12 md:px-12">
                         {products.map((product) => (
                             <div key={product.id} className="flex-shrink-0 w-[200px] sm:w-[240px] snap-start">
-                                <Link href={`/product/${product.id}`}>
+                                <ViewportPrefetchLink href={`/product/${product.id}`}>
                                     <Card className="bg-transparent border-0 rounded-none hover-lift">
                                         <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
                                             {product.stock > 0 && (
@@ -199,7 +200,7 @@ export function ProductGrid({
                                             <ColorSwatches colors={product.colors} />
                                         </CardFooter>
                                     </Card>
-                                </Link>
+                                </ViewportPrefetchLink>
                             </div>
                         ))}
                     </div>
@@ -211,7 +212,7 @@ export function ProductGrid({
                     >
                         {products.map((product, index) => (
                             <StaggerItem key={product.id} className={index >= mobileLimit ? "hidden md:block" : undefined}>
-                                <Link href={`/product/${product.id}`}>
+                                <ViewportPrefetchLink href={`/product/${product.id}`}>
                                     <Card className="bg-transparent border-0 rounded-none hover-lift">
                                         <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
                                             {product.stock > 0 && (
@@ -264,7 +265,7 @@ export function ProductGrid({
                                             <ColorSwatches colors={product.colors} />
                                         </CardFooter>
                                     </Card>
-                                </Link>
+                                </ViewportPrefetchLink>
                             </StaggerItem>
                         ))}
                     </StaggerContainer>

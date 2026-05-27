@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
 import { combos, products, productVariants } from "@/lib/db/schema";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { and, desc, eq, inArray } from "drizzle-orm";
+import { cacheLife, cacheTag } from "next/cache";
 
 export type ComboLinkedItem = {
   productId: string;
@@ -15,6 +17,12 @@ export function canonicalizeComboPair(productAId: string, productBId: string) {
 }
 
 export async function getActiveCombosWithProducts(limit = 6) {
+  "use cache";
+
+  cacheLife("hours");
+  cacheTag(CACHE_TAGS.combos);
+  cacheTag(CACHE_TAGS.products);
+
   const activeCombos = await db
     .select()
     .from(combos)
@@ -77,6 +85,78 @@ export async function getActiveCombosWithProducts(limit = 6) {
       };
     })
     .filter((combo): combo is NonNullable<typeof combo> => combo !== null);
+}
+
+export async function getActiveComboIds() {
+  "use cache";
+
+  cacheLife("hours");
+  cacheTag(CACHE_TAGS.combos);
+
+  return db
+    .select({ id: combos.id })
+    .from(combos)
+    .where(eq(combos.isActive, true))
+    .orderBy(desc(combos.displayOrder), desc(combos.createdAt));
+}
+
+export async function getComboDetails(id: string) {
+  "use cache";
+
+  cacheLife("hours");
+  cacheTag(CACHE_TAGS.combos);
+  cacheTag(CACHE_TAGS.combo(id));
+  cacheTag(CACHE_TAGS.products);
+
+  const [combo] = await db
+    .select()
+    .from(combos)
+    .where(and(eq(combos.id, id), eq(combos.isActive, true)));
+
+  if (!combo) return null;
+
+  const comboProductIds = [combo.productAId, combo.productBId];
+  const [comboProducts, variants] = await Promise.all([
+    db
+      .select()
+      .from(products)
+      .where(and(inArray(products.id, comboProductIds), eq(products.isActive, true))),
+    db
+      .select()
+      .from(productVariants)
+      .where(inArray(productVariants.productId, comboProductIds)),
+  ]);
+
+  const productMap = new Map(comboProducts.map((product) => [product.id, product]));
+  const productA = productMap.get(combo.productAId);
+  const productB = productMap.get(combo.productBId);
+
+  if (!productA || !productB) return null;
+
+  const variantsByProductId = variants.reduce<Map<string, typeof variants>>((acc, variant) => {
+    const existing = acc.get(variant.productId) || [];
+    existing.push(variant);
+    acc.set(variant.productId, existing);
+    return acc;
+  }, new Map());
+
+  return {
+    ...combo,
+    productA: {
+      ...productA,
+      images: productA.images || [],
+      sizes: productA.sizes || [],
+      colors: productA.colors || [],
+      variants: variantsByProductId.get(productA.id) || [],
+    },
+    productB: {
+      ...productB,
+      images: productB.images || [],
+      sizes: productB.sizes || [],
+      colors: productB.colors || [],
+      variants: variantsByProductId.get(productB.id) || [],
+    },
+  };
 }
 
 export async function computeComboDiscountFromItems(items: ComboLinkedItem[]) {

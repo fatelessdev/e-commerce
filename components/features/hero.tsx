@@ -87,6 +87,7 @@ export function Hero() {
           >
             {visibleSlides.map((slide, panelIndex) => {
               const isActive = panelIndex === 1;
+              const shouldPrioritize = activeIndex === 0 && isActive;
               const targetIndex = panelIndex === 0
                 ? activeIndex - 1
                 : panelIndex === 2
@@ -125,7 +126,7 @@ export function Hero() {
                     fill
                     sizes={isActive ? "(max-width: 768px) 100vw, 56vw" : "22vw"}
                     className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-[1.025]"
-                    priority={isActive}
+                    priority={shouldPrioritize}
                   />
                 </motion.div>
               <div className={`absolute inset-0 z-10 ${isActive ? "bg-gradient-to-t from-black/76 via-black/24 to-black/8" : "bg-black/20"}`} />

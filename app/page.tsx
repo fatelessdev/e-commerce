@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { Hero } from "@/components/features/hero";
 import { ComboSection } from "@/components/features/combo-section";
 import { ProductGrid } from "@/components/features/product-grid";
-import { ShopTheReels } from "@/components/features/shop-the-reels";
 import { RealReviews } from "@/components/features/real-reviews";
 import { getActiveCombosWithProducts } from "@/lib/combos";
 import { getCatalogProducts } from "@/lib/product-catalog";
@@ -11,6 +11,24 @@ import {
   organizationJsonLd,
   webSiteJsonLd,
 } from "@/components/seo/structured-data";
+
+const ShopTheReels = dynamic(() =>
+  import("@/components/features/shop-the-reels").then((mod) => mod.ShopTheReels),
+  {
+    loading: () => (
+      <section className="border-t border-border/60 bg-background px-6 py-16 md:px-12 md:py-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto h-8 w-64 animate-pulse bg-muted" />
+          <div className="mt-10 flex gap-4 overflow-hidden">
+            {[0, 1, 2].map((item) => (
+              <div key={item} className="aspect-[9/16] w-[245px] flex-none animate-pulse bg-muted md:w-[260px]" />
+            ))}
+          </div>
+        </div>
+      </section>
+    ),
+  }
+);
 
 export const metadata: Metadata = {
   title: "Home | Premium Streetwear for Gen-Z",

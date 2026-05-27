@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/auth-server";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { generateSecureCode } from "@/lib/utils";
+import { revalidateComboSurfaces, revalidateProductSurfaces } from "@/lib/cache-tags";
 
 // ============================================
 // PRODUCT ACTIONS
@@ -145,6 +146,7 @@ export async function createProduct(data: ProductInput) {
   revalidatePath("/admin/products");
   revalidatePath("/shop");
   revalidatePath("/");
+  revalidateProductSurfaces(product.id);
 
   return product;
 }
@@ -204,6 +206,7 @@ export async function updateProduct(id: string, data: Partial<ProductInput>) {
   revalidatePath(`/product/${id}`);
   revalidatePath("/shop");
   revalidatePath("/");
+  revalidateProductSurfaces(id);
 
   return product;
 }
@@ -220,6 +223,8 @@ export async function deleteProduct(id: string) {
   revalidatePath("/shop/women");
   revalidatePath("/shop/accessories");
   revalidatePath("/");
+  revalidateProductSurfaces(id);
+  revalidateComboSurfaces();
 
   return { success: true };
 }

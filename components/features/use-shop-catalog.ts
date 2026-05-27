@@ -46,6 +46,7 @@ export function useShopCatalog(initialData?: CatalogProduct[]) {
     queryKey: SHOP_CATALOG_QUERY_KEY,
     queryFn: fetchShopCatalog,
     initialData,
+    enabled: initialData === undefined,
     staleTime: 1000 * 60 * 5,
   });
 }

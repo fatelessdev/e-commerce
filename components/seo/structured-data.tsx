@@ -1,5 +1,7 @@
 import { safeJsonLdStringify } from "@/lib/safe-json";
 
+const PRICE_VALID_UNTIL = "2026-12-31";
+
 type JsonLdProps = {
   data: Record<string, unknown> | Record<string, unknown>[];
 };
@@ -178,9 +180,7 @@ export function productJsonLd(
         },
       },
       ...(hasDiscount && {
-        priceValidUntil: new Date(
-          Date.now() + 30 * 24 * 60 * 60 * 1000
-        ).toISOString().split("T")[0],
+        priceValidUntil: PRICE_VALID_UNTIL,
       }),
     },
   };

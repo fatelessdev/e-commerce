@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/auth-server";
 import { db } from "@/lib/db";
 import { combos, products } from "@/lib/db/schema";
 import { canonicalizeComboPair } from "@/lib/combos";
+import { revalidateComboSurfaces } from "@/lib/cache-tags";
 
 export type ComboInput = {
   productAId: string;
@@ -77,6 +78,7 @@ export async function createCombo(input: ComboInput) {
 
   revalidatePath("/admin/combos");
   revalidatePath("/");
+  revalidateComboSurfaces(combo.id);
   return combo;
 }
 
@@ -113,6 +115,7 @@ export async function updateCombo(id: string, updates: { discountAmount?: number
 
   revalidatePath("/admin/combos");
   revalidatePath("/");
+  revalidateComboSurfaces(id);
   return combo;
 }
 
@@ -121,6 +124,7 @@ export async function deleteCombo(id: string) {
   await db.delete(combos).where(eq(combos.id, id));
   revalidatePath("/admin/combos");
   revalidatePath("/");
+  revalidateComboSurfaces(id);
   return { success: true };
 }
 

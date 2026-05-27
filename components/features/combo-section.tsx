@@ -3,11 +3,11 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useCart } from "@/lib/cart-context";
 import { normalizeProductImage } from "@/lib/image";
+import { ViewportPrefetchLink } from "@/components/ui/viewport-prefetch-link";
 
 interface ProductVariant {
   id: string;
@@ -106,7 +106,7 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
     <Card className="rounded-none border-border/60">
       <CardContent className="p-4 space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <Link href={previewHref} className="group space-y-2">
+          <ViewportPrefetchLink href={previewHref} className="group space-y-2">
             <div className="relative aspect-[3/4] overflow-hidden bg-muted/30">
               <Image
                 src={normalizeProductImage(combo.productA.images?.[0])}
@@ -118,9 +118,9 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
             </div>
             <p className="text-xs font-medium line-clamp-2">{combo.productA.name}</p>
             <p className="text-xs text-muted-foreground">{formatPrice(combo.productA.sellingPrice)}</p>
-          </Link>
+          </ViewportPrefetchLink>
 
-          <Link href={secondaryPreviewHref} className="group space-y-2">
+          <ViewportPrefetchLink href={secondaryPreviewHref} className="group space-y-2">
             <div className="relative aspect-[3/4] overflow-hidden bg-muted/30">
               <Image
                 src={normalizeProductImage(combo.productB.images?.[0])}
@@ -132,7 +132,7 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
             </div>
             <p className="text-xs font-medium line-clamp-2">{combo.productB.name}</p>
             <p className="text-xs text-muted-foreground">{formatPrice(combo.productB.sellingPrice)}</p>
-          </Link>
+          </ViewportPrefetchLink>
         </div>
 
         {interactive && (
@@ -274,7 +274,7 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
           </Button>
         ) : (
           <Button asChild className="w-full rounded-none text-[10px] uppercase tracking-[0.15em]">
-            <Link href={`/combo/${combo.id}`}>Customize this combo</Link>
+            <ViewportPrefetchLink href={`/combo/${combo.id}`}>Customize this combo</ViewportPrefetchLink>
           </Button>
         )}
       </CardFooter>
@@ -302,6 +302,8 @@ export function ComboSection({
       return (data.combos || []) as Combo[];
     },
     initialData: initialCombos,
+    enabled: initialCombos === undefined,
+    staleTime: 1000 * 60 * 5,
   });
 
   const hasCombos = useMemo(() => combos.length > 0, [combos.length]);

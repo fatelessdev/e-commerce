@@ -5,11 +5,11 @@ import { usePathname } from "next/navigation"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { BargainDiscountStrip } from "@/components/ui/bargain-discount-strip"
-import Link from "next/link"
 import Image from "next/image"
 import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react"
 import { normalizeProductImage } from "@/lib/image"
 import { getDisplaySizes, productMatchesGender, useShopCatalog, type CatalogProduct } from "@/components/features/use-shop-catalog"
+import { ViewportPrefetchLink } from "@/components/ui/viewport-prefetch-link"
 
 const CATEGORIES = ["All", "tshirt", "shirt", "cargo", "jogger", "jeans", "hoodie", "jacket", "shorts", "accessory"]
 const CATEGORY_LABELS: Record<string, string> = {
@@ -371,7 +371,7 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                         {visibleProducts.length > 0 ? (
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                                 {visibleProducts.map((product) => (
-                                    <Link
+                                    <ViewportPrefetchLink
                                         href={`/product/${product.id}`}
                                         key={product.id}
                                         onClick={() => saveScrollState(product.id)}
@@ -433,7 +433,7 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                                                 )}
                                             </CardFooter>
                                         </Card>
-                                    </Link>
+                                    </ViewportPrefetchLink>
                                 ))}
                             </div>
                         ) : (

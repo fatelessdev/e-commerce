@@ -2,6 +2,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { CONTACT_EMAIL, CONTACT_PHONE } from "@/lib/constants"
 
+const COPYRIGHT_YEAR = 2026
+
 export function Footer() {
     return (
         <footer className="border-t border-border/60 bg-background">
@@ -128,7 +130,7 @@ export function Footer() {
             {/* Bottom bar */}
             <div className="border-t border-border/60 px-6 md:px-12 lg:px-16 py-6">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] tracking-[0.1em] uppercase text-muted-foreground max-w-7xl mx-auto">
-                    <p>&copy; {new Date().getFullYear()} XILAR. All rights reserved.</p>
+                    <p>&copy; {COPYRIGHT_YEAR} XILAR. All rights reserved.</p>
                     <Link href="/policies" className="hover:text-foreground transition-colors duration-300">
                         Store Policies
                     </Link>

@@ -1,72 +1,13 @@
 import type { Metadata } from "next"
 import { ComboClient } from "@/components/features/combo-client"
-import { db } from "@/lib/db"
-import { combos, products, productVariants } from "@/lib/db/schema"
-import { and, eq, inArray } from "drizzle-orm"
+import { getComboDetails } from "@/lib/combos"
 import {
   JsonLd,
   breadcrumbJsonLd,
 } from "@/components/seo/structured-data"
 
 async function getCombo(id: string) {
-  const [combo] = await db
-    .select()
-    .from(combos)
-    .where(and(eq(combos.id, id), eq(combos.isActive, true)))
-
-  if (!combo) return null
-
-  const [comboProducts, variants] = await Promise.all([
-    db
-      .select()
-      .from(products)
-      .where(
-        and(
-          inArray(products.id, [combo.productAId, combo.productBId]),
-          eq(products.isActive, true)
-        )
-      ),
-    db
-      .select()
-      .from(productVariants)
-      .where(inArray(productVariants.productId, [combo.productAId, combo.productBId])),
-  ])
-
-  // Keep correct product order according to combo table
-  const productA = comboProducts.find(
-    (product) => product.id === combo.productAId
-  )
-
-  const productB = comboProducts.find(
-    (product) => product.id === combo.productBId
-  )
-
-  if (!productA || !productB) return null
-
-  const variantsByProductId = variants.reduce<Map<string, typeof variants>>((acc, variant) => {
-    const existing = acc.get(variant.productId) || []
-    existing.push(variant)
-    acc.set(variant.productId, existing)
-    return acc
-  }, new Map())
-
-  return {
-    ...combo,
-    productA: {
-      ...productA,
-      images: productA.images || [],
-      sizes: productA.sizes || [],
-      colors: productA.colors || [],
-      variants: variantsByProductId.get(productA.id) || [],
-    },
-    productB: {
-      ...productB,
-      images: productB.images || [],
-      sizes: productB.sizes || [],
-      colors: productB.colors || [],
-      variants: variantsByProductId.get(productB.id) || [],
-    },
-  }
+  return getComboDetails(id)
 }
 
 export async function generateMetadata({

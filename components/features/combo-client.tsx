@@ -93,6 +93,8 @@ export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: C
       return (await res.json()) as Combo
     },
     initialData: initialCombo,
+    enabled: initialCombo === undefined,
+    staleTime: 1000 * 60 * 5,
   })
 
   const requiredColorA = combo?.productA.colors.length ? true : false

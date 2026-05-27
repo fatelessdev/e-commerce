@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
 import { combos, products, productVariants } from "@/lib/db/schema";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { and, desc, eq, gt, inArray, or } from "drizzle-orm";
+import { cacheLife, cacheTag } from "next/cache";
 
 type ProductRow = typeof products.$inferSelect;
 type ProductVariantRow = typeof productVariants.$inferSelect;
@@ -37,6 +39,27 @@ function getRelatedScore(
 }
 
 export async function getProductDetails(
+  id: string,
+  options: { includeInactive?: boolean } = {}
+): Promise<ProductDetails | null> {
+  if (options.includeInactive) {
+    return getProductDetailsUncached(id, options);
+  }
+
+  return getCachedProductDetails(id);
+}
+
+async function getCachedProductDetails(id: string) {
+  "use cache";
+
+  cacheLife("hours");
+  cacheTag(CACHE_TAGS.products);
+  cacheTag(CACHE_TAGS.product(id));
+
+  return getProductDetailsUncached(id);
+}
+
+async function getProductDetailsUncached(
   id: string,
   options: { includeInactive?: boolean } = {}
 ): Promise<ProductDetails | null> {
