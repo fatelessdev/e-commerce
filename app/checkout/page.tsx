@@ -407,7 +407,7 @@ export default function CheckoutPage() {
                     </div>
                     <div className="space-y-2">
                         <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium">Confirmation</p>
-                        <h1 className="text-3xl font-black tracking-tighter uppercase">Order confirmed</h1>
+                        <h1 className="font-display text-4xl">Order confirmed</h1>
                     </div>
                     <p className="text-sm text-muted-foreground">
                         Thank you for shopping with XILAR. Your order has been placed and will be delivered soon.
@@ -439,7 +439,7 @@ export default function CheckoutPage() {
         <div className="min-h-screen">
             <div className="px-6 md:px-12 py-14 md:py-20 border-b border-border/60">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium mb-3">Secure checkout</p>
-                <h1 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">Checkout</h1>
+                <h1 className="font-display text-4xl md:text-6xl">Checkout</h1>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">

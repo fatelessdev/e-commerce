@@ -100,7 +100,7 @@ function AccountContent() {
             <div className="min-h-screen flex items-center justify-center p-6">
                 <div className="w-full max-w-md space-y-8">
                     <div className="text-center space-y-2">
-                        <h1 className="text-2xl md:text-3xl font-bold tracking-tighter uppercase">
+                        <h1 className="font-display text-3xl md:text-4xl">
                             {showLogin ? "Welcome back" : "Join XILAR"}
                         </h1>
                         <p className="text-sm text-muted-foreground">
@@ -233,7 +233,7 @@ function AccountContent() {
         <div className="min-h-screen">
             <div className="px-6 md:px-12 py-14 md:py-20 border-b border-border/60">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium mb-3">Account</p>
-                <h1 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">
+                <h1 className="font-display text-4xl md:text-6xl">
                     My account
                 </h1>
                 <p className="text-muted-foreground mt-2 text-sm">

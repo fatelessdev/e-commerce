@@ -43,7 +43,7 @@ export default async function OrdersPage() {
         <div className="min-h-screen">
             <div className="px-6 md:px-12 py-14 md:py-20 border-b border-border/60">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium mb-3">History</p>
-                <h1 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">
+                <h1 className="font-display text-4xl md:text-6xl">
                     My orders
                 </h1>
             </div>

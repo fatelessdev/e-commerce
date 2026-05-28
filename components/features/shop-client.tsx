@@ -403,9 +403,9 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                                                 <p className="text-[10px] text-muted-foreground uppercase tracking-[0.15em]">
                                                     {CATEGORY_LABELS[product.category] || product.category}
                                                 </p>
-                                                <div className="flex w-full flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5">
-                                                    <h3 className="font-medium tracking-tight text-sm line-clamp-1">{product.name}</h3>
-                                                    <div className="flex flex-wrap items-center gap-1.5 text-left sm:justify-end sm:text-right">
+                                                <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+                                                    <h3 className="min-w-0 truncate font-medium tracking-tight text-sm">{product.name}</h3>
+                                                    <div className="flex flex-none flex-nowrap items-center justify-end gap-1.5 whitespace-nowrap text-right">
                                                         <span className="font-semibold text-sm tabular-nums">{formatPrice(product.sellingPrice)}</span>
                                                         {parseFloat(product.mrp) > parseFloat(product.sellingPrice) && (
                                                             <span className="text-[10px] text-muted-foreground line-through tabular-nums">
@@ -413,7 +413,7 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                                                             </span>
                                                         )}
                                                         {discountPercent(product) !== null && (
-                                                            <span className="bg-foreground px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-background">
+                                                            <span className="flex-none bg-foreground px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-background">
                                                                 {discountPercent(product)}% off
                                                             </span>
                                                         )}

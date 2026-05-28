@@ -38,7 +38,7 @@ export default function ReturnPolicyPage() {
                     <FileText className="h-5 w-5 text-red-accent" />
                     <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium">Policy</p>
                 </div>
-                <h1 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">Return policy</h1>
+                <h1 className="font-display text-4xl md:text-6xl">Return policy</h1>
                 <p className="text-sm text-muted-foreground mt-2">Defects only</p>
             </div>
 

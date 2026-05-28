@@ -196,16 +196,16 @@ export function ProductGrid({
                                         </CardContent>
                                         <CardFooter className="flex flex-col items-start px-1 pt-3 pb-2 space-y-1">
                                             <h3 className="font-medium tracking-tight text-xs uppercase leading-tight line-clamp-1">{product.name}</h3>
-                                            <div className="flex items-center gap-2">
-                                                <p className="text-xs font-semibold tabular-nums">{formatPrice(product.sellingPrice)}</p>
-                                                {parseFloat(product.mrp) > parseFloat(product.sellingPrice) && (
-                                                    <p className="text-[10px] text-muted-foreground line-through tabular-nums">{formatPrice(product.mrp)}</p>
-                                                )}
-                                                {discountPercent(product) !== null && (
-                                                    <span className="bg-foreground px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-background">
-                                                        {discountPercent(product)}% off
-                                                    </span>
-                                                )}
+                                                <div className="flex max-w-full flex-nowrap items-center gap-1.5 whitespace-nowrap">
+                                                    <p className="text-xs font-semibold tabular-nums">{formatPrice(product.sellingPrice)}</p>
+                                                    {parseFloat(product.mrp) > parseFloat(product.sellingPrice) && (
+                                                        <p className="truncate text-[10px] text-muted-foreground line-through tabular-nums">{formatPrice(product.mrp)}</p>
+                                                    )}
+                                                    {discountPercent(product) !== null && (
+                                                        <span className="flex-none bg-foreground px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-background">
+                                                            {discountPercent(product)}% off
+                                                        </span>
+                                                    )}
                                             </div>
                                             <SizeChips sizes={getDisplaySizes(product)} />
                                             <ColorSwatches colors={product.colors} />
@@ -259,13 +259,13 @@ export function ProductGrid({
                                                 <h3 className="font-medium tracking-tight text-sm uppercase leading-tight line-clamp-1">
                                                     {product.name}
                                                 </h3>
-                                                <div className="flex items-center gap-2 mt-1">
+                                                <div className="flex max-w-full flex-nowrap items-center gap-1.5 mt-1 whitespace-nowrap">
                                                     <p className="text-sm font-semibold tabular-nums">{formatPrice(product.sellingPrice)}</p>
                                                     {parseFloat(product.mrp) > parseFloat(product.sellingPrice) && (
-                                                        <p className="text-[10px] text-muted-foreground line-through tabular-nums">{formatPrice(product.mrp)}</p>
+                                                        <p className="truncate text-[10px] text-muted-foreground line-through tabular-nums">{formatPrice(product.mrp)}</p>
                                                     )}
                                                     {discountPercent(product) !== null && (
-                                                        <span className="bg-foreground px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-background">
+                                                        <span className="flex-none bg-foreground px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-background">
                                                             {discountPercent(product)}% off
                                                         </span>
                                                     )}

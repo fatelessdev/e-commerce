@@ -55,12 +55,12 @@ function getViewerSequence(seed: string) {
 
 function ProductDetailSkeleton() {
     return (
-        <div className="min-h-screen bg-background pb-24">
+        <div className="min-h-screen bg-background pb-24 lg:pt-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
                 <div className="relative overflow-hidden bg-muted/30">
                     <div className="aspect-[4/5] w-full animate-pulse bg-muted" />
                 </div>
-                <div className="lg:h-[calc(100vh-4rem)] lg:sticky lg:top-16 p-8 lg:p-14 flex flex-col justify-center space-y-8">
+                <div className="lg:min-h-[calc(100dvh-8rem)] lg:sticky lg:top-20 p-8 lg:p-14 lg:pt-10 flex flex-col justify-start space-y-8">
                     <div className="space-y-5">
                         <div className="h-3 w-32 animate-pulse bg-muted" />
                         <div className="space-y-3">
@@ -323,11 +323,11 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
     }
 
     return (
-        <div className="min-h-screen bg-background pb-24">
+        <div className="min-h-screen bg-background pb-24 lg:pt-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
                 {/* Gallery Section — Horizontal Slider */}
                 <div className="relative bg-white/5 overflow-hidden group">
-<div className="aspect-[4/5] w-full relative">
+                    <div className="aspect-[4/5] w-full relative">
                         {product.stock > 0 && (
                             <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-20" />
                         )}
@@ -366,7 +366,7 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                                         initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: -22, filter: "blur(6px)" }}
                                         animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
                                         transition={{ duration: shouldReduceMotion ? 0.01 : 0.58, ease: [0.32, 0.72, 0, 1] }}
-                                        className="text-2xl font-semibold tracking-tight md:text-3xl"
+                                        className="font-display text-4xl leading-none md:text-5xl"
                                     >
                                         Style Spotlight
                                     </motion.p>
@@ -457,7 +457,7 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                 </div>
 
                 {/* Product Info Section */}
-                <div className="lg:h-[calc(100vh-4rem)] lg:sticky lg:top-16 p-8 lg:p-14 flex flex-col justify-center space-y-8">
+                <div className="lg:min-h-[calc(100dvh-8rem)] lg:sticky lg:top-20 p-8 lg:p-14 lg:pt-10 flex flex-col justify-start space-y-8">
                     <div className="space-y-5">
                         <div className="space-y-2">
                             <p className="text-[10px] font-medium tracking-[0.2em] text-muted-foreground uppercase">
@@ -465,7 +465,7 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                             </p>
                             <h1 className="font-display text-4xl leading-[0.92] md:text-6xl lg:text-7xl">{product.name}</h1>
                         </div>
-                        <div className="flex items-baseline gap-3">
+                        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                             <p className="text-xl font-semibold tabular-nums">{displayPrice}</p>
                             {hasDiscount && (
                                 <>
@@ -727,13 +727,13 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                                     </div>
                                     <div className="space-y-1">
                                         <p className="text-xs font-medium line-clamp-1 uppercase">{related.name}</p>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex max-w-full flex-nowrap items-center gap-1.5 whitespace-nowrap">
                                             <p className="text-xs font-semibold tabular-nums">₹{Number(related.sellingPrice).toLocaleString("en-IN")}</p>
                                             {Number(related.mrp) > Number(related.sellingPrice) && (
-                                                <p className="text-[10px] text-muted-foreground line-through tabular-nums">₹{Number(related.mrp).toLocaleString("en-IN")}</p>
+                                                <p className="truncate text-[10px] text-muted-foreground line-through tabular-nums">₹{Number(related.mrp).toLocaleString("en-IN")}</p>
                                             )}
                                             {relatedDiscountPercent(related) !== null && (
-                                                <span className="bg-foreground px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-background">
+                                                <span className="flex-none bg-foreground px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-background">
                                                     {relatedDiscountPercent(related)}% off
                                                 </span>
                                             )}

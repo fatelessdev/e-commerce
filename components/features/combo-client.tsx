@@ -207,7 +207,7 @@ export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: C
       {/* <div className="border-b border-border/60 px-6 md:px-12 py-14 md:py-20">
         <div className="space-y-3">
           <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium">Bundle Deal</p>
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tighter uppercase leading-tight">
+          <h1 className="font-display text-4xl leading-[0.96] md:text-6xl lg:text-7xl">
             {combo.productA.name}
             <br />
             <span className="text-muted-foreground">+</span>
@@ -403,7 +403,7 @@ export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: C
             <div className="space-y-8">
               <div className="space-y-3">
                 <p className="text-sm uppercase tracking-[0.15em] font-medium text-muted-foreground">Product A</p>
-                <h2 className="text-xl md:text-2xl font-bold tracking-tight uppercase">{combo.productA.name}</h2>
+                <h2 className="font-display text-3xl leading-tight md:text-4xl">{combo.productA.name}</h2>
                 <div className="flex items-center gap-3">
                   <p className="text-lg font-semibold tabular-nums">{formatPrice(combo.productA.sellingPrice)}</p>
                   {Number(combo.productA.mrp) > Number(combo.productA.sellingPrice) && (
@@ -465,7 +465,7 @@ export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: C
             <div className="space-y-8">
               <div className="space-y-3">
                 <p className="text-sm uppercase tracking-[0.15em] font-medium text-muted-foreground">Product B</p>
-                <h2 className="text-xl md:text-2xl font-bold tracking-tight uppercase">{combo.productB.name}</h2>
+                <h2 className="font-display text-3xl leading-tight md:text-4xl">{combo.productB.name}</h2>
                 <div className="flex items-center gap-3">
                   <p className="text-lg font-semibold tabular-nums">{formatPrice(combo.productB.sellingPrice)}</p>
                   {Number(combo.productB.mrp) > Number(combo.productB.sellingPrice) && (

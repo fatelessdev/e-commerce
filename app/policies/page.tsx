@@ -78,7 +78,7 @@ export default function PoliciesPage() {
             />
             <div className="px-6 md:px-12 py-14 md:py-20 border-b border-border/60">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium mb-3">Legal</p>
-                <h1 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">Store policies</h1>
+                <h1 className="font-display text-4xl md:text-6xl">Store policies</h1>
                 <p className="text-sm text-muted-foreground mt-2">
                     Everything you need to know about exchanges, returns, refunds, and shipping.
                 </p>

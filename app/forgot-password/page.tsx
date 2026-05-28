@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
         <div className="min-h-screen flex items-center justify-center p-6">
             <div className="w-full max-w-md space-y-8">
                 <div className="text-center space-y-2">
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tighter uppercase">
+                    <h1 className="font-display text-3xl md:text-4xl">
                         {success ? "Check your email" : "Forgot password"}
                     </h1>
                     <p className="text-sm text-muted-foreground">

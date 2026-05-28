@@ -30,7 +30,7 @@ export default function AboutPage() {
             />
             <div className="px-6 md:px-12 lg:px-16 py-20 md:py-32 max-w-3xl">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium mb-6">Our story</p>
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter uppercase mb-12 leading-[0.9]">About XILAR</h1>
+                <h1 className="font-display mb-12 text-5xl leading-[0.92] md:text-7xl lg:text-8xl">About XILAR</h1>
 
                 <div className="space-y-8 text-base md:text-lg leading-relaxed text-muted-foreground max-w-[60ch]">
                     <p>
