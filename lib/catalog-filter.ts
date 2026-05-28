@@ -6,7 +6,7 @@ export type CatalogFilterOptions = {
   isFeatured?: boolean;
   isNew?: boolean;
   isPremium?: boolean;
-  limit?: number;
+  limit?: number | null;
 };
 
 export function productMatchesGender(
@@ -25,14 +25,15 @@ export function filterCatalogProducts(
     isFeatured,
     isNew,
     isPremium,
-    limit = 8,
+    limit,
   }: CatalogFilterOptions,
 ) {
-  return products
+  const filteredProducts = products
     .filter((product) => productMatchesGender(product, gender))
     .filter((product) => !fixedCategory || product.category === fixedCategory)
     .filter((product) => !isFeatured || product.isFeatured)
     .filter((product) => !isNew || product.isNew)
-    .filter((product) => !isPremium || product.isPremium)
-    .slice(0, limit);
+    .filter((product) => !isPremium || product.isPremium);
+
+  return typeof limit === "number" ? filteredProducts.slice(0, limit) : filteredProducts;
 }

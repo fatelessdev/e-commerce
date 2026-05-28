@@ -25,7 +25,7 @@ const HERO_IMAGES = [
     src: "/hero/image(2).webp",
     eyebrow: "Clean fits",
     title: "Streetwear basics",
-    href: "/collections/essentials",
+    href: "/collections/premium",
   },
   {
     src: "/hero/image(3).webp",

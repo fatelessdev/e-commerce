@@ -11,6 +11,7 @@ import { normalizeProductImage } from "@/lib/image"
 import { getDisplaySizes, useShopCatalog, type CatalogProduct } from "@/components/features/use-shop-catalog"
 import { filterCatalogProducts } from "@/lib/catalog-filter"
 import { ViewportPrefetchLink } from "@/components/ui/viewport-prefetch-link"
+import { cn } from "@/lib/utils"
 
 function ColorSwatches({ colors }: { colors: { name: string; hex: string }[] }) {
     if (!colors || colors.length === 0) return null
@@ -57,8 +58,11 @@ export function ProductGrid({
     fixedCategory,
     mobileLimit = 6,
     viewAllHref = "/shop",
+    viewAllLabel = "View all products",
     initialProducts,
     hideWhenEmpty = false,
+    maxProducts = 8,
+    showGenderTabs = true,
 }: {
     title?: string
     gender?: "men" | "women" | "unisex"
@@ -69,21 +73,26 @@ export function ProductGrid({
     fixedCategory?: string
     mobileLimit?: number
     viewAllHref?: string
+    viewAllLabel?: string
     initialProducts?: CatalogProduct[]
     hideWhenEmpty?: boolean
+    maxProducts?: number | null
+    showGenderTabs?: boolean
 }) {
     const [activeTab, setActiveTab] = useState<"men" | "women">(gender === "women" ? "women" : "men")
     const { data: catalogProducts = [], isLoading: loading } = useShopCatalog(initialProducts)
+    const hasHeaderContent = Boolean(title) || (showGenderTabs && !gender && !fixedCategory && layout !== "scroll")
     const products = useMemo(() => {
-        const resolvedGender = gender || (!fixedCategory ? activeTab : "all")
+        const resolvedGender = gender || (!fixedCategory && showGenderTabs ? activeTab : "all")
         return filterCatalogProducts(catalogProducts, {
             gender: resolvedGender,
             fixedCategory,
             isFeatured,
             isNew,
             isPremium,
+            limit: maxProducts,
         })
-    }, [activeTab, catalogProducts, fixedCategory, gender, isFeatured, isNew, isPremium])
+    }, [activeTab, catalogProducts, fixedCategory, gender, isFeatured, isNew, isPremium, maxProducts, showGenderTabs])
     const gridAnimationKey = [
         layout,
         gender || activeTab,
@@ -110,8 +119,14 @@ export function ProductGrid({
     }
 
     return (
-        <section className="py-20 md:py-28 px-6 md:px-12 bg-background">
+        <section
+            className={cn(
+                "bg-background px-6 md:px-12",
+                hasHeaderContent ? "py-20 md:py-28" : "pt-8 pb-20 md:pt-12 md:pb-28",
+            )}
+        >
             {/* Header with tabs */}
+            {hasHeaderContent && (
             <ScrollReveal>
                 <div className="flex flex-col items-center mb-14">
                     {title && (
@@ -119,7 +134,7 @@ export function ProductGrid({
                     )}
 
                     {/* FOR HIM / FOR HER Tabs */}
-                    {!gender && !fixedCategory && layout !== "scroll" && (
+                    {showGenderTabs && !gender && !fixedCategory && layout !== "scroll" && (
                         <div className="flex items-center gap-8 text-sm" role="tablist" aria-label="Shop by gender">
                             <button
                                 role="tab"
@@ -147,6 +162,7 @@ export function ProductGrid({
                     )}
                 </div>
             </ScrollReveal>
+            )}
 
             {/* Loading State — Skeleton */}
             {loading && (
@@ -218,7 +234,7 @@ export function ProductGrid({
                 ) : (
                     <StaggerContainer
                         key={gridAnimationKey}
-                        once={false}
+                        amount={0.01}
                         className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6"
                     >
                         {products.map((product, index) => (
@@ -291,7 +307,7 @@ export function ProductGrid({
                             href={viewAllHref}
                             className="group inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground transition-colors duration-500"
                         >
-                            View all products
+                            {viewAllLabel}
                             <ArrowRight className="h-3.5 w-3.5 transition-transform duration-500 group-hover:translate-x-1" />
                         </Link>
                     </div>

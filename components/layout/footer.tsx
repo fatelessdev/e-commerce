@@ -59,8 +59,8 @@ export function Footer() {
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/collections/essentials" className="hover:text-foreground transition-colors duration-300">
-                                    Essentials
+                                <Link href="/collections/premium" className="hover:text-foreground transition-colors duration-300">
+                                    Premium
                                 </Link>
                             </li>
                             <li>

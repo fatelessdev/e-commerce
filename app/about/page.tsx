@@ -48,7 +48,7 @@ export default function AboutPage() {
                     </div>
 
                     <p>
-                        Our Essentials collection features joggers, cargo pants, denim, trousers, shorts, shirts, and premium T-shirts — all designed for the streets but refined for the culture.
+                        Our Premium collection features selected joggers, cargo pants, denim, trousers, shorts, shirts, and premium T-shirts — all designed for the streets but refined for the culture.
                     </p>
                 </div>
 

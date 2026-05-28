@@ -63,8 +63,15 @@ export default async function Home() {
       <Hero />
       <ProductGrid title="Best Sellers" isFeatured initialProducts={products} />
       <ComboSection limit={4} interactive={false} mobileLimit={3} initialCombos={combos} />
-      <ProductGrid title="New Arrivals" isNew initialProducts={products} />
-      <ProductGrid title="Premium" isPremium initialProducts={products} hideWhenEmpty />
+      <ProductGrid title="New Arrivals" isNew viewAllHref="/new" viewAllLabel="Shop all new arrivals" initialProducts={products} />
+      <ProductGrid
+        title="Premium"
+        isPremium
+        viewAllHref="/collections/premium"
+        viewAllLabel="Explore premium collection"
+        initialProducts={products}
+        hideWhenEmpty
+      />
       <ShopTheReels />
       <ProductGrid title="Accessories" fixedCategory="accessory" viewAllHref="/shop/accessories" initialProducts={products} />
       <RealReviews />

@@ -30,8 +30,8 @@ export function Sidebar({ className }: SidebarProps) {
                         Collections
                     </h2>
                     <div className="space-y-0.5">
-                        <Link href="/collections/essentials" className="block px-3 py-2.5 text-sm font-medium hover:bg-accent/60 hover:text-accent-foreground transition-colors duration-300">
-                            Essentials
+                        <Link href="/collections/premium" className="block px-3 py-2.5 text-sm font-medium hover:bg-accent/60 hover:text-accent-foreground transition-colors duration-300">
+                            Premium
                         </Link>
                         <Link href="/collections/summer-26" className="block px-3 py-2.5 text-sm font-medium hover:bg-accent/60 hover:text-accent-foreground transition-colors duration-300">
                             Summer &apos;26
