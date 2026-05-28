@@ -204,6 +204,32 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
     }
 
     const currentStock = selectedVariantStock()
+    const images = useMemo(() => {
+        const productImages = product?.images || []
+        return productImages.length > 0
+            ? productImages.map((image) => normalizeProductImage(image))
+            : [normalizeProductImage()]
+    }, [product?.images])
+
+    useEffect(() => {
+        if (!product || images.length <= 1) return
+
+        const preloadGalleryImages = () => {
+            images.slice(1).forEach((src) => {
+                const image = new window.Image()
+                image.src = src
+            })
+        }
+
+        const idle = window.requestIdleCallback
+        if (idle) {
+            const idleId = idle(preloadGalleryImages, { timeout: 1500 })
+            return () => window.cancelIdleCallback?.(idleId)
+        }
+
+        const timer = window.setTimeout(preloadGalleryImages, 200)
+        return () => window.clearTimeout(timer)
+    }, [images, product])
 
     if (loading && !product) {
         return <ProductDetailSkeleton />
@@ -231,13 +257,9 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
     const hasDiscount = mrp > price
     const displayPrice = `₹${price.toLocaleString("en-IN")}`
     const displayMrp = `₹${mrp.toLocaleString("en-IN")}`
-    const productImages = product.images || []
     const productSizes = product.sizes || []
     const productColors = product.colors || []
     const productFeatures = product.features || []
-    const images = productImages.length > 0
-        ? productImages.map((image) => normalizeProductImage(image))
-        : [normalizeProductImage()]
 
     const inWishlist = isInWishlist(product.id)
     const hasRelatedContent = (product.relatedCombos?.length || 0) > 0 || (product.relatedProducts?.length || 0) > 0
@@ -441,7 +463,7 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                             <p className="text-[10px] font-medium tracking-[0.2em] text-muted-foreground uppercase">
                                 {isAccessory ? product.category : `${product.category} · ${product.gender}`}
                             </p>
-                            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tighter uppercase leading-[0.9]">{product.name}</h1>
+                            <h1 className="font-display text-4xl leading-[0.92] md:text-6xl lg:text-7xl">{product.name}</h1>
                         </div>
                         <div className="flex items-baseline gap-3">
                             <p className="text-xl font-semibold tabular-nums">{displayPrice}</p>

@@ -8,7 +8,8 @@ import Image from "next/image"
 import { useMemo, useState } from "react"
 import { ArrowRight } from "lucide-react"
 import { normalizeProductImage } from "@/lib/image"
-import { getDisplaySizes, productMatchesGender, useShopCatalog, type CatalogProduct } from "@/components/features/use-shop-catalog"
+import { getDisplaySizes, useShopCatalog, type CatalogProduct } from "@/components/features/use-shop-catalog"
+import { filterCatalogProducts } from "@/lib/catalog-filter"
 import { ViewportPrefetchLink } from "@/components/ui/viewport-prefetch-link"
 
 function ColorSwatches({ colors }: { colors: { name: string; hex: string }[] }) {
@@ -51,39 +52,45 @@ export function ProductGrid({
     gender,
     isFeatured,
     isNew,
+    isPremium,
     layout = "grid",
     fixedCategory,
     mobileLimit = 6,
     viewAllHref = "/shop",
     initialProducts,
+    hideWhenEmpty = false,
 }: {
     title?: string
     gender?: "men" | "women" | "unisex"
     isFeatured?: boolean
     isNew?: boolean
+    isPremium?: boolean
     layout?: "grid" | "scroll"
     fixedCategory?: string
     mobileLimit?: number
     viewAllHref?: string
     initialProducts?: CatalogProduct[]
+    hideWhenEmpty?: boolean
 }) {
     const [activeTab, setActiveTab] = useState<"men" | "women">(gender === "women" ? "women" : "men")
     const { data: catalogProducts = [], isLoading: loading } = useShopCatalog(initialProducts)
     const products = useMemo(() => {
         const resolvedGender = gender || (!fixedCategory ? activeTab : "all")
-        return catalogProducts
-            .filter((product) => productMatchesGender(product, resolvedGender))
-            .filter((product) => !fixedCategory || product.category === fixedCategory)
-            .filter((product) => !isFeatured || product.isFeatured)
-            .filter((product) => !isNew || product.isNew)
-            .slice(0, 8)
-    }, [activeTab, catalogProducts, fixedCategory, gender, isFeatured, isNew])
+        return filterCatalogProducts(catalogProducts, {
+            gender: resolvedGender,
+            fixedCategory,
+            isFeatured,
+            isNew,
+            isPremium,
+        })
+    }, [activeTab, catalogProducts, fixedCategory, gender, isFeatured, isNew, isPremium])
     const gridAnimationKey = [
         layout,
         gender || activeTab,
         fixedCategory || "all",
         isFeatured ? "featured" : "regular",
         isNew ? "new" : "all",
+        isPremium ? "premium" : "standard",
     ].join(":")
 
     const formatPrice = (price: string) => {
@@ -98,13 +105,17 @@ export function ProductGrid({
         return Math.round(((mrp - price) / mrp) * 100)
     }
 
+    if (!loading && products.length === 0 && hideWhenEmpty) {
+        return null
+    }
+
     return (
         <section className="py-20 md:py-28 px-6 md:px-12 bg-background">
             {/* Header with tabs */}
             <ScrollReveal>
                 <div className="flex flex-col items-center mb-14">
                     {title && (
-                        <h2 className="text-2xl md:text-3xl font-bold tracking-tighter uppercase mb-8">{title}</h2>
+                        <h2 className="font-display text-3xl font-normal tracking-normal md:text-4xl mb-8">{title}</h2>
                     )}
 
                     {/* FOR HIM / FOR HER Tabs */}

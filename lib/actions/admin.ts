@@ -33,6 +33,7 @@ export type ProductInput = {
   variants?: { size: string; color: string | null; stock: number }[];
   isNew?: boolean;
   isFeatured?: boolean;
+  isPremium?: boolean;
   isActive?: boolean;
   displayOrder?: number;
 };
@@ -115,6 +116,7 @@ export async function createProduct(data: ProductInput) {
       colors: effectiveColors,
       isNew: data.isNew ?? false,
       isFeatured: data.isFeatured ?? false,
+      isPremium: data.isPremium ?? false,
       isActive: data.isActive ?? true,
       displayOrder: data.displayOrder ?? 0,
     })

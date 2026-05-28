@@ -16,6 +16,7 @@ export type CatalogProduct = Pick<
   | "gender"
   | "isNew"
   | "isFeatured"
+  | "isPremium"
   | "stock"
 > & {
   images: string[];
@@ -38,6 +39,7 @@ type CatalogQuery = {
   maxPrice?: string | null;
   isNew?: boolean;
   isFeatured?: boolean;
+  isPremium?: boolean;
   limit?: number;
   offset?: number;
   includeTotal?: boolean;
@@ -57,6 +59,7 @@ const catalogProductColumns = {
   colors: products.colors,
   isNew: products.isNew,
   isFeatured: products.isFeatured,
+  isPremium: products.isPremium,
   stock: products.stock,
 };
 
@@ -94,6 +97,10 @@ function buildCatalogConditions(query: CatalogQuery) {
 
   if (query.isFeatured) {
     conditions.push(eq(products.isFeatured, true));
+  }
+
+  if (query.isPremium) {
+    conditions.push(eq(products.isPremium, true));
   }
 
   return and(...conditions);

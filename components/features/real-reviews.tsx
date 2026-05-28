@@ -47,7 +47,7 @@ export function RealReviews() {
                     <p className="mb-5 text-[10px] font-medium uppercase tracking-[0.45em] text-muted-foreground">
                         Real reviews
                     </p>
-                    <h2 className="text-3xl font-black uppercase tracking-normal md:text-4xl">What Our Customers Say</h2>
+                    <h2 className="font-display text-4xl font-normal tracking-normal md:text-5xl">What Our Customers Say</h2>
                 </div>
 
                 <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">

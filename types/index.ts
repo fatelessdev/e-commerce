@@ -21,6 +21,7 @@ export interface Product {
   variants?: ProductVariant[];
   isNew: boolean;
   isFeatured: boolean;
+  isPremium: boolean;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

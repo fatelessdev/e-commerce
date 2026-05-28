@@ -172,6 +172,11 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Admi
                           Best Seller
                         </span>
                       )}
+                      {product.isPremium && (
+                        <span className="ml-2 inline-flex items-center rounded-full bg-amber-500/10 px-2 py-1 text-xs text-amber-600 dark:text-amber-400">
+                          Premium
+                        </span>
+                      )}
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">

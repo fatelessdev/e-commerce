@@ -316,7 +316,7 @@ export function ComboSection({
     <section className="py-20 md:py-28 px-6 md:px-12 bg-background">
       <div className="flex flex-col items-center mb-12">
         <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium mb-3">Bundle deals</p>
-        <h2 className="text-2xl md:text-3xl font-bold tracking-tighter uppercase">Combos</h2>
+        <h2 className="font-display text-3xl font-normal tracking-normal md:text-4xl">Combos</h2>
       </div>
 
       {loading ? (

@@ -2,8 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { CatalogProduct } from "@/lib/product-catalog";
+import { productMatchesGender } from "@/lib/catalog-filter";
 
 export type { CatalogProduct };
+export { productMatchesGender };
 
 type ProductPageResponse = {
   products: CatalogProduct[];
@@ -49,11 +51,6 @@ export function useShopCatalog(initialData?: CatalogProduct[]) {
     enabled: initialData === undefined,
     staleTime: 1000 * 60 * 5,
   });
-}
-
-export function productMatchesGender(product: CatalogProduct, gender?: "men" | "women" | "unisex" | "all") {
-  if (!gender || gender === "all") return true;
-  return product.gender === gender || product.gender === "unisex";
 }
 
 export function getDisplaySizes(product: Pick<CatalogProduct, "availableSizes" | "sizes" | "stock" | "category">) {

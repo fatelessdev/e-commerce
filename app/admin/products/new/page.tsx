@@ -50,6 +50,7 @@ export default function NewProductPage() {
     gsm: 0,
     isNew: true,
     isFeatured: false,
+    isPremium: false,
     isActive: true,
     displayOrder: 0,
   });
@@ -845,9 +846,18 @@ export default function NewProductPage() {
                 />
                 <span className="text-sm">Mark as Best Seller</span>
               </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.isPremium}
+                  onChange={(e) => setFormData({ ...formData, isPremium: e.target.checked })}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">Mark as Premium</span>
+              </label>
             </div>
             <p className="text-xs text-muted-foreground">
-              Home page Best Sellers are controlled manually with this toggle.
+              Home page Best Sellers, New Arrivals, and Premium sections are controlled manually with these toggles.
             </p>
              
             <div className="space-y-2">

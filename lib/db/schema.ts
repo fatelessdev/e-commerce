@@ -152,6 +152,7 @@ export const products = pgTable("products", {
   // Metadata
   isNew: boolean("is_new").notNull().default(false),
   isFeatured: boolean("is_featured").notNull().default(false),
+  isPremium: boolean("is_premium").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),
   
   // Manual merchandising (gap method with increments of 100)

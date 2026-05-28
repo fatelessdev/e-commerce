@@ -40,7 +40,7 @@ export default async function Summer26Page() {
             />
             <div className="px-6 md:px-12 py-14 md:py-20 border-b border-border/60">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium mb-3">Collection</p>
-                <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tighter uppercase">Summer &apos;26</h1>
+                <h1 className="font-display text-4xl md:text-6xl lg:text-7xl">Summer &apos;26</h1>
                 <p className="text-sm text-muted-foreground mt-2">Light fabrics. Bold statements. Made for the heat.</p>
             </div>
             <ProductGrid title="" initialProducts={products} />

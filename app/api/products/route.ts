@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
     const maxPrice = searchParams.get("maxPrice");
     const isNew = searchParams.get("isNew");
     const isFeatured = searchParams.get("isFeatured");
+    const isPremium = searchParams.get("isPremium");
     const { limit, offset } = parsePublicProductPagination(
       searchParams.get("limit"),
       searchParams.get("offset")
@@ -29,6 +30,7 @@ export async function GET(req: NextRequest) {
       maxPrice,
       isNew: isNew === "true",
       isFeatured: isFeatured === "true",
+      isPremium: isPremium === "true",
       limit,
       offset,
       includeTotal: true,

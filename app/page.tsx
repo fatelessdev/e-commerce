@@ -16,7 +16,7 @@ const ShopTheReels = dynamic(() =>
   import("@/components/features/shop-the-reels").then((mod) => mod.ShopTheReels),
   {
     loading: () => (
-      <section className="border-t border-border/60 bg-background px-6 py-16 md:px-12 md:py-24">
+      <section className="min-h-[560px] border-t border-border/60 bg-background px-6 py-16 md:min-h-[650px] md:px-12 md:py-24">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto h-8 w-64 animate-pulse bg-muted" />
           <div className="mt-10 flex gap-4 overflow-hidden">
@@ -64,6 +64,7 @@ export default async function Home() {
       <ProductGrid title="Best Sellers" isFeatured initialProducts={products} />
       <ComboSection limit={4} interactive={false} mobileLimit={3} initialCombos={combos} />
       <ProductGrid title="New Arrivals" isNew initialProducts={products} />
+      <ProductGrid title="Premium" isPremium initialProducts={products} hideWhenEmpty />
       <ShopTheReels />
       <ProductGrid title="Accessories" fixedCategory="accessory" viewAllHref="/shop/accessories" initialProducts={products} />
       <RealReviews />

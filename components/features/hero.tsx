@@ -166,7 +166,7 @@ export function Hero() {
                     initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 26, filter: "blur(6px)" }}
                     animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                     transition={{ duration: 0.72, delay: 0.16, ease: EASE_OUT_EXPO }}
-                    className="max-w-2xl text-5xl font-black uppercase leading-[0.86] tracking-tight md:text-7xl lg:text-8xl"
+                    className="font-display max-w-2xl text-6xl leading-[0.86] md:text-8xl lg:text-9xl"
                   >
                     {activeSlide.title}
                   </motion.h1>
@@ -194,7 +194,7 @@ export function Hero() {
               ) : (
                 <div className="absolute bottom-8 left-6 z-30 text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.45)]">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-white/70">{slide.eyebrow}</p>
-                  <p className="mt-2 max-w-[12rem] text-2xl font-black uppercase leading-none tracking-tight">{slide.title}</p>
+                  <p className="font-display mt-2 max-w-[12rem] text-3xl leading-none">{slide.title}</p>
                 </div>
               )}
                 </div>
