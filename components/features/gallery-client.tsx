@@ -320,6 +320,9 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
     const targetLeft = (window.innerWidth - targetWidth) / 2;
     const targetTop = (window.innerHeight - targetHeight) / 2;
 
+    const startX = (active.rect.left + active.rect.width / 2) - window.innerWidth / 2;
+    const startY = (active.rect.top + active.rect.height / 2) - window.innerHeight / 2;
+
     gsap.killTweensOf([card, text, "[data-xilar-gallery-card]"]);
 
     const timeline = gsap.timeline();
@@ -333,19 +336,19 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
     timeline.fromTo(
       card,
       {
-        left: active.rect.left,
-        top: active.rect.top,
         width: active.rect.width,
         height: active.rect.height,
+        x: startX,
+        y: startY,
         opacity: 1,
       },
       {
-        left: targetLeft,
-        top: targetTop,
         width: targetWidth,
         height: targetHeight,
+        x: 0,
+        y: 0,
         duration: 1,
-        ease: "power3.inOut",
+        ease: "cubic-bezier(0.9, 0, 0.1, 1)",
       },
       0,
     );
@@ -442,6 +445,9 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
       return;
     }
 
+    const startX = (active.rect.left + active.rect.width / 2) - window.innerWidth / 2;
+    const startY = (active.rect.top + active.rect.height / 2) - window.innerHeight / 2;
+
     gsap.killTweensOf([card, text, "[data-xilar-gallery-card]"]);
 
     const words = text?.querySelectorAll("[data-gallery-word]") ?? [];
@@ -472,12 +478,12 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
     }, 0);
     timeline.to(text, { opacity: 0, duration: 0.18, ease: "power2.out" }, 0.32);
     timeline.to(card, {
-      left: active.rect.left,
-      top: active.rect.top,
       width: active.rect.width,
       height: active.rect.height,
-      duration: 0.8,
-      ease: "power3.inOut",
+      x: startX,
+      y: startY,
+      duration: 1,
+      ease: "cubic-bezier(0.9, 0, 0.1, 1)",
     }, 0.44);
   }, [active, shouldReduceMotion]);
 
@@ -527,7 +533,13 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
                     width: "84vw",
                     height: "70svh",
                   }
-                : undefined
+                : {
+                    left: "50%",
+                    top: "50%",
+                    transform: `translate(-50%, -50%) translate(${(active.rect.left + active.rect.width / 2) - window.innerWidth / 2}px, ${(active.rect.top + active.rect.height / 2) - window.innerHeight / 2}px)`,
+                    width: active.rect.width,
+                    height: active.rect.height,
+                  }
             }
           >
             <img

@@ -58,11 +58,21 @@ export function Navbar() {
     const mainContainer = document.getElementById("main-content-container");
     const overlay = menuOverlayRef.current;
     const content = menuContentRef.current;
-    if (!mainContainer || !overlay || !content || shouldReduceMotion) return;
+    if (!mainContainer || !overlay || !content) return;
+
+    if (shouldReduceMotion) {
+      if (showMobileMenu) {
+        document.body.style.overflow = "hidden";
+      } else {
+        document.body.style.overflow = "";
+      }
+      return;
+    }
 
     const links = gsap.utils.toArray<HTMLElement>("[data-xilar-menu-animate]");
 
     if (showMobileMenu) {
+      document.body.style.overflow = "hidden";
       gsap.killTweensOf([mainContainer, overlay, content, links]);
 
       gsap.to(mainContainer, {
@@ -126,6 +136,7 @@ export function Navbar() {
         ease: "power4.inOut",
         onComplete: () => {
           gsap.set(links, { y: "120%", opacity: 0.25 });
+          document.body.style.overflow = "";
         },
       });
     }
@@ -148,8 +159,6 @@ export function Navbar() {
   useEffect(() => {
     if (!showMobileMenu) return;
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     window.setTimeout(() => firstMenuLinkRef.current?.focus(), 120);
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -159,7 +168,6 @@ export function Navbar() {
     window.addEventListener("keydown", onKeyDown);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [showMobileMenu]);
