@@ -320,9 +320,6 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
     const targetLeft = (window.innerWidth - targetWidth) / 2;
     const targetTop = (window.innerHeight - targetHeight) / 2;
 
-    const startX = (active.rect.left + active.rect.width / 2) - window.innerWidth / 2;
-    const startY = (active.rect.top + active.rect.height / 2) - window.innerHeight / 2;
-
     gsap.killTweensOf([card, text, "[data-xilar-gallery-card]"]);
 
     const timeline = gsap.timeline();
@@ -338,15 +335,15 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
       {
         width: active.rect.width,
         height: active.rect.height,
-        x: startX,
-        y: startY,
+        x: active.rect.left,
+        y: active.rect.top,
         opacity: 1,
       },
       {
         width: targetWidth,
         height: targetHeight,
-        x: 0,
-        y: 0,
+        x: targetLeft,
+        y: targetTop,
         duration: 1,
         ease: "cubic-bezier(0.9, 0, 0.1, 1)",
       },
@@ -445,9 +442,6 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
       return;
     }
 
-    const startX = (active.rect.left + active.rect.width / 2) - window.innerWidth / 2;
-    const startY = (active.rect.top + active.rect.height / 2) - window.innerHeight / 2;
-
     gsap.killTweensOf([card, text, "[data-xilar-gallery-card]"]);
 
     const words = text?.querySelectorAll("[data-gallery-word]") ?? [];
@@ -480,8 +474,8 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
     timeline.to(card, {
       width: active.rect.width,
       height: active.rect.height,
-      x: startX,
-      y: startY,
+      x: active.rect.left,
+      y: active.rect.top,
       duration: 1,
       ease: "cubic-bezier(0.9, 0, 0.1, 1)",
     }, 0.44);
@@ -534,9 +528,9 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
                     height: "70svh",
                   }
                 : {
-                    left: "50%",
-                    top: "50%",
-                    transform: `translate(-50%, -50%) translate(${(active.rect.left + active.rect.width / 2) - window.innerWidth / 2}px, ${(active.rect.top + active.rect.height / 2) - window.innerHeight / 2}px)`,
+                    left: 0,
+                    top: 0,
+                    transform: `translate(${active.rect.left}px, ${active.rect.top}px)`,
                     width: active.rect.width,
                     height: active.rect.height,
                   }
