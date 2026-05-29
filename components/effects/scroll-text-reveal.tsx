@@ -54,6 +54,9 @@ export function ScrollTextReveal({
       const allChars = charSplit.chars as HTMLElement[];
       let lastScrollProgress = 0;
 
+      // 0 = initial, 1 = accent, 2 = final
+      const charStates = new Uint8Array(allChars.length);
+
       gsap.set(allChars, { color: initialColor });
 
       const scheduleFinalTransition = (char: HTMLElement, index: number) => {
@@ -66,7 +69,10 @@ export function ScrollTextReveal({
               duration: 0.1,
               ease: "none",
               color: finalColor,
-              onComplete: () => completedChars.add(index),
+              onComplete: () => {
+                completedChars.add(index);
+                charStates[index] = 2;
+              },
             });
           }
           colorTransitionTimers.delete(index);
@@ -86,27 +92,49 @@ export function ScrollTextReveal({
           const isScrollingDown = progress >= lastScrollProgress;
           const currentCharIndex = Math.floor(progress * totalChars);
 
-          allChars.forEach((char, index) => {
-            if (!isScrollingDown && index >= currentCharIndex) {
-              const timer = colorTransitionTimers.get(index);
-              if (timer) window.clearTimeout(timer);
-              colorTransitionTimers.delete(index);
-              completedChars.delete(index);
-              gsap.set(char, { color: initialColor });
-              return;
-            }
-
-            if (completedChars.has(index)) return;
-
-            if (index <= currentCharIndex) {
-              gsap.set(char, { color: accentColor });
-              if (!colorTransitionTimers.has(index)) {
-                scheduleFinalTransition(char, index);
+          if (isScrollingDown) {
+            for (let index = 0; index < totalChars; index++) {
+              if (index <= currentCharIndex) {
+                if (charStates[index] === 0) {
+                  charStates[index] = 1;
+                  gsap.set(allChars[index], { color: accentColor });
+                  if (!colorTransitionTimers.has(index)) {
+                    scheduleFinalTransition(allChars[index], index);
+                  }
+                }
+              } else {
+                if (charStates[index] !== 0) {
+                  charStates[index] = 0;
+                  const timer = colorTransitionTimers.get(index);
+                  if (timer) window.clearTimeout(timer);
+                  colorTransitionTimers.delete(index);
+                  completedChars.delete(index);
+                  gsap.set(allChars[index], { color: initialColor });
+                }
               }
-            } else {
-              gsap.set(char, { color: initialColor });
             }
-          });
+          } else {
+            for (let index = 0; index < totalChars; index++) {
+              if (index >= currentCharIndex) {
+                if (charStates[index] !== 0) {
+                  charStates[index] = 0;
+                  const timer = colorTransitionTimers.get(index);
+                  if (timer) window.clearTimeout(timer);
+                  colorTransitionTimers.delete(index);
+                  completedChars.delete(index);
+                  gsap.set(allChars[index], { color: initialColor });
+                }
+              } else {
+                if (charStates[index] === 0) {
+                  charStates[index] = 1;
+                  gsap.set(allChars[index], { color: accentColor });
+                  if (!colorTransitionTimers.has(index)) {
+                    scheduleFinalTransition(allChars[index], index);
+                  }
+                }
+              }
+            }
+          }
 
           lastScrollProgress = progress;
         },
@@ -169,6 +197,9 @@ export function ScrollTextRevealStack({
       const allChars = splitRefs.flatMap(({ charSplit }) => charSplit.chars as HTMLElement[]);
       let lastScrollProgress = 0;
 
+      // 0 = initial, 1 = accent, 2 = final
+      const charStates = new Uint8Array(allChars.length);
+
       gsap.set(allChars, { color: initialColor });
 
       const scheduleFinalTransition = (char: HTMLElement, index: number) => {
@@ -181,7 +212,10 @@ export function ScrollTextRevealStack({
               duration: 0.1,
               ease: "none",
               color: finalColor,
-              onComplete: () => completedChars.add(index),
+              onComplete: () => {
+                completedChars.add(index);
+                charStates[index] = 2;
+              },
             });
           }
           colorTransitionTimers.delete(index);
@@ -201,27 +235,49 @@ export function ScrollTextRevealStack({
           const isScrollingDown = progress >= lastScrollProgress;
           const currentCharIndex = Math.floor(progress * totalChars);
 
-          allChars.forEach((char, index) => {
-            if (!isScrollingDown && index >= currentCharIndex) {
-              const timer = colorTransitionTimers.get(index);
-              if (timer) window.clearTimeout(timer);
-              colorTransitionTimers.delete(index);
-              completedChars.delete(index);
-              gsap.set(char, { color: initialColor });
-              return;
-            }
-
-            if (completedChars.has(index)) return;
-
-            if (index <= currentCharIndex) {
-              gsap.set(char, { color: accentColor });
-              if (!colorTransitionTimers.has(index)) {
-                scheduleFinalTransition(char, index);
+          if (isScrollingDown) {
+            for (let index = 0; index < totalChars; index++) {
+              if (index <= currentCharIndex) {
+                if (charStates[index] === 0) {
+                  charStates[index] = 1;
+                  gsap.set(allChars[index], { color: accentColor });
+                  if (!colorTransitionTimers.has(index)) {
+                    scheduleFinalTransition(allChars[index], index);
+                  }
+                }
+              } else {
+                if (charStates[index] !== 0) {
+                  charStates[index] = 0;
+                  const timer = colorTransitionTimers.get(index);
+                  if (timer) window.clearTimeout(timer);
+                  colorTransitionTimers.delete(index);
+                  completedChars.delete(index);
+                  gsap.set(allChars[index], { color: initialColor });
+                }
               }
-            } else {
-              gsap.set(char, { color: initialColor });
             }
-          });
+          } else {
+            for (let index = 0; index < totalChars; index++) {
+              if (index >= currentCharIndex) {
+                if (charStates[index] !== 0) {
+                  charStates[index] = 0;
+                  const timer = colorTransitionTimers.get(index);
+                  if (timer) window.clearTimeout(timer);
+                  colorTransitionTimers.delete(index);
+                  completedChars.delete(index);
+                  gsap.set(allChars[index], { color: initialColor });
+                }
+              } else {
+                if (charStates[index] === 0) {
+                  charStates[index] = 1;
+                  gsap.set(allChars[index], { color: accentColor });
+                  if (!colorTransitionTimers.has(index)) {
+                    scheduleFinalTransition(allChars[index], index);
+                  }
+                }
+              }
+            }
+          }
 
           lastScrollProgress = progress;
         },

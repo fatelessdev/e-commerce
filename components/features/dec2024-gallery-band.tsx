@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowRight } from "lucide-react";
@@ -27,9 +28,17 @@ const FALLBACK_IMAGES: GalleryBandItem[] = [
 ];
 
 export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
+  const [mounted, setMounted] = useState(false);
   const rootRef = useRef<HTMLElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
   const resolvedItems = useMemo(() => {
     const clean = (items || [])
       .filter((item) => item.src)
@@ -79,7 +88,7 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
   }, [shouldReduceMotion]);
 
   useEffect(() => {
-    if (!cursorRef.current || shouldReduceMotion) return;
+    if (!cursorRef.current || shouldReduceMotion || !mounted) return;
 
     const cursor = cursorRef.current;
     gsap.set(cursor, { xPercent: -50, yPercent: -50, scale: 0.15, opacity: 0 });
@@ -112,7 +121,7 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
       root?.removeEventListener("pointerleave", onLeave);
       window.removeEventListener("pointermove", onMove);
     };
-  }, [shouldReduceMotion]);
+  }, [shouldReduceMotion, mounted]);
 
   const rows = [0, 1, 2, 3].map((row) => resolvedItems.slice(row * 8, row * 8 + 8));
 
@@ -122,14 +131,15 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
       className="relative min-h-[78svh] overflow-hidden border-t border-border/60 bg-background px-6 py-16 text-foreground md:min-h-[94svh] md:px-12 md:py-24"
       aria-label="XILAR moving product gallery"
     >
-      {!shouldReduceMotion && (
+      {mounted && !shouldReduceMotion && createPortal(
         <div
           ref={cursorRef}
-          className="pointer-events-none fixed left-0 top-0 z-[70] hidden h-20 w-20 items-center justify-center rounded-full bg-white text-neutral-950 shadow-2xl mix-blend-difference md:flex"
+          className="pointer-events-none fixed left-0 top-0 z-[10000] hidden h-20 w-20 items-center justify-center rounded-full bg-white text-neutral-950 shadow-2xl mix-blend-difference md:flex"
           aria-hidden="true"
         >
           <ArrowRight className="h-5 w-5" />
-        </div>
+        </div>,
+        document.body
       )}
       <div className="pointer-events-none absolute left-1/2 top-[56%] z-0 w-[220vw] -translate-x-1/2 -translate-y-1/2 rotate-[28deg] scale-125 md:top-1/2">
         {rows.map((row, rowIndex) => (
