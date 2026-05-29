@@ -7,6 +7,7 @@ import { eq, desc, sql, and, gte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { generateSecureCode } from "@/lib/utils";
 import { revalidateComboSurfaces, revalidateProductSurfaces } from "@/lib/cache-tags";
+import { ADMIN_PRODUCTS_PAGE_SIZE } from "@/lib/admin-products-pagination";
 import {
   ACCESSORY_SIZE,
   normalizeProductInput,
@@ -249,6 +250,27 @@ export async function getProducts(options?: {
     .offset(options?.offset || 0);
 
   return result;
+}
+
+export async function getProductsPage(options?: {
+  category?: string;
+  gender?: string;
+  isActive?: boolean;
+  limit?: number;
+  offset?: number;
+}) {
+  const limit = Math.max(1, Math.min(options?.limit ?? ADMIN_PRODUCTS_PAGE_SIZE, 100));
+  const offset = Math.max(0, options?.offset ?? 0);
+  const rows = await getProducts({
+    ...options,
+    limit: limit + 1,
+    offset,
+  });
+
+  return {
+    products: rows.slice(0, limit),
+    nextOffset: rows.length > limit ? offset + limit : null,
+  };
 }
 
 export async function getProductById(id: string) {
