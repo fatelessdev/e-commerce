@@ -88,6 +88,38 @@ test("rejects invalid product numerics at the action boundary", () => {
   )
 })
 
+test("rejects duplicate variant combinations before product insert", () => {
+  assert.throws(
+    () =>
+      normalizeProductInput({
+        ...baseInput,
+        variants: [
+          { size: "M", color: null, stock: 1 },
+          { size: "M", color: null, stock: 0 },
+        ],
+      }),
+    /Duplicate variant/
+  )
+})
+
+test("rejects duplicate inventory dimensions before variant rows are created", () => {
+  assert.throws(
+    () => normalizeProductInput({ ...baseInput, sizes: ["M", "M"] }),
+    /Duplicate size/
+  )
+  assert.throws(
+    () =>
+      normalizeProductInput({
+        ...baseInput,
+        colors: [
+          { name: "Ivory", hex: "#fffff0" },
+          { name: "Ivory", hex: "#fffaf0" },
+        ],
+      }),
+    /Duplicate color/
+  )
+})
+
 test("normalizes partial product updates without forcing missing fields", () => {
   assert.deepEqual(normalizeProductPatch({ gsm: "$undefined", fabric: "" }), {
     gsm: null,

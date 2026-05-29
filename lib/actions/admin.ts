@@ -20,16 +20,30 @@ export type { ProductInput } from "@/lib/admin-product-input";
 // PRODUCT ACTIONS
 // ============================================
 
+type ProductMutationClient = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+function revalidateAdminProductSurfaces(productId: string) {
+  try {
+    revalidatePath("/admin/products");
+    revalidatePath(`/product/${productId}`);
+    revalidatePath("/shop");
+    revalidatePath("/");
+    revalidateProductSurfaces(productId);
+  } catch (error) {
+    console.error("Failed to revalidate product surfaces after mutation:", error);
+  }
+}
+
 // Helper: recompute total stock from variants
-async function recomputeProductStock(productId: string) {
-  const result = await db
+async function recomputeProductStock(client: ProductMutationClient, productId: string) {
+  const result = await client
     .select({ totalStock: sql<number>`COALESCE(SUM(${productVariants.stock}), 0)` })
     .from(productVariants)
     .where(eq(productVariants.productId, productId));
 
   const totalStock = Number(result[0]?.totalStock ?? 0);
 
-  await db
+  await client
     .update(products)
     .set({ stock: totalStock, updatedAt: new Date() })
     .where(eq(products.id, productId));
@@ -39,15 +53,16 @@ async function recomputeProductStock(productId: string) {
 
 // Helper: sync variants for a product (delete old, insert new)
 async function syncProductVariants(
+  client: ProductMutationClient,
   productId: string,
   variants: { size: string; color: string | null; stock: number }[]
 ) {
   // Delete all existing variants for this product
-  await db.delete(productVariants).where(eq(productVariants.productId, productId));
+  await client.delete(productVariants).where(eq(productVariants.productId, productId));
 
   // Insert new variants
   if (variants.length > 0) {
-    await db.insert(productVariants).values(
+    await client.insert(productVariants).values(
       variants.map((v) => ({
         productId,
         size: v.size,
@@ -58,7 +73,7 @@ async function syncProductVariants(
   }
 
   // Recompute the total stock on the product
-  return recomputeProductStock(productId);
+  return recomputeProductStock(client, productId);
 }
 
 export async function createProduct(data: ProductInput) {
@@ -69,61 +84,66 @@ export async function createProduct(data: ProductInput) {
   const effectiveSizes = input.sizes || ["S", "M", "L", "XL"];
   const effectiveColors = input.colors || [];
 
-  const [product] = await db
-    .insert(products)
-    .values({
-      name: input.name,
-      slug: input.slug,
-      description: input.description,
-      mrp: input.mrp,
-      sellingPrice: input.sellingPrice,
-      maxBargainDiscount: input.maxBargainDiscount || "0",
-      category: input.category,
-      gender: input.gender,
-      tags: input.tags || [],
-      stock: 0, // Will be computed from variants
-      images: input.images || [],
-      fabric: input.fabric,
-      gsm: input.gsm,
-      careInstructions: input.careInstructions || [],
-      features: input.features || [],
-      sizes: effectiveSizes,
-      colors: effectiveColors,
-      isNew: input.isNew ?? false,
-      isFeatured: input.isFeatured ?? false,
-      isPremium: input.isPremium ?? false,
-      isActive: input.isActive ?? true,
-      displayOrder: input.displayOrder ?? 0,
-    })
-    .returning();
+  const product = await db.transaction(async (tx) => {
+    const [createdProduct] = await tx
+      .insert(products)
+      .values({
+        name: input.name,
+        slug: input.slug,
+        description: input.description,
+        mrp: input.mrp,
+        sellingPrice: input.sellingPrice,
+        maxBargainDiscount: input.maxBargainDiscount || "0",
+        category: input.category,
+        gender: input.gender,
+        tags: input.tags || [],
+        stock: 0, // Will be computed from variants
+        images: input.images || [],
+        fabric: input.fabric,
+        gsm: input.gsm,
+        careInstructions: input.careInstructions || [],
+        features: input.features || [],
+        sizes: effectiveSizes,
+        colors: effectiveColors,
+        isNew: input.isNew ?? false,
+        isFeatured: input.isFeatured ?? false,
+        isPremium: input.isPremium ?? false,
+        isActive: input.isActive ?? true,
+        displayOrder: input.displayOrder ?? 0,
+      })
+      .returning();
 
-  // Create variant rows
-  if (isAccessory) {
-    await syncProductVariants(product.id, input.variants || [{ size: ACCESSORY_SIZE, color: null, stock: input.stock }]);
-  } else if (input.variants && input.variants.length > 0) {
-    await syncProductVariants(product.id, input.variants);
-  } else {
-    // Fallback: create variants from sizes × colors with the provided stock split evenly
-    const variantCombos: { size: string; color: string | null; stock: number }[] = [];
-    const totalVariants = effectiveSizes.length * Math.max(effectiveColors.length, 1);
-    const stockPer = totalVariants > 0 ? Math.floor(input.stock / totalVariants) : 0;
+    // Create variant rows in the same transaction as the product row.
+    if (isAccessory) {
+      await syncProductVariants(
+        tx,
+        createdProduct.id,
+        input.variants || [{ size: ACCESSORY_SIZE, color: null, stock: input.stock }]
+      );
+    } else if (input.variants && input.variants.length > 0) {
+      await syncProductVariants(tx, createdProduct.id, input.variants);
+    } else {
+      // Fallback: create variants from sizes × colors with the provided stock split evenly
+      const variantCombos: { size: string; color: string | null; stock: number }[] = [];
+      const totalVariants = effectiveSizes.length * Math.max(effectiveColors.length, 1);
+      const stockPer = totalVariants > 0 ? Math.floor(input.stock / totalVariants) : 0;
 
-    for (const size of effectiveSizes) {
-      if (effectiveColors.length > 0) {
-        for (const color of effectiveColors) {
-          variantCombos.push({ size, color: color.name, stock: stockPer });
+      for (const size of effectiveSizes) {
+        if (effectiveColors.length > 0) {
+          for (const color of effectiveColors) {
+            variantCombos.push({ size, color: color.name, stock: stockPer });
+          }
+        } else {
+          variantCombos.push({ size, color: null, stock: stockPer });
         }
-      } else {
-        variantCombos.push({ size, color: null, stock: stockPer });
       }
+      await syncProductVariants(tx, createdProduct.id, variantCombos);
     }
-    await syncProductVariants(product.id, variantCombos);
-  }
 
-  revalidatePath("/admin/products");
-  revalidatePath("/shop");
-  revalidatePath("/");
-  revalidateProductSurfaces(product.id);
+    return createdProduct;
+  });
+
+  revalidateAdminProductSurfaces(product.id);
 
   return product;
 }
@@ -174,17 +194,13 @@ export async function updateProduct(id: string, data: Partial<ProductInput>) {
     const accessoryStock =
       variants?.[0]?.stock ??
       (typeof data.stock === "number" ? data.stock : existingProduct.stock);
-    await syncProductVariants(id, [{ size: ACCESSORY_SIZE, color: null, stock: Math.max(0, accessoryStock) }]);
+    await syncProductVariants(db, id, [{ size: ACCESSORY_SIZE, color: null, stock: Math.max(0, accessoryStock) }]);
   } else if (variants) {
     // If variants are provided, sync them
-    await syncProductVariants(id, variants);
+    await syncProductVariants(db, id, variants);
   }
 
-  revalidatePath("/admin/products");
-  revalidatePath(`/product/${id}`);
-  revalidatePath("/shop");
-  revalidatePath("/");
-  revalidateProductSurfaces(id);
+  revalidateAdminProductSurfaces(id);
 
   return product;
 }
@@ -194,14 +210,10 @@ export async function deleteProduct(id: string) {
 
   await db.delete(products).where(eq(products.id, id));
 
-  revalidatePath("/admin/products");
-  revalidatePath(`/product/${id}`);
-  revalidatePath("/shop");
+  revalidateAdminProductSurfaces(id);
   revalidatePath("/shop/men");
   revalidatePath("/shop/women");
   revalidatePath("/shop/accessories");
-  revalidatePath("/");
-  revalidateProductSurfaces(id);
   revalidateComboSurfaces();
 
   return { success: true };

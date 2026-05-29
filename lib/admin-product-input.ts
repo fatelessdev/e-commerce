@@ -88,6 +88,18 @@ function normalizeStringArray(value: unknown, label: string) {
   return value.map((item) => requiredText(item, label)).filter(Boolean)
 }
 
+function ensureUnique<T>(items: T[], label: string, getKey: (item: T) => string) {
+  const seen = new Set<string>()
+
+  for (const item of items) {
+    const key = getKey(item).trim().toLowerCase()
+    if (seen.has(key)) throw new Error(`Duplicate ${label}: ${getKey(item)}`)
+    seen.add(key)
+  }
+
+  return items
+}
+
 function normalizeBoolean(value: unknown, fallback: boolean) {
   return typeof value === "boolean" ? value : fallback
 }
@@ -138,7 +150,7 @@ function normalizeColors(value: unknown) {
   if (isUnset(value)) return []
   if (!Array.isArray(value)) throw new Error("Colors must be a list")
 
-  return value.map((item) => {
+  const colors = value.map((item) => {
     if (!item || typeof item !== "object") throw new Error("Color is invalid")
     const color = item as Record<string, unknown>
     return {
@@ -147,13 +159,15 @@ function normalizeColors(value: unknown) {
       images: normalizeStringArray(color.images, "Color images"),
     }
   })
+
+  return ensureUnique(colors, "color", (color) => color.name)
 }
 
 function normalizeVariants(value: unknown) {
   if (isUnset(value)) return []
   if (!Array.isArray(value)) throw new Error("Variants must be a list")
 
-  return value.map((item) => {
+  const variants = value.map((item) => {
     if (!item || typeof item !== "object") throw new Error("Variant is invalid")
     const variant = item as Record<string, unknown>
     return {
@@ -162,6 +176,12 @@ function normalizeVariants(value: unknown) {
       stock: normalizeNonNegativeInt(variant.stock, "Variant stock"),
     }
   })
+
+  return ensureUnique(
+    variants,
+    "variant",
+    (variant) => `${variant.size}|${variant.color ?? ""}`
+  )
 }
 
 function normalizeCommonProductInput(input: RawProductInput, partial: boolean) {
@@ -190,7 +210,9 @@ function normalizeCommonProductInput(input: RawProductInput, partial: boolean) {
     normalized.careInstructions = normalizeStringArray(input.careInstructions, "Care instructions")
   }
   if ("features" in input) normalized.features = normalizeStringArray(input.features, "Features")
-  if ("sizes" in input) normalized.sizes = normalizeStringArray(input.sizes, "Sizes")
+  if ("sizes" in input) {
+    normalized.sizes = ensureUnique(normalizeStringArray(input.sizes, "Sizes"), "size", (size) => size)
+  }
   if ("colors" in input) normalized.colors = normalizeColors(input.colors)
   if ("variants" in input) normalized.variants = normalizeVariants(input.variants)
   if ("isNew" in input) normalized.isNew = normalizeBoolean(input.isNew, false)
