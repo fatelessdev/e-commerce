@@ -7,38 +7,18 @@ import { eq, desc, sql, and, gte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { generateSecureCode } from "@/lib/utils";
 import { revalidateComboSurfaces, revalidateProductSurfaces } from "@/lib/cache-tags";
+import {
+  ACCESSORY_SIZE,
+  normalizeProductInput,
+  normalizeProductPatch,
+  type ProductInput,
+} from "@/lib/admin-product-input";
+
+export type { ProductInput } from "@/lib/admin-product-input";
 
 // ============================================
 // PRODUCT ACTIONS
 // ============================================
-
-export type ProductInput = {
-  name: string;
-  slug: string;
-  description?: string;
-  mrp: string;
-  sellingPrice: string;
-  maxBargainDiscount?: string;
-  category: "tshirt" | "cargo" | "jogger" | "shirt" | "jeans" | "hoodie" | "jacket" | "shorts" | "accessory";
-  gender: "men" | "women" | "unisex";
-  tags?: string[];
-  stock: number;
-  images?: string[];
-  fabric?: string | null;
-  gsm?: number | null;
-  careInstructions?: string[];
-  features?: string[];
-  sizes?: string[];
-  colors?: { name: string; hex: string; images?: string[] }[];
-  variants?: { size: string; color: string | null; stock: number }[];
-  isNew?: boolean;
-  isFeatured?: boolean;
-  isPremium?: boolean;
-  isActive?: boolean;
-  displayOrder?: number;
-};
-
-const ACCESSORY_SIZE = "One Size";
 
 // Helper: recompute total stock from variants
 async function recomputeProductStock(productId: string) {
@@ -83,55 +63,50 @@ async function syncProductVariants(
 
 export async function createProduct(data: ProductInput) {
   await requireAdmin();
+  const input = normalizeProductInput(data);
 
-  const isAccessory = data.category === "accessory";
-  const effectiveSizes = isAccessory ? [ACCESSORY_SIZE] : (data.sizes || ["S", "M", "L", "XL"]);
-  const effectiveColors = isAccessory ? [] : (data.colors || []);
-  const effectiveGender = isAccessory ? "unisex" : data.gender;
-  const effectiveFabric = isAccessory ? null : (data.fabric ?? null);
-  const effectiveGsm = isAccessory ? null : (data.gsm ?? null);
-  const effectiveCareInstructions = isAccessory ? [] : (data.careInstructions || []);
-  const effectiveFeatures = isAccessory ? [] : (data.features || []);
-  const effectiveStock = Math.max(0, data.stock || 0);
+  const isAccessory = input.category === "accessory";
+  const effectiveSizes = input.sizes || ["S", "M", "L", "XL"];
+  const effectiveColors = input.colors || [];
 
   const [product] = await db
     .insert(products)
     .values({
-      name: data.name,
-      slug: data.slug,
-      description: data.description,
-      mrp: data.mrp,
-      sellingPrice: data.sellingPrice,
-      maxBargainDiscount: data.maxBargainDiscount || "0",
-      category: data.category,
-      gender: effectiveGender,
-      tags: data.tags || [],
+      name: input.name,
+      slug: input.slug,
+      description: input.description,
+      mrp: input.mrp,
+      sellingPrice: input.sellingPrice,
+      maxBargainDiscount: input.maxBargainDiscount || "0",
+      category: input.category,
+      gender: input.gender,
+      tags: input.tags || [],
       stock: 0, // Will be computed from variants
-      images: data.images || [],
-      fabric: effectiveFabric,
-      gsm: effectiveGsm,
-      careInstructions: effectiveCareInstructions,
-      features: effectiveFeatures,
+      images: input.images || [],
+      fabric: input.fabric,
+      gsm: input.gsm,
+      careInstructions: input.careInstructions || [],
+      features: input.features || [],
       sizes: effectiveSizes,
       colors: effectiveColors,
-      isNew: data.isNew ?? false,
-      isFeatured: data.isFeatured ?? false,
-      isPremium: data.isPremium ?? false,
-      isActive: data.isActive ?? true,
-      displayOrder: data.displayOrder ?? 0,
+      isNew: input.isNew ?? false,
+      isFeatured: input.isFeatured ?? false,
+      isPremium: input.isPremium ?? false,
+      isActive: input.isActive ?? true,
+      displayOrder: input.displayOrder ?? 0,
     })
     .returning();
 
   // Create variant rows
   if (isAccessory) {
-    await syncProductVariants(product.id, [{ size: ACCESSORY_SIZE, color: null, stock: effectiveStock }]);
-  } else if (data.variants && data.variants.length > 0) {
-    await syncProductVariants(product.id, data.variants);
+    await syncProductVariants(product.id, input.variants || [{ size: ACCESSORY_SIZE, color: null, stock: input.stock }]);
+  } else if (input.variants && input.variants.length > 0) {
+    await syncProductVariants(product.id, input.variants);
   } else {
     // Fallback: create variants from sizes × colors with the provided stock split evenly
     const variantCombos: { size: string; color: string | null; stock: number }[] = [];
     const totalVariants = effectiveSizes.length * Math.max(effectiveColors.length, 1);
-    const stockPer = totalVariants > 0 ? Math.floor(data.stock / totalVariants) : 0;
+    const stockPer = totalVariants > 0 ? Math.floor(input.stock / totalVariants) : 0;
 
     for (const size of effectiveSizes) {
       if (effectiveColors.length > 0) {
@@ -155,6 +130,7 @@ export async function createProduct(data: ProductInput) {
 
 export async function updateProduct(id: string, data: Partial<ProductInput>) {
   await requireAdmin();
+  const input = normalizeProductPatch(data);
 
   const [existingProduct] = await db
     .select()
@@ -166,7 +142,7 @@ export async function updateProduct(id: string, data: Partial<ProductInput>) {
   }
 
   // Separate variants from the rest of the data
-  const { variants, ...incomingData } = data;
+  const { variants, ...incomingData } = input;
   const nextCategory = incomingData.category ?? existingProduct.category;
   const isAccessory = nextCategory === "accessory";
 

@@ -234,8 +234,8 @@ export default function EditProductPage() {
         colors: effectiveColors,
         tags,
         variants,
-        fabric: isAccessory ? undefined : (formData.fabric || undefined),
-        gsm: isAccessory ? undefined : (formData.gsm || undefined),
+        fabric: isAccessory ? null : (formData.fabric || null),
+        gsm: isAccessory ? null : (formData.gsm || null),
       };
 
       await updateProduct(productId, productData);
