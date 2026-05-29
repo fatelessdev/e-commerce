@@ -32,7 +32,7 @@ const utilityLinks = [
 
 function ArrowMarker() {
   return (
-    <span className="hidden h-11 w-11 translate-x-2 items-center justify-center rounded-full border border-white/18 opacity-0 transition-all duration-500 group-hover:translate-x-0 group-hover:opacity-100 md:flex">
+    <span className="hidden h-11 w-11 translate-x-2 items-center justify-center rounded-full border border-border opacity-0 transition-all duration-500 group-hover:translate-x-0 group-hover:opacity-100 md:flex">
       <ArrowRight className="h-4 w-4" />
     </span>
   );
@@ -263,9 +263,9 @@ export function Navbar() {
               animate={shouldReduceMotion ? { opacity: 1 } : { clipPath: "inset(0 0% 0 0)", opacity: 1 }}
               exit={shouldReduceMotion ? { opacity: 0 } : { clipPath: "inset(0 100% 0 0)", opacity: 1 }}
               transition={{ duration: shouldReduceMotion ? 0.18 : 0.95, ease: EASE_OUT_EXPO }}
-              className="fixed inset-0 z-[100] overflow-hidden bg-neutral-950 text-white"
+              className="fixed inset-0 z-[100] overflow-hidden bg-background text-foreground"
             >
-              <div className="flex h-svh flex-col justify-between px-5 py-5 md:px-10 md:py-6 overflow-hidden">
+              <div className="flex h-svh flex-col justify-between overflow-hidden px-5 py-5 md:px-10 md:py-6">
                 <div className="flex items-center justify-between">
                   <Link href="/" className="flex items-center" onClick={() => setShowMobileMenu(false)}>
                     <Image
@@ -273,13 +273,13 @@ export function Navbar() {
                       alt="XILAR"
                       width={160}
                       height={40}
-                      className="h-8 w-auto object-contain invert"
+                      className="h-8 w-auto object-contain dark:invert"
                     />
                   </Link>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-white hover:bg-white/10 hover:text-white"
+                    className="text-foreground hover:bg-accent hover:text-foreground"
                     onClick={() => setShowMobileMenu(false)}
                     aria-label="Close menu"
                   >
@@ -292,9 +292,9 @@ export function Navbar() {
                   animate={{ x: 0, y: 0, scale: 1, rotate: 0, opacity: 1 }}
                   exit={shouldReduceMotion ? { opacity: 0 } : { x: -80, y: -50, scale: 1.16, rotate: -10, opacity: 0.25 }}
                   transition={{ duration: shouldReduceMotion ? 0.18 : 0.95, ease: EASE_OUT_EXPO }}
-                  className="grid flex-1 min-h-0 gap-6 py-4 md:grid-cols-[0.85fr_1.15fr] md:items-center md:gap-12 md:py-6"
+                  className="grid min-h-0 flex-1 content-center gap-5 py-3 md:grid-cols-[0.85fr_1.15fr] md:items-stretch md:gap-12 md:py-6"
                 >
-                  <div className="relative hidden h-[45vh] max-h-[350px] overflow-hidden bg-white/5 md:block">
+                  <div className="relative hidden h-full overflow-hidden bg-muted md:block">
                     <AnimatePresence mode="popLayout">
                       <motion.div
                         key={previewImage}
@@ -311,7 +311,7 @@ export function Navbar() {
                   </div>
 
                   <div>
-                    <p className="mb-5 text-[10px] font-semibold uppercase tracking-[0.42em] text-white/36">
+                    <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.42em] text-muted-foreground md:mb-5">
                       Discover
                     </p>
                     <nav className="flex flex-col">
@@ -322,12 +322,12 @@ export function Navbar() {
                           animate={{ y: "0%", opacity: 1 }}
                           exit={{ y: "80%", opacity: 0 }}
                           transition={{ duration: 0.48, delay: shouldReduceMotion ? 0 : 0.16 + i * 0.045, ease: EASE_OUT_EXPO }}
-                          className="overflow-hidden border-b border-white/12"
+                          className="overflow-hidden border-b border-border/70"
                         >
                           <Link
                             ref={i === 0 ? firstMenuLinkRef : undefined}
                             href={link.href}
-                            className="group flex items-center justify-between py-2 font-display text-2xl leading-none text-white transition-colors duration-500 hover:text-white/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:text-4xl md:py-3 md:text-5xl lg:text-6xl"
+                            className="group flex items-center justify-between py-2 font-display text-[clamp(2.65rem,13vw,5.4rem)] leading-[0.84] text-foreground transition-colors duration-500 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:py-3 md:text-5xl lg:text-6xl"
                             onPointerEnter={() => setPreviewImage(link.img)}
                             onFocus={() => setPreviewImage(link.img)}
                             onClick={() => setShowMobileMenu(false)}
@@ -339,12 +339,12 @@ export function Navbar() {
                       ))}
                     </nav>
 
-                    <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-xs uppercase tracking-[0.2em] text-white/45 sm:grid-cols-3">
+                    <div className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 text-[13px] uppercase tracking-[0.18em] text-muted-foreground sm:grid-cols-3 md:text-xs md:tracking-[0.2em]">
                       {utilityLinks.map((link) => (
                         <Link
                           key={link.href}
                           href={link.href}
-                          className="w-fit transition-colors duration-300 hover:text-white"
+                          className="w-fit transition-colors duration-300 hover:text-foreground"
                           onClick={() => setShowMobileMenu(false)}
                         >
                           {link.label}
@@ -354,12 +354,12 @@ export function Navbar() {
                   </div>
                 </motion.div>
 
-                <div className="flex flex-col gap-3 border-t border-white/12 pt-4 text-xs uppercase tracking-[0.2em] text-white/45 sm:flex-row sm:items-center sm:justify-between">
-                  <Link href="/policies/shipping" onClick={() => setShowMobileMenu(false)} className="hover:text-white">
+                <div className="flex flex-row items-center justify-between gap-3 border-t border-border/70 pt-4 text-[11px] uppercase tracking-[0.18em] text-muted-foreground sm:text-xs sm:tracking-[0.2em]">
+                  <Link href="/policies/shipping" onClick={() => setShowMobileMenu(false)} className="hover:text-foreground">
                     Shipping
                   </Link>
                   <span className="hidden sm:inline">Lucknow / Streetwise Minimalism</span>
-                  <Link href="/gallery" onClick={() => setShowMobileMenu(false)} className="hover:text-white">
+                  <Link href="/gallery" onClick={() => setShowMobileMenu(false)} className="hover:text-foreground">
                     Open Gallery
                   </Link>
                 </div>
