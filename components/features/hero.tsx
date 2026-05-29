@@ -14,37 +14,37 @@ const PANEL_TRANSITION = {
 } as const;
 const HERO_IMAGES = [
   {
-    src: "/hero/image.webp",
+    src: "/hero/image(6).webp",
     eyebrow: "New season",
     title: "Premium shirts",
     href: "/shop/men",
   },
   {
-    src: "/hero/image(1).webp",
-    eyebrow: "Everyday essentials",
-    title: "Longlasting Attars",
+    src: "/hero/image(10).webp",
+    eyebrow: "Summer styles",
+    title: "Dreamy dresses",
     href: "/shop",
   },
   {
-    src: "/hero/image(2).webp",
+    src: "/hero/image(7).webp",
     eyebrow: "Clean fits",
     title: "Streetwear basics",
     href: "/collections/premium",
   },
   {
-    src: "/hero/image(3).webp",
+    src: "/hero/image(8).webp",
     eyebrow: "Fresh drops",
     title: "New arrivals",
     href: "/new",
   },
   {
-    src: "/hero/image(4).webp",
+    src: "/hero/image(9).webp",
     eyebrow: "For him",
     title: "Premium polos",
     href: "/shop/men",
   },
   {
-    src: "/hero/image(5).webp",
+    src: "/hero/image(11).webp",
     eyebrow: "For him",
     title: "Finish the fit",
     href: "/shop/accessories",
@@ -58,13 +58,13 @@ export function Hero() {
   const activeSlide = HERO_IMAGES[activeIndex];
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
+    const timer = window.setTimeout(() => {
       setSlideDirection(1);
       setActiveIndex((current) => (current + 1) % HERO_IMAGES.length);
-    }, 3200);
+    }, 2500);
 
-    return () => window.clearInterval(timer);
-  }, []);
+    return () => window.clearTimeout(timer);
+  }, [activeIndex]);
 
   const goToSlide = (index: number) => {
     const nextIndex = (index + HERO_IMAGES.length) % HERO_IMAGES.length;
@@ -167,7 +167,7 @@ export function Hero() {
                         <Link href={activeSlide.href}>
                           <Button
                             size="lg"
-                            className="group/cta h-13 rounded-none bg-white px-8 text-xs font-semibold uppercase tracking-[0.2em] text-neutral-950 transition-all duration-500 hover:bg-red-accent hover:text-white"
+                            className="group/cta h-13 rounded-full bg-white px-8 text-xs font-semibold uppercase tracking-[0.2em] text-neutral-950 transition-all duration-500 hover:bg-red-accent hover:text-white"
                           >
                             Shop now
                             <ArrowRight className="ml-2 h-3.5 w-3.5 transition-transform duration-500 group-hover/cta:translate-x-1" />
@@ -177,7 +177,7 @@ export function Hero() {
                           <Button
                             size="lg"
                             variant="outline"
-                            className="h-13 rounded-none border-white/35 bg-transparent px-8 text-xs font-semibold uppercase tracking-[0.2em] text-white transition-all duration-500 hover:border-white/70 hover:text-white"
+                            className="h-13 rounded-full border-white/35 bg-transparent px-8 text-xs font-semibold uppercase tracking-[0.2em] text-white transition-all duration-500 hover:border-white/70 hover:text-white"
                           >
                             View all
                           </Button>
@@ -196,16 +196,16 @@ export function Hero() {
           </AnimatePresence>
         </div>
 
-        <div className="absolute inset-0 md:hidden">
-          <AnimatePresence initial={false} custom={slideDirection} mode="wait">
+        <div className="absolute inset-0 overflow-hidden bg-neutral-950 md:hidden">
+          <AnimatePresence initial={false} custom={slideDirection}>
             <motion.div
               key={activeSlide.src}
               custom={slideDirection}
-              initial={shouldReduceMotion ? { opacity: 1 } : { x: `${slideDirection * 12}%`, opacity: 0, scale: 1.04 }}
+              initial={shouldReduceMotion ? { opacity: 1 } : { x: `${slideDirection * 14}%`, opacity: 1, scale: 1.03 }}
               animate={{ x: "0%", opacity: 1, scale: 1 }}
-              exit={shouldReduceMotion ? { opacity: 0 } : { x: `${slideDirection * -12}%`, opacity: 0, scale: 0.98 }}
-              transition={{ duration: shouldReduceMotion ? 0.01 : 0.78, ease: EASE_OUT_EXPO }}
-              className="group relative min-h-[72dvh] overflow-hidden bg-neutral-950 text-left"
+              exit={shouldReduceMotion ? { opacity: 0 } : { x: `${slideDirection * -14}%`, opacity: 1, scale: 0.985 }}
+              transition={{ duration: shouldReduceMotion ? 0.01 : 0.46, ease: EASE_OUT_EXPO }}
+              className="group absolute inset-0 min-h-[72dvh] overflow-hidden bg-neutral-950 text-left"
             >
               <Image
                 src={activeSlide.src}
@@ -250,7 +250,7 @@ export function Hero() {
                   <Link href={activeSlide.href}>
                     <Button
                       size="lg"
-                      className="group/cta h-13 rounded-none bg-white px-8 text-xs font-semibold uppercase tracking-[0.2em] text-neutral-950 transition-all duration-500 hover:bg-red-accent hover:text-white"
+                      className="group/cta h-13 rounded-full bg-white px-8 text-xs font-semibold uppercase tracking-[0.2em] text-neutral-950 transition-all duration-500 hover:bg-red-accent hover:text-white"
                     >
                       Shop now
                       <ArrowRight className="ml-2 h-3.5 w-3.5 transition-transform duration-500 group-hover/cta:translate-x-1" />
@@ -260,7 +260,7 @@ export function Hero() {
                     <Button
                       size="lg"
                       variant="outline"
-                      className="h-13 rounded-none border-white/35 bg-transparent px-8 text-xs font-semibold uppercase tracking-[0.2em] text-white transition-all duration-500 hover:border-white/70 hover:text-white"
+                      className="h-13 rounded-full border-white/35 bg-transparent px-8 text-xs font-semibold uppercase tracking-[0.2em] text-white transition-all duration-500 hover:border-white/70 hover:text-white"
                     >
                       View all
                     </Button>

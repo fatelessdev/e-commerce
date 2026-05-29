@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
@@ -36,24 +35,6 @@ const FALLBACK_ITEMS: XilarGalleryItem[] = [
 const ITEM_WIDTH = 126;
 const ITEM_HEIGHT = 168;
 const ITEM_GAP = 148;
-const INTRO_POSITIONS = [
-  { left: 7, top: 9, rotate: -14 },
-  { left: 23, top: 5, rotate: 11 },
-  { left: 42, top: 8, rotate: -7 },
-  { left: 62, top: 4, rotate: 9 },
-  { left: 79, top: 10, rotate: -12 },
-  { left: 13, top: 39, rotate: 8 },
-  { left: 31, top: 34, rotate: -10 },
-  { left: 50, top: 36, rotate: 13 },
-  { left: 69, top: 33, rotate: -6 },
-  { left: 86, top: 39, rotate: 10 },
-  { left: 6, top: 73, rotate: -5 },
-  { left: 24, top: 67, rotate: 12 },
-  { left: 45, top: 72, rotate: -13 },
-  { left: 66, top: 68, rotate: 7 },
-  { left: 83, top: 74, rotate: -9 },
-];
-
 function modulo(index: number, length: number) {
   return ((index % length) + length) % length;
 }
@@ -92,6 +73,7 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
   const [introDone, setIntroDone] = useState(false);
   const introRanRef = useRef(false);
   const shouldReduceMotion = useReducedMotion();
+  const galleryReady = introDone || shouldReduceMotion;
 
   const galleryItems = useMemo(() => {
     const clean = items
@@ -164,7 +146,6 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
   useEffect(() => {
     if (shouldReduceMotion) {
       introRanRef.current = true;
-      setIntroDone(true);
       return;
     }
     if (introRanRef.current || tiles.length === 0) return;
@@ -468,7 +449,7 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
       <div
         ref={canvasRef}
         className="absolute left-0 top-0 will-change-transform"
-        style={{ pointerEvents: introDone || shouldReduceMotion ? "auto" : "none" }}
+        style={{ pointerEvents: galleryReady ? "auto" : "none" }}
       >
         {tiles.map((tile) => {
           const left = tile.col * (ITEM_WIDTH + ITEM_GAP);
@@ -491,12 +472,11 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
               onClick={(event) => openTile(tile, event)}
               aria-label={`Open ${tile.item.title}`}
             >
-              <Image
+              <img
                 src={tile.item.src}
                 alt={tile.item.title}
-                fill
-                sizes="126px"
-                className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-105"
+                className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-105"
+                loading="lazy"
               />
             </button>
           );
@@ -504,7 +484,7 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
       </div>
 
       {active && (
-        <div className="fixed inset-0 z-[80] bg-background/92 backdrop-blur-sm" onClick={closeActive}>
+        <div className="fixed inset-0 z-[80] bg-background/96" onClick={closeActive}>
           {/* Expanded card — image only, no text inside */}
           <div
             ref={activeCardRef}
@@ -521,13 +501,10 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
                 : undefined
             }
           >
-            <Image
+            <img
               src={active.item.src}
               alt={active.item.title}
-              fill
-              sizes="(max-width: 768px) 84vw, 560px"
-              className="object-cover"
-              priority
+              className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/12 to-black/10" />
             <button
@@ -573,7 +550,7 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
             <Button
               data-gallery-detail
               asChild
-              className="mt-5 rounded-none bg-white px-6 text-xs font-semibold uppercase tracking-[0.18em] text-neutral-950 hover:bg-red-accent hover:text-white pointer-events-auto"
+              className="mt-5 rounded-full bg-white px-6 text-xs font-semibold uppercase tracking-[0.18em] text-neutral-950 hover:bg-red-accent hover:text-white pointer-events-auto"
             >
               <Link href={active.item.href}>
                 Shop product
