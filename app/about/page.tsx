@@ -26,45 +26,45 @@ const teamMembers = [
     {
         index: "01",
         role: "Lead Developer",
-        name: "Alex Johnson",
+        name: "Aditya Singh",
         shortName: (
             <>
-                Alex <br />
-                Johnson
+                Aditya <br />
+                Singh
             </>
         ),
-        image: "/team/team-1.jpg",
+        image: "/team/lead.jpg",
         description:
-            "Alex is a skilled developer with expertise in modern web technologies and a passion for creating seamless user experiences.",
+            "Aditya is a skilled developer with expertise in modern web technologies and a passion for creating seamless user experiences.",
     },
     {
         index: "02",
-        role: "UI/UX Designer",
-        name: "Sophia Martinez",
+        role: "Founder",
+        name: "Aman Somvanshi",
         shortName: (
             <>
-                Sophia <br />
-                Martinez
+                Aman <br />
+                Somvanshi
             </>
         ),
-        image: "/team/team-2.jpg",
+        image: "/team/founder.jpeg",
         description:
-            "Sophia specializes in crafting intuitive and visually appealing designs that bring digital products to life.",
+            "Aman is the founder of XILAR, with a vision to create a brand that resonates with Gen-Z consumers and delivers on the promise of affordable luxury."
     },
-    {
-        index: "03",
-        role: "Project Manager",
-        name: "Michael Brown",
-        shortName: (
-            <>
-                Michael <br />
-                Brown
-            </>
-        ),
-        image: "/team/team-3.jpg",
-        description:
-            "Michael ensures projects are delivered on time and within scope, maintaining excellent communication with clients and the team.",
-    },
+    // {
+    //     index: "03",
+    //     role: "Project Manager",
+    //     name: "Michael Brown",
+    //     shortName: (
+    //         <>
+    //             Michael <br />
+    //             Brown
+    //         </>
+    //     ),
+    //     image: "/team/team-3.jpg",
+    //     description:
+    //         "Michael ensures projects are delivered on time and within scope, maintaining excellent communication with clients and the team.",
+    // },
 ]
 
 export default function AboutPage() {
@@ -102,7 +102,7 @@ export default function AboutPage() {
                         </h1>
                         <div className="relative h-[48svh] min-h-[24rem] overflow-hidden bg-muted md:h-[56svh]">
                             <Image
-                                src="/hero/image(4).webp"
+                                src="/about/logo.jpeg"
                                 alt="XILAR streetwear editorial"
                                 fill
                                 sizes="(max-width: 768px) 100vw, 68vw"

@@ -16,12 +16,6 @@ export type XilarGalleryItem = {
   price?: string;
 };
 
-type Tile = {
-  key: string;
-  col: number;
-  row: number;
-  item: XilarGalleryItem;
-};
 
 const FALLBACK_ITEMS: XilarGalleryItem[] = [
   { id: "fallback-shirt", title: "XILAR Shirt", src: "/clothes/shirt1.jpeg", href: "/shop" },
@@ -67,8 +61,10 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
     isDragging: false,
     moved: false,
     canDrag: true,
+    visibleTiles: new Set<string>(),
+    activeKey: null as string | null,
   });
-  const [tiles, setTiles] = useState<Tile[]>([]);
+
   const [active, setActive] = useState<{ item: XilarGalleryItem; rect: DOMRect; key: string } | null>(null);
   const [introDone, setIntroDone] = useState(false);
   const introRanRef = useRef(false);
@@ -83,6 +79,9 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
   }, [items]);
 
   const updateVisibleTiles = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const state = stateRef.current;
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -94,27 +93,167 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
     const endCol = Math.ceil((-state.currentX + width * (1 + buffer)) / cellWidth);
     const startRow = Math.floor((-state.currentY - height * buffer) / cellHeight);
     const endRow = Math.ceil((-state.currentY + height * (1 + buffer)) / cellHeight);
-    const nextTiles: Tile[] = [];
+
+    const currentKeys = new Set<string>();
 
     for (let row = startRow; row <= endRow; row += 1) {
       for (let col = startCol; col <= endCol; col += 1) {
+        const key = `${col}:${row}`;
+        currentKeys.add(key);
+
+        if (state.visibleTiles.has(key)) continue;
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.id = `tile-${key}`;
+        btn.setAttribute("data-xilar-gallery-card", "true");
+        btn.className = "absolute overflow-hidden bg-muted/40 text-left opacity-100 shadow-2xl shadow-black/10";
+        
+        const left = col * cellWidth;
+        const top = row * cellHeight;
+        btn.style.left = `${left}px`;
+        btn.style.top = `${top}px`;
+        btn.style.width = `${ITEM_WIDTH}px`;
+        btn.style.height = `${ITEM_HEIGHT}px`;
+        
+        if (state.activeKey === key) {
+          btn.style.visibility = "hidden";
+        } else {
+          btn.style.visibility = "visible";
+        }
+
         const itemIndex = modulo(row * 5 + col, galleryItems.length);
-        nextTiles.push({
-          key: `${col}:${row}`,
-          col,
-          row,
-          item: galleryItems[itemIndex],
+        const item = galleryItems[itemIndex];
+
+        const img = document.createElement("img");
+        img.src = item.src;
+        img.alt = item.title;
+        img.className = "w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-105";
+        img.loading = "lazy";
+        
+        btn.appendChild(img);
+
+        btn.addEventListener("click", () => {
+          const s = stateRef.current;
+          if (s.moved || s.isDragging || !s.canDrag) return;
+          const rect = btn.getBoundingClientRect();
+          setActive({ item, rect, key });
         });
+
+        canvas.appendChild(btn);
+        state.visibleTiles.add(key);
       }
     }
 
-    setTiles(nextTiles);
+    state.visibleTiles.forEach((key) => {
+      if (!currentKeys.has(key)) {
+        const btn = document.getElementById(`tile-${key}`);
+        if (btn && canvas.contains(btn)) {
+          canvas.removeChild(btn);
+        }
+        state.visibleTiles.delete(key);
+      }
+    });
   }, [galleryItems]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.innerHTML = "";
+    }
+    stateRef.current.visibleTiles.clear();
+
+    updateVisibleTiles();
+
+    if (!shouldReduceMotion && !introRanRef.current) {
+      introRanRef.current = true;
+      const allCards = gsap.utils.toArray<HTMLElement>("[data-xilar-gallery-card]");
+      if (allCards.length > 0) {
+        const state = stateRef.current;
+        state.canDrag = false;
+
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const centerX = width / 2 - ITEM_WIDTH / 2 - state.currentX;
+        const centerY = height / 2 - ITEM_HEIGHT / 2 - state.currentY;
+
+        const inViewport: HTMLElement[] = [];
+        const outViewport: HTMLElement[] = [];
+
+        allCards.forEach((card) => {
+          const left = parseFloat(card.style.left) || 0;
+          const top = parseFloat(card.style.top) || 0;
+          if (
+            left >= -ITEM_WIDTH &&
+            left <= width &&
+            top >= -ITEM_HEIGHT &&
+            top <= height
+          ) {
+            inViewport.push(card);
+          } else {
+            outViewport.push(card);
+          }
+        });
+
+        gsap.set(outViewport, {
+          x: 0,
+          y: 0,
+          scale: 1,
+          opacity: 1,
+          rotate: 0,
+        });
+
+        inViewport.forEach((card) => {
+          const targetLeft = parseFloat(card.style.left) || 0;
+          const targetTop = parseFloat(card.style.top) || 0;
+          const startX = centerX - targetLeft;
+          const startY = centerY - targetTop;
+
+          gsap.set(card, {
+            x: startX,
+            y: startY,
+            scale: 0,
+            opacity: 0,
+            rotate: () => (Math.random() - 0.5) * 35,
+            transformOrigin: "50% 50%",
+          });
+        });
+
+        const timeline = gsap.timeline({
+          onComplete: () => {
+            state.canDrag = true;
+            setIntroDone(true);
+          },
+        });
+
+        timeline.to(inViewport, {
+          opacity: 1,
+          scale: 2.2,
+          duration: 0.65,
+          stagger: 0.03,
+          ease: "power2.out",
+        });
+
+        timeline.to(inViewport, {
+          x: 0,
+          y: 0,
+          scale: 1,
+          rotate: 0,
+          duration: 1.25,
+          stagger: 0.015,
+          ease: "power4.inOut",
+        }, "-=0.15");
+      } else {
+        Promise.resolve().then(() => setIntroDone(true));
+      }
+    } else {
+      Promise.resolve().then(() => setIntroDone(true));
+    }
+  }, [updateVisibleTiles, shouldReduceMotion]);
 
   useEffect(() => {
     const state = stateRef.current;
     let frameId = 0;
-    window.requestAnimationFrame(updateVisibleTiles);
 
     const animate = () => {
       if (canvasRef.current && state.canDrag) {
@@ -135,112 +274,36 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
     };
 
     frameId = window.requestAnimationFrame(animate);
-    window.addEventListener("resize", updateVisibleTiles);
+
+    const handleResize = () => {
+      updateVisibleTiles();
+    };
+    window.addEventListener("resize", handleResize);
 
     return () => {
       window.cancelAnimationFrame(frameId);
-      window.removeEventListener("resize", updateVisibleTiles);
+      window.removeEventListener("resize", handleResize);
     };
   }, [updateVisibleTiles]);
 
   useEffect(() => {
-    if (shouldReduceMotion) {
-      introRanRef.current = true;
-      return;
-    }
-    if (introRanRef.current || tiles.length === 0) return;
-    introRanRef.current = true;
-
-    const allCards = gsap.utils.toArray<HTMLElement>("[data-xilar-gallery-card]");
-    if (allCards.length === 0) {
-      introRanRef.current = false;
-      return;
-    }
-
-    const context = gsap.context(() => {
-      const state = stateRef.current;
-      state.canDrag = false;
-
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      const centerX = width / 2 - ITEM_WIDTH / 2 - state.currentX;
-      const centerY = height / 2 - ITEM_HEIGHT / 2 - state.currentY;
-
-      const inViewport: HTMLElement[] = [];
-      const outViewport: HTMLElement[] = [];
-
-      allCards.forEach((card) => {
-        const left = parseFloat(card.style.left) || 0;
-        const top = parseFloat(card.style.top) || 0;
-        // Check if card is inside viewport area (with margins)
-        if (
-          left >= -ITEM_WIDTH &&
-          left <= width &&
-          top >= -ITEM_HEIGHT &&
-          top <= height
-        ) {
-          inViewport.push(card);
-        } else {
-          outViewport.push(card);
+    if (active) {
+      stateRef.current.activeKey = active.key;
+      const activeEl = document.getElementById(`tile-${active.key}`);
+      if (activeEl) {
+        activeEl.style.visibility = "hidden";
+      }
+    } else {
+      const prevKey = stateRef.current.activeKey;
+      if (prevKey) {
+        const activeEl = document.getElementById(`tile-${prevKey}`);
+        if (activeEl) {
+          activeEl.style.visibility = "visible";
         }
-      });
-
-      // Immediately place off-viewport cards at their final positions
-      gsap.set(outViewport, {
-        x: 0,
-        y: 0,
-        scale: 1,
-        opacity: 1,
-        rotate: 0,
-      });
-
-      // Stack only in-viewport cards at the center of the screen
-      inViewport.forEach((card) => {
-        const targetLeft = parseFloat(card.style.left) || 0;
-        const targetTop = parseFloat(card.style.top) || 0;
-        const startX = centerX - targetLeft;
-        const startY = centerY - targetTop;
-
-        gsap.set(card, {
-          x: startX,
-          y: startY,
-          scale: 0,
-          opacity: 0,
-          rotate: () => (Math.random() - 0.5) * 35,
-          transformOrigin: "50% 50%",
-        });
-      });
-
-      const timeline = gsap.timeline({
-        onComplete: () => {
-          state.canDrag = true;
-          setIntroDone(true);
-        },
-      });
-
-      // Zoom card deck stack at center
-      timeline.to(inViewport, {
-        opacity: 1,
-        scale: 2.2,
-        duration: 0.65,
-        stagger: 0.03,
-        ease: "power2.out",
-      });
-
-      // Scatter cards outward to their final grid slots
-      timeline.to(inViewport, {
-        x: 0,
-        y: 0,
-        scale: 1,
-        rotate: 0,
-        duration: 1.25,
-        stagger: 0.015,
-        ease: "power4.inOut",
-      }, "-=0.15");
-    }, containerRef);
-
-    return () => context.revert();
-  }, [shouldReduceMotion, tiles.length]);
+        stateRef.current.activeKey = null;
+      }
+    }
+  }, [active]);
 
   useEffect(() => {
     if (!active || !activeCardRef.current || shouldReduceMotion) return;
@@ -286,7 +349,6 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
       const words = text.querySelectorAll("[data-gallery-word]");
       const details = text.querySelectorAll("[data-gallery-detail]");
 
-      // Position text overlay to align with the bottom of the expanded card
       const textBottom = (window.innerHeight - targetTop - targetHeight);
       gsap.set(text, {
         visibility: "visible",
@@ -296,7 +358,6 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
         bottom: textBottom,
       });
 
-      // Set initial hidden states for animation — GSAP controls all transforms
       gsap.set(words, { yPercent: 110 });
       gsap.set(details, { y: 18, opacity: 0 });
 
@@ -364,12 +425,6 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
       state.targetX += state.dragVelocityX * 210;
       state.targetY += state.dragVelocityY * 210;
     }
-  };
-
-  const openTile = (tile: Tile, event: React.MouseEvent<HTMLButtonElement>) => {
-    if (stateRef.current.moved || stateRef.current.isDragging || !stateRef.current.canDrag) return;
-    const rect = event.currentTarget.getBoundingClientRect();
-    setActive({ item: tile.item, rect, key: tile.key });
   };
 
   const closeActive = useCallback(() => {
@@ -450,38 +505,7 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
         ref={canvasRef}
         className="absolute left-0 top-0 will-change-transform"
         style={{ pointerEvents: galleryReady ? "auto" : "none" }}
-      >
-        {tiles.map((tile) => {
-          const left = tile.col * (ITEM_WIDTH + ITEM_GAP);
-          const top = tile.row * (ITEM_HEIGHT + ITEM_GAP);
-          const isHidden = active?.key === tile.key;
-
-          return (
-            <button
-              key={tile.key}
-              type="button"
-              data-xilar-gallery-card
-              className="absolute overflow-hidden bg-muted/40 text-left opacity-100 shadow-2xl shadow-black/10"
-              style={{
-                left,
-                top,
-                width: ITEM_WIDTH,
-                height: ITEM_HEIGHT,
-                visibility: isHidden ? "hidden" : "visible",
-              }}
-              onClick={(event) => openTile(tile, event)}
-              aria-label={`Open ${tile.item.title}`}
-            >
-              <img
-                src={tile.item.src}
-                alt={tile.item.title}
-                className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-105"
-                loading="lazy"
-              />
-            </button>
-          );
-        })}
-      </div>
+      />
 
       {active && (
         <div className="fixed inset-0 z-[80] bg-background/96" onClick={closeActive}>

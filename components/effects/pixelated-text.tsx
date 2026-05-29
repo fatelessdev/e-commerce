@@ -49,9 +49,9 @@ function createTextTexture(text: string, width: number, height: number, align: "
   if (!context) return null;
 
   context.clearRect(0, 0, canvas.width, canvas.height);
-  const bodyStyles = getComputedStyle(document.body);
-  const fontFamily = bodyStyles.getPropertyValue("--font-instrument-serif").trim() || "Georgia, serif";
-  context.fillStyle = "#f4f1ec";
+  const rootStyles = getComputedStyle(document.body);
+  const fontFamily = rootStyles.getPropertyValue("--font-instrument-serif").trim() || "Georgia, serif";
+  context.fillStyle = rootStyles.getPropertyValue("--foreground").trim() || rootStyles.color || "#f4f1ec";
   context.textAlign = align;
   context.textBaseline = "middle";
   context.font = `400 ${Math.floor(canvas.height * 0.82)}px ${fontFamily}, Georgia, serif`;
@@ -78,7 +78,14 @@ export function PixelatedText({ text, className, textClassName, align = "center"
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [ready, setReady] = useState(false);
+  const [themeVersion, setThemeVersion] = useState(0);
   const shouldReduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => setThemeVersion((version) => version + 1));
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (shouldReduceMotion || !rootRef.current || !canvasRef.current) return;
@@ -215,13 +222,13 @@ export function PixelatedText({ text, className, textClassName, align = "center"
       if (renderer) renderer.dispose();
       setReady(false);
     };
-  }, [align, shouldReduceMotion, text]);
+  }, [align, shouldReduceMotion, text, themeVersion]);
 
   return (
     <div ref={rootRef} className={cn("relative w-full overflow-hidden", className)}>
       <span
         className={cn(
-          "block select-none font-serif text-[31vw] font-normal uppercase leading-[0.72] tracking-normal text-[#f4f1ec]",
+          "block select-none font-serif text-[31vw] font-normal uppercase leading-[0.72] tracking-normal text-current",
           align === "left" ? "text-left" : "text-center",
           ready && !shouldReduceMotion ? "opacity-0" : "opacity-100",
           textClassName,

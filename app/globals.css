@@ -274,3 +274,8 @@ body {
     animation: none;
   }
 }
+
+#main-content-container {
+  will-change: transform;
+  transform-origin: right top;
+}

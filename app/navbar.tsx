@@ -1,4 +1,5 @@
 "use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -10,6 +11,8 @@ import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
 import ThemeToggleButton from "@/components/ui/theme-toggle-button";
 import { ANNOUNCEMENT_MESSAGES, CONTACT_PHONE } from "@/lib/constants";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 
 const EASE_OUT_EXPO = [0.32, 0.72, 0, 1] as const;
 
@@ -47,6 +50,87 @@ export function Navbar() {
   const firstMenuLinkRef = useRef<HTMLAnchorElement>(null);
   const shouldReduceMotion = useReducedMotion();
 
+  const navContainerRef = useRef<HTMLDivElement>(null);
+  const menuOverlayRef = useRef<HTMLDivElement>(null);
+  const menuContentRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    const mainContainer = document.getElementById("main-content-container");
+    const overlay = menuOverlayRef.current;
+    const content = menuContentRef.current;
+    if (!mainContainer || !overlay || !content || shouldReduceMotion) return;
+
+    const links = gsap.utils.toArray<HTMLElement>("[data-xilar-menu-animate]");
+
+    if (showMobileMenu) {
+      gsap.killTweensOf([mainContainer, overlay, content, links]);
+
+      gsap.to(mainContainer, {
+        rotation: 10,
+        x: 300,
+        y: 450,
+        scale: 1.5,
+        duration: 1.25,
+        ease: "power4.inOut",
+      });
+
+      gsap.to(content, {
+        rotation: 0,
+        x: 0,
+        y: 0,
+        scale: 1,
+        opacity: 1,
+        duration: 1.25,
+        ease: "power4.inOut",
+      });
+
+      gsap.to(links, {
+        y: "0%",
+        opacity: 1,
+        delay: 0.55,
+        duration: 1,
+        stagger: 0.045,
+        ease: "power3.out",
+      });
+
+      gsap.to(overlay, {
+        clipPath: "polygon(0% 0%, 100% 0%, 100% 175%, 0% 100%)",
+        duration: 1.25,
+        ease: "power4.inOut",
+      });
+    } else {
+      gsap.killTweensOf([mainContainer, overlay, content, links]);
+
+      gsap.to(mainContainer, {
+        rotation: 0,
+        x: 0,
+        y: 0,
+        scale: 1,
+        duration: 1.25,
+        ease: "power4.inOut",
+      });
+
+      gsap.to(content, {
+        rotation: -15,
+        x: -100,
+        y: -100,
+        scale: 1.5,
+        opacity: 0.25,
+        duration: 1.25,
+        ease: "power4.inOut",
+      });
+
+      gsap.to(overlay, {
+        clipPath: "polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%)",
+        duration: 1.25,
+        ease: "power4.inOut",
+        onComplete: () => {
+          gsap.set(links, { y: "120%", opacity: 0.25 });
+        },
+      });
+    }
+  }, { dependencies: [showMobileMenu, shouldReduceMotion], scope: navContainerRef });
+
   useEffect(() => {
     const timer = window.setInterval(() => {
       setAnnouncementIndex((current) => (current + 1) % ANNOUNCEMENT_MESSAGES.length);
@@ -81,7 +165,7 @@ export function Navbar() {
   }, [showMobileMenu]);
 
   return (
-    <>
+    <div ref={navContainerRef} className="contents">
       {/* Rotating announcement bar */}
       <div className="w-full bg-red-accent/8 border-b border-red-accent/10 py-1">
         <div className="relative mx-auto flex max-w-7xl items-center justify-between px-5 md:px-8">
@@ -248,125 +332,156 @@ export function Navbar() {
             </Button>
           </div>
         </div>
-
       </header>
 
       {/* Left Editorial Menu */}
-        <AnimatePresence>
-          {showMobileMenu && (
-            <motion.div
-              id="site-menu"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Site navigation"
-              initial={shouldReduceMotion ? { opacity: 0 } : { clipPath: "inset(0 100% 0 0)", opacity: 1 }}
-              animate={shouldReduceMotion ? { opacity: 1 } : { clipPath: "inset(0 0% 0 0)", opacity: 1 }}
-              exit={shouldReduceMotion ? { opacity: 0 } : { clipPath: "inset(0 100% 0 0)", opacity: 1 }}
-              transition={{ duration: shouldReduceMotion ? 0.18 : 0.95, ease: EASE_OUT_EXPO }}
-              className="fixed inset-0 z-[100] overflow-hidden bg-background text-foreground"
+      <div
+        ref={menuOverlayRef}
+        id="site-menu"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Site navigation"
+        className="fixed inset-0 z-[100] overflow-hidden bg-background text-foreground"
+        style={{
+          clipPath: "polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%)",
+          pointerEvents: showMobileMenu ? "auto" : "none",
+        }}
+      >
+        <div
+          ref={menuContentRef}
+          className="flex h-svh flex-col justify-between overflow-hidden px-5 py-5 md:px-10 md:py-6"
+          style={{
+            transform: "translateX(-100px) translateY(-100px) scale(1.5) rotate(-15deg)",
+            opacity: 0.25,
+            transformOrigin: "left bottom",
+            willChange: "opacity, transform",
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center" onClick={() => setShowMobileMenu(false)}>
+              <Image
+                src="/logo.png"
+                alt="XILAR"
+                width={160}
+                height={40}
+                className="h-8 w-auto object-contain dark:invert"
+              />
+            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-foreground hover:bg-accent hover:text-foreground"
+              onClick={() => setShowMobileMenu(false)}
+              aria-label="Close menu"
             >
-              <div className="flex h-svh flex-col justify-between overflow-hidden px-5 py-5 md:px-10 md:py-6">
-                <div className="flex items-center justify-between">
-                  <Link href="/" className="flex items-center" onClick={() => setShowMobileMenu(false)}>
-                    <Image
-                      src="/logo.png"
-                      alt="XILAR"
-                      width={160}
-                      height={40}
-                      className="h-8 w-auto object-contain dark:invert"
-                    />
-                  </Link>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-foreground hover:bg-accent hover:text-foreground"
-                    onClick={() => setShowMobileMenu(false)}
-                    aria-label="Close menu"
-                  >
-                    <X className="h-5 w-5" />
-                  </Button>
-                </div>
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
 
+          <div className="grid min-h-0 flex-1 content-center gap-5 py-3 md:grid-cols-[0.85fr_1.15fr] md:items-stretch md:gap-12 md:py-6">
+            <div className="relative hidden h-full overflow-hidden bg-muted md:block">
+              <AnimatePresence mode="popLayout">
                 <motion.div
-                  initial={shouldReduceMotion ? { opacity: 1 } : { x: -80, y: -50, scale: 1.16, rotate: -10, opacity: 0.25 }}
-                  animate={{ x: 0, y: 0, scale: 1, rotate: 0, opacity: 1 }}
-                  exit={shouldReduceMotion ? { opacity: 0 } : { x: -80, y: -50, scale: 1.16, rotate: -10, opacity: 0.25 }}
-                  transition={{ duration: shouldReduceMotion ? 0.18 : 0.95, ease: EASE_OUT_EXPO }}
-                  className="grid min-h-0 flex-1 content-center gap-5 py-3 md:grid-cols-[0.85fr_1.15fr] md:items-stretch md:gap-12 md:py-6"
+                  key={previewImage}
+                  initial={{ opacity: 0, scale: 1.14, rotate: 4 }}
+                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                  exit={{ opacity: 0, scale: 1.05, rotate: -3 }}
+                  transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
+                  className="absolute inset-0"
                 >
-                  <div className="relative hidden h-full overflow-hidden bg-muted md:block">
-                    <AnimatePresence mode="popLayout">
-                      <motion.div
-                        key={previewImage}
-                        initial={{ opacity: 0, scale: 1.14, rotate: 4 }}
-                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                        exit={{ opacity: 0, scale: 1.05, rotate: -3 }}
-                        transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
-                        className="absolute inset-0"
-                      >
-                        <Image src={previewImage} alt="" fill sizes="34vw" className="object-cover" />
-                      </motion.div>
-                    </AnimatePresence>
-                    <div className="absolute inset-0 bg-black/10" />
-                  </div>
-
-                  <div>
-                    <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.42em] text-muted-foreground md:mb-5">
-                      Discover
-                    </p>
-                    <nav className="flex flex-col">
-                      {overlayLinks.map((link, i) => (
-                        <motion.div
-                          key={link.href}
-                          initial={{ y: "120%", opacity: 0.25 }}
-                          animate={{ y: "0%", opacity: 1 }}
-                          exit={{ y: "80%", opacity: 0 }}
-                          transition={{ duration: 0.48, delay: shouldReduceMotion ? 0 : 0.16 + i * 0.045, ease: EASE_OUT_EXPO }}
-                          className="overflow-hidden border-b border-border/70"
-                        >
-                          <Link
-                            ref={i === 0 ? firstMenuLinkRef : undefined}
-                            href={link.href}
-                            className="group flex items-center justify-between py-2 font-display text-[clamp(2.65rem,13vw,5.4rem)] leading-[0.84] text-foreground transition-colors duration-500 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:py-3 md:text-5xl lg:text-6xl"
-                            onPointerEnter={() => setPreviewImage(link.img)}
-                            onFocus={() => setPreviewImage(link.img)}
-                            onClick={() => setShowMobileMenu(false)}
-                          >
-                            <span>{link.label}</span>
-                            <ArrowMarker />
-                          </Link>
-                        </motion.div>
-                      ))}
-                    </nav>
-
-                    <div className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 text-[13px] uppercase tracking-[0.18em] text-muted-foreground sm:grid-cols-3 md:text-xs md:tracking-[0.2em]">
-                      {utilityLinks.map((link) => (
-                        <Link
-                          key={link.href}
-                          href={link.href}
-                          className="w-fit transition-colors duration-300 hover:text-foreground"
-                          onClick={() => setShowMobileMenu(false)}
-                        >
-                          {link.label}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
+                  <Image src={previewImage} alt="" fill sizes="34vw" className="object-cover" />
                 </motion.div>
+              </AnimatePresence>
+              <div className="absolute inset-0 bg-black/10" />
+            </div>
 
-                <div className="flex flex-row items-center justify-between gap-3 border-t border-border/70 pt-4 text-[11px] uppercase tracking-[0.18em] text-muted-foreground sm:text-xs sm:tracking-[0.2em]">
-                  <Link href="/policies/shipping" onClick={() => setShowMobileMenu(false)} className="hover:text-foreground">
-                    Shipping
+            <div>
+              <p
+                data-xilar-menu-animate
+                className="mb-3 text-[10px] font-semibold uppercase tracking-[0.42em] text-muted-foreground md:mb-5"
+                style={{ transform: "translateY(120%)", opacity: 0.25, willChange: "transform" }}
+              >
+                Discover
+              </p>
+              <nav className="flex flex-col">
+                {overlayLinks.map((link, i) => (
+                  <div
+                    key={link.href}
+                    className="overflow-hidden border-b border-border/70"
+                  >
+                    <Link
+                      ref={i === 0 ? firstMenuLinkRef : undefined}
+                      href={link.href}
+                      data-xilar-menu-animate
+                      className="group flex items-center justify-between py-2 font-display text-[clamp(2.65rem,13vw,5.4rem)] leading-[0.84] text-foreground transition-colors duration-500 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:py-3 md:text-5xl lg:text-6xl"
+                      style={{
+                        transform: "translateY(120%)",
+                        opacity: 0.25,
+                        display: "inline-flex",
+                        width: "100%",
+                        willChange: "transform",
+                      }}
+                      onPointerEnter={() => setPreviewImage(link.img)}
+                      onFocus={() => setPreviewImage(link.img)}
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <span>{link.label}</span>
+                      <ArrowMarker />
+                    </Link>
+                  </div>
+                ))}
+              </nav>
+
+              <div className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 text-[13px] uppercase tracking-[0.18em] text-muted-foreground sm:grid-cols-3 md:text-xs md:tracking-[0.2em]">
+                {utilityLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    data-xilar-menu-animate
+                    className="w-fit transition-colors duration-300 hover:text-foreground"
+                    style={{
+                      transform: "translateY(120%)",
+                      opacity: 0.25,
+                      willChange: "transform",
+                    }}
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    {link.label}
                   </Link>
-                  <span className="hidden sm:inline">Lucknow / Streetwise Minimalism</span>
-                  <Link href="/gallery" onClick={() => setShowMobileMenu(false)} className="hover:text-foreground">
-                    Open Gallery
-                  </Link>
-                </div>
+                ))}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-    </>
+            </div>
+          </div>
+
+          <div className="flex flex-row items-center justify-between gap-3 border-t border-border/70 pt-4 text-[11px] uppercase tracking-[0.18em] text-muted-foreground sm:text-xs sm:tracking-[0.2em]">
+            <Link
+              href="/policies/shipping"
+              data-xilar-menu-animate
+              style={{ transform: "translateY(120%)", opacity: 0.25, willChange: "transform" }}
+              onClick={() => setShowMobileMenu(false)}
+              className="hover:text-foreground"
+            >
+              Shipping
+            </Link>
+            <span
+              data-xilar-menu-animate
+              style={{ transform: "translateY(120%)", opacity: 0.25, willChange: "transform" }}
+              className="hidden sm:inline"
+            >
+              Lucknow / Streetwise Minimalism
+            </span>
+            <Link
+              href="/gallery"
+              data-xilar-menu-animate
+              style={{ transform: "translateY(120%)", opacity: 0.25, willChange: "transform" }}
+              onClick={() => setShowMobileMenu(false)}
+              className="hover:text-foreground"
+            >
+              Open Gallery
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

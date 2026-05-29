@@ -4,7 +4,8 @@ import { Instrument_Serif, Outfit } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import { Navbar } from "@/app/navbar";
-import { Footer } from "@/components/layout/footer";
+import { LenisProvider } from "@/components/effects/lenis-provider";
+import { FooterGate } from "@/components/layout/footer-gate";
 import { CartProvider } from "@/lib/cart-context";
 import { WishlistProvider } from "@/lib/wishlist-context";
 import { ThemeProvider } from "@/components/ui/theme-provider";
@@ -126,7 +127,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark scroll-smooth" data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body
         className={`${outfit.variable} ${instrumentSerif.variable} font-sans antialiased bg-background text-foreground tracking-tight min-h-screen flex flex-col`}
       >
@@ -135,13 +136,19 @@ export default function RootLayout({
           <QueryProvider>
             <CartProvider>
               <WishlistProvider>
-                <Navbar />
-                <main className="flex-1 overflow-x-hidden relative">
-                  <Suspense fallback={null}>{children}</Suspense>
-                  {/* <BargainAI /> */}
-                </main>
-                <Footer />
-                <CartDrawer />
+                <LenisProvider>
+                  <Navbar />
+                  <div id="main-content-container" className="flex-1 flex flex-col">
+                    <main className="flex-1 overflow-x-hidden relative">
+                      <Suspense fallback={null}>{children}</Suspense>
+                      {/* <BargainAI /> */}
+                    </main>
+                    <Suspense fallback={null}>
+                      <FooterGate />
+                    </Suspense>
+                  </div>
+                  <CartDrawer />
+                </LenisProvider>
                 {/* Grain overlay for premium texture */}
                 <div
                   className="pointer-events-none fixed inset-0 z-[60] opacity-[0.025] dark:opacity-[0.03]"

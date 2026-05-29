@@ -51,8 +51,8 @@ export function RealReviews() {
                 </div>
 
                 <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-                    {REVIEWS.map((review) => (
-                        <article key={`${review.name}-${review.product}`} className="border border-border/70 bg-background/55 p-5 md:p-6">
+                    {REVIEWS.map((review, index) => (
+                        <article key={`${review.name}-${review.product}`} className={`border border-border/70 bg-background/55 p-5 md:p-6 ${index >= 4 ? "max-md:hidden" : ""}`}>
                             <div className="mb-4 flex items-center gap-1 text-[#caa45d]" aria-label="5 out of 5 stars">
                                 {[...Array(5)].map((_, index) => (
                                     <Star key={index} className="h-4 w-4 fill-current" />
