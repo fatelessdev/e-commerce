@@ -310,8 +310,13 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
 
     const card = activeCardRef.current;
     const text = activeTextRef.current;
-    const targetWidth = Math.min(window.innerWidth * 0.84, 560);
-    const targetHeight = targetWidth * 1.22;
+    let targetWidth = Math.min(window.innerWidth * 0.84, 560);
+    let targetHeight = targetWidth * 1.22;
+    const maxHeight = window.innerHeight * 0.68;
+    if (targetHeight > maxHeight) {
+      targetHeight = maxHeight;
+      targetWidth = targetHeight / 1.22;
+    }
     const targetLeft = (window.innerWidth - targetWidth) / 2;
     const targetTop = (window.innerHeight - targetHeight) / 2;
 

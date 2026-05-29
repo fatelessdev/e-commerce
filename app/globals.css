@@ -164,8 +164,14 @@
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+html {
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+
 body {
   background-color: var(--background);
+  overflow-x: hidden;
 }
 
 .font-display {
