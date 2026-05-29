@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { Hero } from "@/components/features/hero";
 import { ComboSection } from "@/components/features/combo-section";
+import { Dec2024GalleryBand } from "@/components/features/dec2024-gallery-band";
 import { ProductGrid } from "@/components/features/product-grid";
 import { RealReviews } from "@/components/features/real-reviews";
+import { DirectionalMarquee } from "@/components/effects/directional-marquee";
 import { getActiveCombosWithProducts } from "@/lib/combos";
 import { getCatalogProducts } from "@/lib/product-catalog";
 import {
@@ -51,6 +53,12 @@ export default async function Home() {
     getCatalogProducts(),
     getActiveCombosWithProducts(4),
   ]);
+  const galleryBandItems = products.flatMap((product) =>
+    product.images.slice(0, 1).map((image) => ({
+      src: image,
+      alt: product.name,
+    })),
+  );
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -72,8 +80,10 @@ export default async function Home() {
         initialProducts={products}
         hideWhenEmpty
       />
+      <DirectionalMarquee />
       <ShopTheReels />
       <ProductGrid title="Accessories" fixedCategory="accessory" viewAllHref="/shop/accessories" initialProducts={products} />
+      <Dec2024GalleryBand items={galleryBandItems} />
       <RealReviews />
     </div>
   );

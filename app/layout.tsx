@@ -4,7 +4,6 @@ import { Instrument_Serif, Outfit } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import { Navbar } from "@/app/navbar";
-import { Sidebar } from "@/components/layout/sidebar";
 import { Footer } from "@/components/layout/footer";
 import { CartProvider } from "@/lib/cart-context";
 import { WishlistProvider } from "@/lib/wishlist-context";
@@ -137,13 +136,10 @@ export default function RootLayout({
             <CartProvider>
               <WishlistProvider>
                 <Navbar />
-                <div className="flex flex-1">
-                  <Sidebar />
-                  <main className="flex-1 overflow-x-hidden relative">
-                    <Suspense fallback={null}>{children}</Suspense>
-                    {/* <BargainAI /> */}
-                  </main>
-                </div>
+                <main className="flex-1 overflow-x-hidden relative">
+                  <Suspense fallback={null}>{children}</Suspense>
+                  {/* <BargainAI /> */}
+                </main>
                 <Footer />
                 <CartDrawer />
                 {/* Grain overlay for premium texture */}

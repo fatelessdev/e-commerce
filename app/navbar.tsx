@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { ShoppingBag, Heart, Menu, X, User, Package, ChevronLeft, ChevronRight, Bot } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ShoppingBag, Heart, Menu, X, User, Package, ChevronLeft, ChevronRight, Bot, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-context";
@@ -13,23 +13,38 @@ import { ANNOUNCEMENT_MESSAGES, CONTACT_PHONE } from "@/lib/constants";
 
 const EASE_OUT_EXPO = [0.32, 0.72, 0, 1] as const;
 
-const mobileLinks = [
-  { href: "/shop", label: "Shop All" },
-  { href: "/shop/men", label: "For Him" },
-  { href: "/shop/women", label: "For Her" },
-  { href: "/shop/accessories", label: "Accessories" },
-  { href: "/new", label: "New Drop" },
-  { href: "/collections/premium", label: "Collections" },
+const overlayLinks = [
+  { href: "/shop/men", label: "Men", img: "/hero/image(4).webp" },
+  { href: "/shop/women", label: "Women", img: "/clothes/topwear-women.jpeg" },
+  { href: "/shop/accessories", label: "Accessories", img: "/hero/image(5).webp" },
+  { href: "/collections/premium", label: "Premium", img: "/hero/image(2).webp" },
+  { href: "/collections/summer-26", label: "Summer '26", img: "/hero/image(3).webp" },
+];
+
+const utilityLinks = [
+  { href: "/gallery", label: "Gallery" },
+  { href: "/about", label: "About" },
   { href: "/account", label: "Account" },
   { href: "/orders", label: "Orders" },
-  { href: "/about", label: "About" },
+  { href: "/wishlist", label: "Wishlist" },
+  { href: "/policies", label: "Policies" },
 ];
+
+function ArrowMarker() {
+  return (
+    <span className="hidden h-11 w-11 translate-x-2 items-center justify-center rounded-full border border-white/18 opacity-0 transition-all duration-500 group-hover:translate-x-0 group-hover:opacity-100 md:flex">
+      <ArrowRight className="h-4 w-4" />
+    </span>
+  );
+}
 
 export function Navbar() {
   const { totalItems, setIsOpen, isHydrated: isCartHydrated } = useCart();
   const { items: wishlistItems, isHydrated: isWishlistHydrated } = useWishlist();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [previewImage, setPreviewImage] = useState(overlayLinks[0].img);
   const [announcementIndex, setAnnouncementIndex] = useState(0);
+  const firstMenuLinkRef = useRef<HTMLAnchorElement>(null);
   const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
@@ -45,6 +60,25 @@ export function Navbar() {
       current + direction + ANNOUNCEMENT_MESSAGES.length
     ) % ANNOUNCEMENT_MESSAGES.length);
   };
+
+  useEffect(() => {
+    if (!showMobileMenu) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.setTimeout(() => firstMenuLinkRef.current?.focus(), 120);
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setShowMobileMenu(false);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [showMobileMenu]);
 
   return (
     <>
@@ -89,14 +123,14 @@ export function Navbar() {
 
       <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="flex h-14 md:h-16 items-center px-4 md:px-6 lg:px-8">
-          {/* Mobile Menu Toggle */}
+          {/* Editorial Menu Toggle */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden mr-2"
+            className="mr-2"
             onClick={() => setShowMobileMenu(!showMobileMenu)}
             aria-expanded={showMobileMenu}
-            aria-controls="mobile-menu"
+            aria-controls="site-menu"
             aria-label={showMobileMenu ? "Close menu" : "Open menu"}
           >
             <div className="relative h-5 w-5">
@@ -215,44 +249,124 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Menu — Staggered Reveal */}
+      </header>
+
+      {/* Left Editorial Menu */}
         <AnimatePresence>
           {showMobileMenu && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.4, ease: EASE_OUT_EXPO }}
-              id="mobile-menu"
-              className="md:hidden border-t border-border overflow-hidden bg-background absolute top-full left-0 w-full z-50"
+              id="site-menu"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Site navigation"
+              initial={shouldReduceMotion ? { opacity: 0 } : { clipPath: "inset(0 100% 0 0)", opacity: 1 }}
+              animate={shouldReduceMotion ? { opacity: 1 } : { clipPath: "inset(0 0% 0 0)", opacity: 1 }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { clipPath: "inset(0 100% 0 0)", opacity: 1 }}
+              transition={{ duration: shouldReduceMotion ? 0.18 : 0.95, ease: EASE_OUT_EXPO }}
+              className="fixed inset-0 z-[100] overflow-hidden bg-neutral-950 text-white"
             >
-              <div className="py-4 px-4 space-y-0">
-                {mobileLinks.map((link, i) => (
-                  <motion.div
-                    key={link.href}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{
-                      duration: 0.35,
-                      delay: i * 0.04,
-                      ease: EASE_OUT_EXPO,
-                    }}
+              <div className="flex h-svh flex-col justify-between px-5 py-5 md:px-10 md:py-6 overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <Link href="/" className="flex items-center" onClick={() => setShowMobileMenu(false)}>
+                    <Image
+                      src="/logo.png"
+                      alt="XILAR"
+                      width={160}
+                      height={40}
+                      className="h-8 w-auto object-contain invert"
+                    />
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:bg-white/10 hover:text-white"
+                    onClick={() => setShowMobileMenu(false)}
+                    aria-label="Close menu"
                   >
-                    <Link
-                      href={link.href}
-                      className="block py-3.5 text-sm font-medium tracking-[0.15em] uppercase border-b border-border/60 text-foreground/80 hover:text-foreground transition-colors duration-300"
-                      onClick={() => setShowMobileMenu(false)}
-                    >
-                      {link.label}
-                    </Link>
-                  </motion.div>
-                ))}
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
+
+                <motion.div
+                  initial={shouldReduceMotion ? { opacity: 1 } : { x: -80, y: -50, scale: 1.16, rotate: -10, opacity: 0.25 }}
+                  animate={{ x: 0, y: 0, scale: 1, rotate: 0, opacity: 1 }}
+                  exit={shouldReduceMotion ? { opacity: 0 } : { x: -80, y: -50, scale: 1.16, rotate: -10, opacity: 0.25 }}
+                  transition={{ duration: shouldReduceMotion ? 0.18 : 0.95, ease: EASE_OUT_EXPO }}
+                  className="grid flex-1 min-h-0 gap-6 py-4 md:grid-cols-[0.85fr_1.15fr] md:items-center md:gap-12 md:py-6"
+                >
+                  <div className="relative hidden h-[45vh] max-h-[350px] overflow-hidden bg-white/5 md:block">
+                    <AnimatePresence mode="popLayout">
+                      <motion.div
+                        key={previewImage}
+                        initial={{ opacity: 0, scale: 1.14, rotate: 4 }}
+                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                        exit={{ opacity: 0, scale: 1.05, rotate: -3 }}
+                        transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
+                        className="absolute inset-0"
+                      >
+                        <Image src={previewImage} alt="" fill sizes="34vw" className="object-cover" />
+                      </motion.div>
+                    </AnimatePresence>
+                    <div className="absolute inset-0 bg-black/10" />
+                  </div>
+
+                  <div>
+                    <p className="mb-5 text-[10px] font-semibold uppercase tracking-[0.42em] text-white/36">
+                      Discover
+                    </p>
+                    <nav className="flex flex-col">
+                      {overlayLinks.map((link, i) => (
+                        <motion.div
+                          key={link.href}
+                          initial={{ y: "120%", opacity: 0.25 }}
+                          animate={{ y: "0%", opacity: 1 }}
+                          exit={{ y: "80%", opacity: 0 }}
+                          transition={{ duration: 0.48, delay: shouldReduceMotion ? 0 : 0.16 + i * 0.045, ease: EASE_OUT_EXPO }}
+                          className="overflow-hidden border-b border-white/12"
+                        >
+                          <Link
+                            ref={i === 0 ? firstMenuLinkRef : undefined}
+                            href={link.href}
+                            className="group flex items-center justify-between py-2 font-display text-2xl leading-none text-white transition-colors duration-500 hover:text-white/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:text-4xl md:py-3 md:text-5xl lg:text-6xl"
+                            onPointerEnter={() => setPreviewImage(link.img)}
+                            onFocus={() => setPreviewImage(link.img)}
+                            onClick={() => setShowMobileMenu(false)}
+                          >
+                            <span>{link.label}</span>
+                            <ArrowMarker />
+                          </Link>
+                        </motion.div>
+                      ))}
+                    </nav>
+
+                    <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-xs uppercase tracking-[0.2em] text-white/45 sm:grid-cols-3">
+                      {utilityLinks.map((link) => (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          className="w-fit transition-colors duration-300 hover:text-white"
+                          onClick={() => setShowMobileMenu(false)}
+                        >
+                          {link.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+
+                <div className="flex flex-col gap-3 border-t border-white/12 pt-4 text-xs uppercase tracking-[0.2em] text-white/45 sm:flex-row sm:items-center sm:justify-between">
+                  <Link href="/policies/shipping" onClick={() => setShowMobileMenu(false)} className="hover:text-white">
+                    Shipping
+                  </Link>
+                  <span className="hidden sm:inline">Lucknow / Streetwise Minimalism</span>
+                  <Link href="/gallery" onClick={() => setShowMobileMenu(false)} className="hover:text-white">
+                    Open Gallery
+                  </Link>
+                </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-      </header>
     </>
   );
 }
