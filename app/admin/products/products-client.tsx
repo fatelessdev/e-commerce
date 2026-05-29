@@ -1,15 +1,28 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  type InfiniteData,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { deleteProduct, getProducts } from "@/lib/actions/admin";
+import { deleteProduct, getProductsPage } from "@/lib/actions/admin";
+import {
+  ADMIN_PRODUCTS_PAGE_SIZE,
+  ADMIN_PRODUCTS_ROW_HEIGHT,
+  ADMIN_PRODUCTS_ROW_OVERSCAN,
+} from "@/lib/admin-products-pagination";
 import { normalizeProductImage } from "@/lib/image";
 
-type AdminProduct = Awaited<ReturnType<typeof getProducts>>[number];
+type AdminProductsPage = Awaited<ReturnType<typeof getProductsPage>>;
+type AdminProduct = AdminProductsPage["products"][number];
+type AdminProductsQueryData = InfiniteData<AdminProductsPage, number>;
 
 function invalidateProductSurfaces(queryClient: ReturnType<typeof useQueryClient>, productId?: string) {
   queryClient.invalidateQueries({
@@ -34,22 +47,112 @@ function invalidateProductSurfaces(queryClient: ReturnType<typeof useQueryClient
   }
 }
 
-export function AdminProductsClient({ initialProducts }: { initialProducts: AdminProduct[] }) {
+function useWindowedRange(totalItems: number) {
+  const tableBodyRef = useRef<HTMLTableSectionElement>(null);
+  const [range, setRange] = useState({ start: 0, end: 0 });
+
+  useEffect(() => {
+    const updateRange = () => {
+      const tableBody = tableBodyRef.current;
+      if (!tableBody || totalItems === 0) {
+        setRange({ start: 0, end: 0 });
+        return;
+      }
+
+      const tableTop = tableBody.getBoundingClientRect().top + window.scrollY;
+      const visibleTop = Math.max(0, window.scrollY - tableTop);
+      const visibleBottom = Math.max(0, window.scrollY + window.innerHeight - tableTop);
+      const start = Math.max(
+        0,
+        Math.floor(visibleTop / ADMIN_PRODUCTS_ROW_HEIGHT) - ADMIN_PRODUCTS_ROW_OVERSCAN
+      );
+      const end = Math.min(
+        totalItems,
+        Math.ceil(visibleBottom / ADMIN_PRODUCTS_ROW_HEIGHT) + ADMIN_PRODUCTS_ROW_OVERSCAN
+      );
+
+      setRange((current) => (
+        current.start === start && current.end === end ? current : { start, end }
+      ));
+    };
+
+    updateRange();
+    window.addEventListener("scroll", updateRange, { passive: true });
+    window.addEventListener("resize", updateRange);
+
+    return () => {
+      window.removeEventListener("scroll", updateRange);
+      window.removeEventListener("resize", updateRange);
+    };
+  }, [totalItems]);
+
+  return { tableBodyRef, range };
+}
+
+export function AdminProductsClient({ initialPage }: { initialPage: AdminProductsPage }) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: products = [] } = useQuery({
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ["admin-products"],
-    queryFn: () => getProducts(),
-    initialData: initialProducts,
+    queryFn: ({ pageParam }) =>
+      getProductsPage({ limit: ADMIN_PRODUCTS_PAGE_SIZE, offset: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextOffset ?? undefined,
+    initialData: {
+      pages: [initialPage],
+      pageParams: [0],
+    },
   });
+  const products = useMemo(
+    () => data?.pages.flatMap((page) => page.products) ?? [],
+    [data]
+  );
+  const { tableBodyRef, range } = useWindowedRange(products.length);
+  const visibleProducts = products.slice(range.start, range.end);
+  const topSpacerHeight = range.start * ADMIN_PRODUCTS_ROW_HEIGHT;
+  const bottomSpacerHeight = Math.max(
+    0,
+    (products.length - range.end) * ADMIN_PRODUCTS_ROW_HEIGHT
+  );
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target || !hasNextPage) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !isFetchingNextPage) {
+          void fetchNextPage();
+        }
+      },
+      { rootMargin: "700px 0px" }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const deleteMutation = useMutation({
     mutationFn: deleteProduct,
     onMutate: async (productId) => {
       await queryClient.cancelQueries({ queryKey: ["admin-products"] });
-      const previousProducts = queryClient.getQueryData<AdminProduct[]>(["admin-products"]);
-      queryClient.setQueryData<AdminProduct[]>(["admin-products"], (current = []) =>
-        current.filter((product) => product.id !== productId)
+      const previousProducts = queryClient.getQueryData<AdminProductsQueryData>(["admin-products"]);
+      queryClient.setQueryData<AdminProductsQueryData>(["admin-products"], (current) =>
+        current
+          ? {
+              ...current,
+              pages: current.pages.map((page) => ({
+                ...page,
+                products: page.products.filter((product) => product.id !== productId),
+              })),
+            }
+          : current
       );
       return { previousProducts };
     },
@@ -102,7 +205,7 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Admi
               <th className="text-right p-4 font-medium">Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody ref={tableBodyRef}>
             {products.length === 0 ? (
               <tr>
                 <td colSpan={6} className="p-8 text-center text-muted-foreground">
@@ -110,14 +213,24 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Admi
                 </td>
               </tr>
             ) : (
-              products.map((product) => {
+              <>
+                {topSpacerHeight > 0 && (
+                  <tr aria-hidden="true">
+                    <td colSpan={6} className="p-0" style={{ height: topSpacerHeight }} />
+                  </tr>
+                )}
+                {visibleProducts.map((product) => {
                 const isDeleting = deleteMutation.variables === product.id && deleteMutation.isPending;
 
                 return (
-                  <tr key={product.id} className="border-b last:border-0">
+                  <tr
+                    key={product.id}
+                    className="border-b last:border-0"
+                    style={{ height: ADMIN_PRODUCTS_ROW_HEIGHT }}
+                  >
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        {product.images?.[0] && (
+                        {product.images?.[0] ? (
                           <Image
                             src={normalizeProductImage(product.images[0])}
                             alt={product.name}
@@ -126,6 +239,8 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Admi
                             className="h-12 w-12 rounded object-cover"
                             unoptimized
                           />
+                        ) : (
+                          <div className="h-12 w-12 shrink-0 rounded bg-muted" />
                         )}
                         <div>
                           <div className="font-medium">{product.name}</div>
@@ -203,10 +318,28 @@ export function AdminProductsClient({ initialProducts }: { initialProducts: Admi
                     </td>
                   </tr>
                 );
-              })
+                })}
+                {bottomSpacerHeight > 0 && (
+                  <tr aria-hidden="true">
+                    <td colSpan={6} className="p-0" style={{ height: bottomSpacerHeight }} />
+                  </tr>
+                )}
+              </>
             )}
           </tbody>
         </table>
+      </div>
+      <div ref={loadMoreRef} className="flex min-h-12 items-center justify-center text-sm text-muted-foreground">
+        {isFetchingNextPage ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Loading more products...
+          </>
+        ) : hasNextPage ? (
+          "Scroll to load more products"
+        ) : products.length > 0 ? (
+          `${products.length} products loaded`
+        ) : null}
       </div>
     </div>
   );
