@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useRef } from "react";
+import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { SplitText } from "gsap/SplitText";
 import { useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, SplitText);
 
 type ScrollTextRevealProps = {
   text: string;
@@ -33,88 +35,101 @@ export function ScrollTextReveal({
   finalColor = "var(--foreground)",
 }: ScrollTextRevealProps) {
   const rootRef = useRef<HTMLParagraphElement>(null);
-  const charRefs = useRef<HTMLSpanElement[]>([]);
   const shouldReduceMotion = useReducedMotion();
-  const chars = useMemo(() => Array.from(text), [text]);
 
-  useEffect(() => {
-    if (shouldReduceMotion || !rootRef.current) return;
+  useGSAP(
+    () => {
+      if (shouldReduceMotion || !rootRef.current) return;
 
-    const root = rootRef.current;
-    const allChars = charRefs.current.filter(Boolean);
-    const completed = new Set<number>();
-    const timers = new Map<number, number>();
-    let lastProgress = 0;
+      const completedChars = new Set<number>();
+      const colorTransitionTimers = new Map<number, number>();
+      const wordSplit = SplitText.create(rootRef.current, {
+        type: "words",
+        wordsClass: "word",
+      });
+      const charSplit = SplitText.create(wordSplit.words, {
+        type: "chars",
+        charsClass: "char",
+      });
+      const allChars = charSplit.chars as HTMLElement[];
+      let lastScrollProgress = 0;
 
-    gsap.set(allChars, { color: initialColor });
+      gsap.set(allChars, { color: initialColor });
 
-    const trigger = ScrollTrigger.create({
-      trigger: root,
-      start: "top 88%",
-      end: "bottom 35%",
-      scrub: 1,
-      onUpdate: (self) => {
-        const progress = self.progress;
-        const currentIndex = Math.floor(progress * allChars.length);
-        const isForward = progress >= lastProgress;
+      const scheduleFinalTransition = (char: HTMLElement, index: number) => {
+        const existingTimer = colorTransitionTimers.get(index);
+        if (existingTimer) window.clearTimeout(existingTimer);
 
-        allChars.forEach((char, index) => {
-          if (!isForward && index >= currentIndex) {
-            const timer = timers.get(index);
-            if (timer) window.clearTimeout(timer);
-            timers.delete(index);
-            completed.delete(index);
-            gsap.set(char, { color: initialColor });
-            return;
+        const timer = window.setTimeout(() => {
+          if (!completedChars.has(index)) {
+            gsap.to(char, {
+              duration: 0.1,
+              ease: "none",
+              color: finalColor,
+              onComplete: () => completedChars.add(index),
+            });
           }
+          colorTransitionTimers.delete(index);
+        }, 100);
 
-          if (completed.has(index)) return;
+        colorTransitionTimers.set(index, timer);
+      };
 
-          if (index <= currentIndex) {
-            gsap.set(char, { color: accentColor });
-            if (!timers.has(index)) {
-              const timer = window.setTimeout(() => {
-                gsap.to(char, {
-                  color: finalColor,
-                  duration: 0.16,
-                  ease: "none",
-                  onComplete: () => completed.add(index),
-                });
-                timers.delete(index);
-              }, 90);
-              timers.set(index, timer);
+      const trigger = ScrollTrigger.create({
+        trigger: rootRef.current,
+        start: "top 90%",
+        end: "top 10%",
+        scrub: 1,
+        onUpdate: (self) => {
+          const progress = self.progress;
+          const totalChars = allChars.length;
+          const isScrollingDown = progress >= lastScrollProgress;
+          const currentCharIndex = Math.floor(progress * totalChars);
+
+          allChars.forEach((char, index) => {
+            if (!isScrollingDown && index >= currentCharIndex) {
+              const timer = colorTransitionTimers.get(index);
+              if (timer) window.clearTimeout(timer);
+              colorTransitionTimers.delete(index);
+              completedChars.delete(index);
+              gsap.set(char, { color: initialColor });
+              return;
             }
-          } else {
-            gsap.set(char, { color: initialColor });
-          }
-        });
 
-        lastProgress = progress;
-      },
-    });
+            if (completedChars.has(index)) return;
 
-    return () => {
-      trigger.kill();
-      timers.forEach((timer) => window.clearTimeout(timer));
-      timers.clear();
-    };
-  }, [accentColor, finalColor, initialColor, shouldReduceMotion]);
+            if (index <= currentCharIndex) {
+              gsap.set(char, { color: accentColor });
+              if (!colorTransitionTimers.has(index)) {
+                scheduleFinalTransition(char, index);
+              }
+            } else {
+              gsap.set(char, { color: initialColor });
+            }
+          });
+
+          lastScrollProgress = progress;
+        },
+      });
+
+      return () => {
+        trigger.kill();
+        colorTransitionTimers.forEach((timer) => window.clearTimeout(timer));
+        colorTransitionTimers.clear();
+        completedChars.clear();
+        charSplit.revert();
+        wordSplit.revert();
+      };
+    },
+    {
+      scope: rootRef,
+      dependencies: [accentColor, finalColor, initialColor, shouldReduceMotion],
+    },
+  );
 
   return (
     <p ref={rootRef} className={cn("text-muted-foreground", className)}>
-      {chars.map((char, index) => (
-        <span
-          key={`${char}-${index}`}
-          ref={(node) => {
-            if (node) charRefs.current[index] = node;
-          }}
-          className="transition-colors duration-150"
-          aria-hidden="true"
-        >
-          {char === " " ? "\u00a0" : char}
-        </span>
-      ))}
-      <span className="sr-only">{text}</span>
+      {text}
     </p>
   );
 }
@@ -130,84 +145,110 @@ export function ScrollTextRevealStack({
   const rootRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
 
-  useEffect(() => {
-    if (shouldReduceMotion || !rootRef.current) return;
+  useGSAP(
+    () => {
+      if (shouldReduceMotion || !rootRef.current) return;
 
-    const root = rootRef.current;
-    const allChars = Array.from(root.querySelectorAll<HTMLElement>("[data-scroll-reveal-char]"));
-    const completed = new Set<number>();
-    const timers = new Map<number, number>();
-    let lastProgress = 0;
+      const splitRefs: Array<{ wordSplit: SplitText; charSplit: SplitText }> = [];
+      const colorTransitionTimers = new Map<number, number>();
+      const completedChars = new Set<number>();
+      const elements = Array.from(rootRef.current.children) as HTMLElement[];
 
-    gsap.set(allChars, { color: initialColor });
-
-    const trigger = ScrollTrigger.create({
-      trigger: root,
-      start: "top 70%",
-      end: "bottom 30%",
-      scrub: 1,
-      onUpdate: (self) => {
-        const progress = self.progress;
-        const currentIndex = Math.floor(progress * allChars.length);
-        const isForward = progress >= lastProgress;
-
-        allChars.forEach((char, index) => {
-          if (!isForward && index >= currentIndex) {
-            const timer = timers.get(index);
-            if (timer) window.clearTimeout(timer);
-            timers.delete(index);
-            completed.delete(index);
-            gsap.set(char, { color: initialColor });
-            return;
-          }
-
-          if (completed.has(index)) return;
-
-          if (index <= currentIndex) {
-            gsap.set(char, { color: accentColor });
-            if (!timers.has(index)) {
-              const timer = window.setTimeout(() => {
-                gsap.to(char, {
-                  color: finalColor,
-                  duration: 0.14,
-                  ease: "none",
-                  onComplete: () => completed.add(index),
-                });
-                timers.delete(index);
-              }, 85);
-              timers.set(index, timer);
-            }
-          } else {
-            gsap.set(char, { color: initialColor });
-          }
+      elements.forEach((element) => {
+        const wordSplit = SplitText.create(element, {
+          type: "words",
+          wordsClass: "word",
         });
+        const charSplit = SplitText.create(wordSplit.words, {
+          type: "chars",
+          charsClass: "char",
+        });
+        splitRefs.push({ wordSplit, charSplit });
+      });
 
-        lastProgress = progress;
-      },
-    });
+      const allChars = splitRefs.flatMap(({ charSplit }) => charSplit.chars as HTMLElement[]);
+      let lastScrollProgress = 0;
 
-    return () => {
-      trigger.kill();
-      timers.forEach((timer) => window.clearTimeout(timer));
-      timers.clear();
-    };
-  }, [accentColor, finalColor, initialColor, shouldReduceMotion]);
+      gsap.set(allChars, { color: initialColor });
+
+      const scheduleFinalTransition = (char: HTMLElement, index: number) => {
+        const existingTimer = colorTransitionTimers.get(index);
+        if (existingTimer) window.clearTimeout(existingTimer);
+
+        const timer = window.setTimeout(() => {
+          if (!completedChars.has(index)) {
+            gsap.to(char, {
+              duration: 0.1,
+              ease: "none",
+              color: finalColor,
+              onComplete: () => completedChars.add(index),
+            });
+          }
+          colorTransitionTimers.delete(index);
+        }, 100);
+
+        colorTransitionTimers.set(index, timer);
+      };
+
+      const trigger = ScrollTrigger.create({
+        trigger: rootRef.current,
+        start: "top 90%",
+        end: "top 10%",
+        scrub: 1,
+        onUpdate: (self) => {
+          const progress = self.progress;
+          const totalChars = allChars.length;
+          const isScrollingDown = progress >= lastScrollProgress;
+          const currentCharIndex = Math.floor(progress * totalChars);
+
+          allChars.forEach((char, index) => {
+            if (!isScrollingDown && index >= currentCharIndex) {
+              const timer = colorTransitionTimers.get(index);
+              if (timer) window.clearTimeout(timer);
+              colorTransitionTimers.delete(index);
+              completedChars.delete(index);
+              gsap.set(char, { color: initialColor });
+              return;
+            }
+
+            if (completedChars.has(index)) return;
+
+            if (index <= currentCharIndex) {
+              gsap.set(char, { color: accentColor });
+              if (!colorTransitionTimers.has(index)) {
+                scheduleFinalTransition(char, index);
+              }
+            } else {
+              gsap.set(char, { color: initialColor });
+            }
+          });
+
+          lastScrollProgress = progress;
+        },
+      });
+
+      return () => {
+        trigger.kill();
+        colorTransitionTimers.forEach((timer) => window.clearTimeout(timer));
+        colorTransitionTimers.clear();
+        completedChars.clear();
+        splitRefs.forEach(({ wordSplit, charSplit }) => {
+          charSplit.revert();
+          wordSplit.revert();
+        });
+      };
+    },
+    {
+      scope: rootRef,
+      dependencies: [accentColor, finalColor, initialColor, shouldReduceMotion, sentences],
+    },
+  );
 
   return (
-    <div ref={rootRef} className={cn("space-y-9", className)}>
-      {sentences.map((sentence, sentenceIndex) => (
-        <p key={sentence} className={cn("text-muted-foreground", sentenceClassName)}>
-          {Array.from(sentence).map((char, charIndex) => (
-            <span
-              key={`${sentenceIndex}-${char}-${charIndex}`}
-              data-scroll-reveal-char
-              aria-hidden="true"
-              className="transition-colors duration-150"
-            >
-              {char === " " ? "\u00a0" : char}
-            </span>
-          ))}
-          <span className="sr-only">{sentence}</span>
+    <div ref={rootRef} data-copy-wrapper className={cn("max-w-full space-y-9 overflow-hidden", className)}>
+      {sentences.map((sentence) => (
+        <p key={sentence} className={cn("max-w-full text-muted-foreground", sentenceClassName)}>
+          {sentence}
         </p>
       ))}
     </div>

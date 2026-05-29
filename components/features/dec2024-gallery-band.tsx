@@ -47,19 +47,29 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
 
     const ctx = gsap.context(() => {
       const rows = gsap.utils.toArray<HTMLElement>("[data-xilar-origin-row]");
-      const isMobile = window.innerWidth <= 900;
+      const isMobileView = window.innerWidth <= 900;
+
+      const getStartX = (index: number) => {
+        const direction = index % 2 === 0 ? 1 : -1;
+        return direction * (isMobileView ? 150 : 300);
+      };
 
       rows.forEach((row, index) => {
-        const startX = (index % 2 === 0 ? 1 : -1) * (isMobile ? 130 : 300);
+        const startX = getStartX(index);
         gsap.set(row, { x: startX });
+
         gsap.to(row, {
-          x: 0,
-          ease: "none",
           scrollTrigger: {
             trigger: rootRef.current,
             start: "top bottom",
             end: "bottom top",
-            scrub: isMobile ? 0.5 : 1,
+            scrub: isMobileView ? 0.5 : 1,
+            onUpdate: (self) => {
+              const moveAmount = startX * (1 - self.progress);
+              gsap.set(row, {
+                x: moveAmount,
+              });
+            },
           },
         });
       });
@@ -109,7 +119,8 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
   return (
     <section
       ref={rootRef}
-      className="relative min-h-[100svh] overflow-hidden border-t border-border/60 bg-background px-6 py-20 text-foreground md:px-12 md:py-28"
+      className="relative min-h-[78svh] overflow-hidden border-t border-border/60 bg-background px-6 py-16 text-foreground md:min-h-[94svh] md:px-12 md:py-24"
+      aria-label="XILAR moving product gallery"
     >
       {!shouldReduceMotion && (
         <div
@@ -120,37 +131,12 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
           <ArrowRight className="h-5 w-5" />
         </div>
       )}
-
-      <div className="relative z-10 mx-auto grid max-w-7xl gap-10 md:grid-cols-[0.95fr_1fr] md:items-end">
-        <div className="max-w-[42rem]">
-          <p
-            className="mb-5 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.35em] text-foreground"
-            style={{ textShadow: "0 1px 18px var(--background), 0 0 2px var(--background)" }}
-          >
-            <ArrowRight className="h-3 w-3" />
-            XILAR Spirit
-          </p>
-          <p
-            className="text-2xl font-medium leading-[1.35] text-foreground md:text-4xl"
-            style={{ textShadow: "0 2px 24px var(--background), 0 0 3px var(--background)" }}
-          >
-            The XILAR spirit is movement without excess. Whether you are finding your first uniform, rebuilding your
-            daily rotation, or returning to the pieces that feel like you, the fit stays sharp and the signal stays calm.
-          </p>
-        </div>
-        <h2
-          className="font-display text-5xl leading-[0.92] text-foreground md:text-7xl lg:text-8xl"
-          style={{ textShadow: "0 2px 28px var(--background), 0 0 4px var(--background)" }}
-        >
-          From corners of the street, we are united by style.
-        </h2>
-      </div>
-
-      <div className="pointer-events-none absolute left-1/2 top-[58%] z-0 w-[220vw] -translate-x-1/2 -translate-y-1/2 rotate-[28deg] scale-125 md:top-1/2">
+      <div className="pointer-events-none absolute left-1/2 top-[56%] z-0 w-[220vw] -translate-x-1/2 -translate-y-1/2 rotate-[28deg] scale-125 md:top-1/2">
         {rows.map((row, rowIndex) => (
           <div
             key={rowIndex}
             data-xilar-origin-row
+            style={{ willChange: "transform" }}
             className="relative mb-5 flex h-44 justify-center gap-5 md:h-72 md:gap-8"
           >
             {row.map((item, index) => (

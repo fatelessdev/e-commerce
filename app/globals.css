@@ -189,6 +189,10 @@ body {
   color: var(--red);
 }
 
+.char {
+  transition: color 150ms ease-out;
+}
+
 .bg-red-accent {
   background-color: var(--red);
 }
