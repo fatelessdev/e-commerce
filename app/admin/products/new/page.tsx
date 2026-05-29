@@ -1,16 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createProduct, type ProductInput } from "@/lib/actions/admin";
-import {
-  ADMIN_NEW_PRODUCT_DRAFT_STORAGE_KEY,
-  decodeAdminProductDraft,
-  encodeAdminProductDraft,
-  type NewProductFormData,
-} from "@/lib/admin-product-draft";
 import { Loader2, Plus, X, Upload } from "lucide-react";
 import Image from "next/image";
 
@@ -35,34 +29,31 @@ const genders = [
 const defaultSizes = ["S", "M", "L", "XL", "XXL"];
 const numberSizes = ["26", "28", "30", "32", "34"];
 const NUMBER_SIZE_CATEGORIES = ["jogger", "jeans", "cargo", "shorts"];
-const DEFAULT_NEW_COLOR = { name: "", hex: "#000000" };
-const DEFAULT_FORM_DATA: NewProductFormData = {
-  name: "",
-  slug: "",
-  description: "",
-  mrp: "",
-  sellingPrice: "",
-  maxBargainDiscount: "",
-  category: "tshirt",
-  gender: "unisex",
-  stock: 0,
-  fabric: "",
-  gsm: 0,
-  isNew: true,
-  isFeatured: false,
-  isPremium: false,
-  isActive: true,
-  displayOrder: 0,
-};
 
 export default function NewProductPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [draftLoaded, setDraftLoaded] = useState(false);
   
   // Form state
-  const [formData, setFormData] = useState<NewProductFormData>(DEFAULT_FORM_DATA);
+  const [formData, setFormData] = useState({
+    name: "",
+    slug: "",
+    description: "",
+    mrp: "",
+    sellingPrice: "",
+    maxBargainDiscount: "",
+    category: "tshirt" as ProductInput["category"],
+    gender: "unisex" as ProductInput["gender"],
+    stock: 0,
+    fabric: "",
+    gsm: 0,
+    isNew: true,
+    isFeatured: false,
+    isPremium: false,
+    isActive: true,
+    displayOrder: 0,
+  });
   
   const [images, setImages] = useState<string[]>([]);
   const [newImageUrl, setNewImageUrl] = useState("");
@@ -73,80 +64,12 @@ export default function NewProductPage() {
   const [features, setFeatures] = useState<string[]>([]);
   const [newFeature, setNewFeature] = useState("");
   const [colors, setColors] = useState<{ name: string; hex: string }[]>([]);
-  const [newColor, setNewColor] = useState(DEFAULT_NEW_COLOR);
+  const [newColor, setNewColor] = useState({ name: "", hex: "#000000" });
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
   // Variant stock: keyed by "size|color" (color can be empty string for no-color products)
   const [variantStock, setVariantStock] = useState<Record<string, number>>({});
   const isAccessory = formData.category === "accessory";
-
-  useEffect(() => {
-    const cachedDraft = window.localStorage.getItem(ADMIN_NEW_PRODUCT_DRAFT_STORAGE_KEY);
-    if (!cachedDraft) {
-      setDraftLoaded(true);
-      return;
-    }
-
-    const draft = decodeAdminProductDraft(cachedDraft);
-    if (!draft) {
-      window.localStorage.removeItem(ADMIN_NEW_PRODUCT_DRAFT_STORAGE_KEY);
-      setDraftLoaded(true);
-      return;
-    }
-
-    setFormData(draft.formData);
-    setImages(draft.images);
-    setNewImageUrl(draft.newImageUrl);
-    setSizes(draft.sizes);
-    setCareInstructions(draft.careInstructions);
-    setNewCareInstruction(draft.newCareInstruction);
-    setFeatures(draft.features);
-    setNewFeature(draft.newFeature);
-    setColors(draft.colors);
-    setNewColor(draft.newColor);
-    setTags(draft.tags);
-    setNewTag(draft.newTag);
-    setVariantStock(draft.variantStock);
-    setDraftLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (!draftLoaded) return;
-
-    window.localStorage.setItem(
-      ADMIN_NEW_PRODUCT_DRAFT_STORAGE_KEY,
-      encodeAdminProductDraft({
-        formData,
-        images,
-        newImageUrl,
-        sizes,
-        careInstructions,
-        newCareInstruction,
-        features,
-        newFeature,
-        colors,
-        newColor,
-        tags,
-        newTag,
-        variantStock,
-      })
-    );
-  }, [
-    careInstructions,
-    colors,
-    draftLoaded,
-    features,
-    formData,
-    images,
-    newCareInstruction,
-    newColor,
-    newFeature,
-    newImageUrl,
-    newTag,
-    sizes,
-    tags,
-    variantStock,
-  ]);
 
   // Auto-generate slug from name
   const handleNameChange = (name: string) => {
@@ -235,7 +158,6 @@ export default function NewProductPage() {
       };
 
       await createProduct(productData);
-      window.localStorage.removeItem(ADMIN_NEW_PRODUCT_DRAFT_STORAGE_KEY);
       router.push("/admin/products");
     } catch (err) {
       console.error("Failed to create product:", err);
