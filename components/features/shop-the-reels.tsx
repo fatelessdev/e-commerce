@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, Volume2, VolumeX, ShoppingBag } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -72,6 +72,31 @@ export function ShopTheReels() {
         })
     }
 
+    useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                const video = entry.target as HTMLVideoElement
+                if (entry.isIntersecting) {
+                    video.play().catch(() => {
+                        // ignore play interruption errors
+                    })
+                } else {
+                    video.pause()
+                }
+            })
+        }, {
+            threshold: 0.25 // play when at least 25% of the video is in viewport
+        })
+
+        videoRefs.current.forEach((video) => {
+            observer.observe(video)
+        })
+
+        return () => {
+            observer.disconnect()
+        }
+    }, [])
+
     if (products.length === 0) return null
 
     return (
@@ -104,7 +129,6 @@ export function ShopTheReels() {
                                     }}
                                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-[1.025]"
                                     src={product.src}
-                                    autoPlay
                                     muted={audibleProductId !== product.id}
                                     loop
                                     playsInline

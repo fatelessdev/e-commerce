@@ -85,7 +85,7 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
       className="relative min-h-[78svh] overflow-hidden border-t border-border/60 bg-background px-6 py-16 text-foreground md:min-h-[94svh] md:px-12 md:py-24"
       aria-label="XILAR moving product gallery"
       data-cursor="explore"
-      data-cursor-label="DRAG"
+      data-cursor-label="XILAR"
     >
       <div className="pointer-events-none absolute left-1/2 top-[56%] z-0 w-[220vw] -translate-x-1/2 -translate-y-1/2 rotate-[28deg] scale-125 md:top-1/2">
         {rows.map((row, rowIndex) => (
