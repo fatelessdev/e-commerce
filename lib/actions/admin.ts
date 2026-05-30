@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { products, productVariants, coupons, orders, orderItems } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth-server";
-import { eq, desc, sql, and, gte } from "drizzle-orm";
+import { eq, desc, sql, and, gte, like } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { generateSecureCode } from "@/lib/utils";
 import { revalidateComboSurfaces, revalidateProductSurfaces } from "@/lib/cache-tags";
@@ -638,7 +638,7 @@ export async function getUserStoreCredits(userId: string) {
       and(
         eq(coupons.userId, userId),
         eq(coupons.isActive, true),
-        sql`${coupons.code} LIKE 'CREDIT-%'`
+        like(coupons.code, 'CREDIT-%')
       )
     )
     .orderBy(desc(coupons.createdAt));
