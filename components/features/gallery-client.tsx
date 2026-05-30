@@ -75,6 +75,17 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
   const shouldReduceMotion = useReducedMotion();
   const lenis = useLenis();
   const galleryReady = introDone || shouldReduceMotion;
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     gsap.registerPlugin(CustomEase);
@@ -351,8 +362,13 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
 
     const card = activeCardRef.current;
     const text = activeTextRef.current;
-    const targetWidth = Math.min(window.innerWidth * 0.4, Math.max(0, (window.innerHeight - 64) / 1.2));
-    const targetHeight = targetWidth * 1.2;
+    const isMobile = window.innerWidth < 768;
+    const targetWidth = isMobile
+      ? window.innerWidth
+      : Math.min(window.innerWidth * 0.4, Math.max(0, (window.innerHeight - 64) / 1.2));
+    const targetHeight = isMobile
+      ? window.innerHeight
+      : targetWidth * 1.2;
     const targetLeft = (window.innerWidth - targetWidth) / 2;
     const targetTop = (window.innerHeight - targetHeight) / 2;
 
@@ -390,7 +406,9 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
       const words = text.querySelectorAll("[data-gallery-word]");
       const details = text.querySelectorAll("[data-gallery-detail]");
 
-      const textBottom = (window.innerHeight - targetTop - targetHeight);
+      const textBottom = isMobile
+        ? "calc(20px + env(safe-area-inset-bottom, 0px))"
+        : (window.innerHeight - targetTop - targetHeight);
       gsap.set(text, {
         visibility: "visible",
         opacity: 1,
@@ -546,13 +564,20 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
         onClick={(event) => event.stopPropagation()}
         style={
           shouldReduceMotion
-            ? {
-                left: "50%",
-                top: "50%",
-                width: "84vw",
-                height: "70svh",
-                transform: "translate(-50%, -50%)",
-              }
+            ? (isMobile
+                ? {
+                    left: 0,
+                    top: 0,
+                    width: "100%",
+                    height: "100%",
+                  }
+                : {
+                    left: "50%",
+                    top: "50%",
+                    width: "84vw",
+                    height: "70svh",
+                    transform: "translate(-50%, -50%)",
+                  })
             : {
                 left: 0,
                 top: 0,
@@ -571,6 +596,7 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
         <button
           type="button"
           className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-neutral-950 transition-transform duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          style={{ top: "calc(1rem + env(safe-area-inset-top, 0px))" }}
           onClick={closeActive}
           aria-label="Close gallery image"
         >
@@ -583,7 +609,9 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
         className="fixed z-[81] pointer-events-none p-5 text-white"
         style={
           shouldReduceMotion
-            ? { left: "50%", right: "auto", bottom: "12svh", transform: "translateX(-50%)" }
+            ? (isMobile
+                ? { left: "20px", right: "20px", bottom: "calc(20px + env(safe-area-inset-bottom, 0px))" }
+                : { left: "50%", right: "auto", bottom: "12svh", transform: "translateX(-50%)" })
             : { visibility: "hidden" }
         }
         onClick={(event) => event.stopPropagation()}
