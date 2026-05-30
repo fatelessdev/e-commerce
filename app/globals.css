@@ -165,13 +165,13 @@
 }
 
 html {
-  overflow-x: hidden;
+  overflow-x: clip;
   scrollbar-gutter: stable;
 }
 
 body {
   background-color: var(--background);
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .font-display {

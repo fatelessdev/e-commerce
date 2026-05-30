@@ -55,6 +55,7 @@ export function Navbar() {
   const navContainerRef = useRef<HTMLDivElement>(null);
   const menuOverlayRef = useRef<HTMLDivElement>(null);
   const menuContentRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
 
   useGSAP(() => {
     const mainContainer = document.getElementById("main-content-container");
@@ -144,6 +145,50 @@ export function Navbar() {
     }
   }, { dependencies: [showMobileMenu, shouldReduceMotion], scope: navContainerRef });
 
+  useGSAP(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
+    if (showMobileMenu || shouldReduceMotion) {
+      gsap.to(header, {
+        y: 0,
+        duration: 0.3,
+        ease: "power2.out",
+      });
+    }
+  }, { dependencies: [showMobileMenu, shouldReduceMotion], scope: navContainerRef });
+
+  useLenis((lenisInstance) => {
+    const header = headerRef.current;
+    if (!header || showMobileMenu || shouldReduceMotion) return;
+
+    const scroll = lenisInstance.scroll;
+    const direction = lenisInstance.direction;
+    const headerHeight = header.offsetHeight;
+
+    if (scroll <= 50) {
+      gsap.to(header, {
+        y: 0,
+        duration: 0.8,
+        ease: "power4.out",
+      });
+    } else if (direction === -1) {
+      // Scrolling DOWN -> Hide Navbar
+      gsap.to(header, {
+        y: -headerHeight,
+        duration: 0.8,
+        ease: "power4.out",
+      });
+    } else if (direction === 1) {
+      // Scrolling UP -> Reveal Navbar
+      gsap.to(header, {
+        y: 0,
+        duration: 0.8,
+        ease: "power4.out",
+      });
+    }
+  }, [showMobileMenu, shouldReduceMotion]);
+
   useEffect(() => {
     const timer = window.setInterval(() => {
       setAnnouncementIndex((current) => (current + 1) % ANNOUNCEMENT_MESSAGES.length);
@@ -226,7 +271,7 @@ export function Navbar() {
         </div>
       </div>
 
-      <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-xl">
+      <header ref={headerRef} className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="flex h-14 md:h-16 items-center px-4 md:px-6 lg:px-8">
           {/* Editorial Menu Toggle */}
           <Button
