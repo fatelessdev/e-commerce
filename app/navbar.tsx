@@ -1,10 +1,13 @@
 "use client";
-"use client";
+
+// NOTE: Search component overlay code is preserved at the bottom for future use.
+// The trigger button in the navbar has been commented out per request.
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ShoppingBag, Heart, Menu, X, User, Package, ChevronLeft, ChevronRight, Bot, ArrowRight } from "lucide-react";
+import { Menu, X, ChevronLeft, ChevronRight, Bot, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useLenis } from "lenis/react";
 import { Button } from "@/components/ui/button";
@@ -43,9 +46,14 @@ function ArrowMarker() {
 }
 
 export function Navbar() {
+  const router = useRouter();
   const { totalItems, setIsOpen, isHydrated: isCartHydrated } = useCart();
   const { items: wishlistItems, isHydrated: isWishlistHydrated } = useWishlist();
+  
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  
   const [previewImage, setPreviewImage] = useState(overlayLinks[0].img);
   const [announcementIndex, setAnnouncementIndex] = useState(0);
   const firstMenuLinkRef = useRef<HTMLAnchorElement>(null);
@@ -175,16 +183,16 @@ export function Navbar() {
         ease: "power4.out",
       });
     } else if (direction === -1) {
-      // Scrolling DOWN -> Hide Navbar
+      // Scrolling DOWN -> Reveal Navbar
       gsap.to(header, {
-        y: -headerHeight,
+        y: 0,
         duration: 0.8,
         ease: "power4.out",
       });
     } else if (direction === 1) {
-      // Scrolling UP -> Reveal Navbar
+      // Scrolling UP -> Hide Navbar
       gsap.to(header, {
-        y: 0,
+        y: -headerHeight,
         duration: 0.8,
         ease: "power4.out",
       });
@@ -222,12 +230,17 @@ export function Navbar() {
   };
 
   useEffect(() => {
-    if (!showMobileMenu) return;
+    if (!showMobileMenu && !showSearch) return;
 
-    window.setTimeout(() => firstMenuLinkRef.current?.focus(), 120);
+    if (showMobileMenu) {
+      window.setTimeout(() => firstMenuLinkRef.current?.focus(), 120);
+    }
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setShowMobileMenu(false);
+      if (event.key === "Escape") {
+        setShowMobileMenu(false);
+        setShowSearch(false);
+      }
     };
 
     window.addEventListener("keydown", onKeyDown);
@@ -235,18 +248,27 @@ export function Navbar() {
     return () => {
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [showMobileMenu]);
+  }, [showMobileMenu, showSearch]);
 
   useEffect(() => {
     if (!lenis) return;
 
-    if (showMobileMenu) {
+    if (showMobileMenu || showSearch) {
       lenis.stop();
       return () => lenis.start();
     }
 
     lenis.start();
-  }, [lenis, showMobileMenu]);
+  }, [lenis, showMobileMenu, showSearch]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+      setShowSearch(false);
+      setSearchQuery("");
+    }
+  };
 
   return (
     <div ref={navContainerRef} className="contents">
@@ -289,134 +311,167 @@ export function Navbar() {
         </div>
       </div>
 
-      <header ref={headerRef} className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-xl">
-        <div className="flex h-14 md:h-16 items-center px-4 md:px-6 lg:px-8">
-          {/* Editorial Menu Toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="mr-2"
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            aria-expanded={showMobileMenu}
-            aria-controls="site-menu"
-            aria-label={showMobileMenu ? "Close menu" : "Open menu"}
-          >
-            <div className="relative h-5 w-5">
-              <AnimatePresence mode="wait" initial={false}>
-                {showMobileMenu ? (
-                  <motion.div
-                    key="close"
-                    className="absolute inset-0 flex items-center justify-center"
-                    initial={{ rotate: -90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: 90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <X className="h-5 w-5" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="menu"
-                    className="absolute inset-0 flex items-center justify-center"
-                    initial={{ rotate: 90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: -90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Menu className="h-5 w-5" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </Button>
-
-          {/* Logo */}
-          <Link href="/" className="mr-6 flex items-center">
-            <Image
-              src="/logo.png"
-              alt="XILAR"
-              width={160}
-              height={40}
-              className="h-7 md:h-9 w-auto object-contain dark:invert"
-            />
-          </Link>
-
-          {/* Questions - Desktop */}
-          <div className="hidden lg:flex items-center text-[10px] tracking-[0.1em] uppercase text-muted-foreground">
-            Questions?{" "}
-            <span className="ml-2 text-foreground font-medium">{CONTACT_PHONE}</span>
-          </div>
-
-          {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center space-x-8 xl:space-x-10 text-sm font-medium ml-auto mr-8 xl:mr-16">
-            {[
-              { href: "/shop/men", label: "For Him" },
-              { href: "/shop/women", label: "For Her" },
-              { href: "/shop/accessories", label: "Accessories" },
-              { href: "/new", label: "New Drop" },
-              { href: "/collections/premium", label: "Collections" },
-            ].map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="relative tracking-[0.15em] uppercase text-[11px] text-muted-foreground hover:text-foreground transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] after:absolute after:bottom-0 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-red-accent after:transition-all after:duration-500 after:ease-[cubic-bezier(0.32,0.72,0,1)]"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          {/* Actions */}
-          <div className="ml-auto flex items-center space-x-0.5 md:space-x-1">
-            <ThemeToggleButton
-              showLabel={false}
-              variant="circle"
-              start="top-right"
-            />
-
-            <Link href="/orders">
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground transition-colors duration-300">
-                <Package className="h-4 w-4" />
-                <span className="sr-only">Orders</span>
-              </Button>
-            </Link>
-
-            <Link href="/account" className="hidden sm:block">
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground transition-colors duration-300">
-                <User className="h-4 w-4" />
-                <span className="sr-only">Account</span>
-              </Button>
-            </Link>
-
-            <Link href="/wishlist">
-              <Button variant="ghost" size="icon" className="h-9 w-9 relative text-muted-foreground hover:text-foreground transition-colors duration-300">
-                <Heart className="h-4 w-4" />
-                {isWishlistHydrated && wishlistItems.length > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-accent text-white text-[10px] flex items-center justify-center font-semibold">
-                    {wishlistItems.length}
-                  </span>
-                )}
-                <span className="sr-only">Wishlist</span>
-              </Button>
-            </Link>
-
+      <header ref={headerRef} className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-xl transition-colors duration-500 hover:bg-background">
+        <div className="flex h-14 md:h-20 items-center justify-between px-4 md:px-8 lg:px-12">
+          
+          {/* Left: Mobile Menu Toggle / Desktop Nav */}
+          <div className="flex-1 flex items-center justify-start gap-4 lg:gap-8">
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 relative text-muted-foreground hover:text-foreground transition-colors duration-300"
+              className="-ml-2"
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              aria-expanded={showMobileMenu}
+              aria-controls="site-menu"
+              aria-label={showMobileMenu ? "Close menu" : "Open menu"}
+            >
+              <div className="relative h-5 w-5">
+                <AnimatePresence mode="wait" initial={false}>
+                  {showMobileMenu ? (
+                    <motion.div
+                      key="close"
+                      className="absolute inset-0 flex items-center justify-center"
+                      initial={{ rotate: -90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: 90, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <X className="h-5 w-5 stroke-[1.5]" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="menu"
+                      className="absolute inset-0 flex items-center justify-center"
+                      initial={{ rotate: 90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: -90, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Menu className="h-5 w-5 stroke-[1.5]" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </Button>
+
+            <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
+              {[
+                { href: "/shop/men", label: "For Him" },
+                { href: "/shop/women", label: "For Her" },
+                { href: "/new", label: "New Drop" },
+                { href: "/collections/premium", label: "Collections" },
+              ].map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="relative tracking-[0.15em] uppercase text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors duration-500 after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-foreground after:transition-all after:duration-500 after:ease-[cubic-bezier(0.32,0.72,0,1)]"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          {/* Center: Logo */}
+          <Link href="/" className="flex-shrink-0 flex items-center justify-center">
+            <span className="font-[family-name:var(--font-instrument-serif)] text-3xl md:text-4xl text-foreground">Xilar</span>
+          </Link>
+
+          {/* Right: Actions */}
+          <div className="flex-1 flex items-center justify-end space-x-5 lg:space-x-8">
+            <ThemeToggleButton showLabel={false} variant="ghost" />
+
+            {/* <button 
+              onClick={() => setShowSearch(true)} 
+              className="hidden sm:block relative tracking-[0.15em] uppercase text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors duration-500 after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-foreground after:transition-all after:duration-500 after:ease-[cubic-bezier(0.32,0.72,0,1)]"
+            >
+              SEARCH
+            </button> */}
+
+            <Link href="/account" className="hidden sm:block relative tracking-[0.15em] uppercase text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors duration-500 after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-foreground after:transition-all after:duration-500 after:ease-[cubic-bezier(0.32,0.72,0,1)]">
+              ACCOUNT
+            </Link>
+
+            <Link href="/wishlist" className="hidden md:block relative tracking-[0.15em] uppercase text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors duration-500 after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-foreground after:transition-all after:duration-500 after:ease-[cubic-bezier(0.32,0.72,0,1)]">
+              WISHLIST {isWishlistHydrated && wishlistItems.length > 0 && `(${wishlistItems.length})`}
+            </Link>
+
+            <button
+              className="relative tracking-[0.15em] uppercase text-[11px] font-medium text-foreground hover:text-foreground/70 transition-colors group"
               onClick={() => setIsOpen(true)}
             >
-              <ShoppingBag className="h-4 w-4" />
-              {isCartHydrated && totalItems > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-accent text-white text-[10px] flex items-center justify-center font-semibold">
-                  {totalItems}
-                </span>
-              )}
-              <span className="sr-only">Cart</span>
-            </Button>
+              CART {isCartHydrated && totalItems > 0 ? `[${totalItems}]` : `[0]`}
+              <span className="absolute -bottom-1 left-0 h-px w-0 group-hover:w-full bg-foreground transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]" />
+            </button>
           </div>
         </div>
       </header>
+
+      {/* Search Overlay */}
+      <AnimatePresence>
+        {showSearch && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
+            className="fixed inset-0 z-[110] bg-background/95 backdrop-blur-xl flex flex-col"
+          >
+            <div className="flex justify-between items-center px-6 md:px-12 lg:px-16 h-20">
+              <div className="flex-1" />
+              <div className="flex-1 flex justify-center">
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Search</span>
+              </div>
+              <div className="flex-1 flex justify-end">
+                <button onClick={() => setShowSearch(false)} className="p-2 -mr-2 text-foreground/80 hover:text-foreground transition-colors">
+                  <X className="h-6 w-6 stroke-[1.5]" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex-1 flex flex-col items-center justify-center px-6 pb-32">
+              <form onSubmit={handleSearchSubmit} className="w-full max-w-3xl relative">
+                <input
+                  type="text"
+                  placeholder="WHAT ARE YOU LOOKING FOR?"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                  className="w-full bg-transparent border-b border-foreground/20 focus:border-foreground text-3xl md:text-5xl lg:text-6xl uppercase font-light pb-4 outline-none transition-colors placeholder:text-muted-foreground/30 font-display"
+                />
+                <button type="submit" className="absolute right-0 bottom-6 text-foreground hover:text-red-accent transition-colors">
+                  <ArrowRight className="h-8 w-8 md:h-10 md:w-10 stroke-[1.5]" />
+                </button>
+              </form>
+              
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.6, ease: EASE_OUT_EXPO }}
+                className="mt-16 w-full max-w-3xl flex flex-col gap-6"
+              >
+                <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Trending Searches</p>
+                <div className="flex flex-wrap gap-4 md:gap-6">
+                  {['Oversized Tees', 'Cargo Pants', 'Summer Collection', 'Premium Basics'].map((term) => (
+                    <button 
+                      key={term}
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery(term);
+                        router.push(`/shop?search=${encodeURIComponent(term)}`);
+                        setShowSearch(false);
+                      }}
+                      className="text-sm md:text-base font-light tracking-wide hover:text-red-accent transition-colors relative after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-red-accent after:transition-all after:duration-300"
+                    >
+                      {term}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Left Editorial Menu */}
       <div
@@ -443,13 +498,7 @@ export function Navbar() {
         >
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center" onClick={() => setShowMobileMenu(false)}>
-              <Image
-                src="/logo.png"
-                alt="XILAR"
-                width={160}
-                height={40}
-                className="h-8 w-auto object-contain dark:invert"
-              />
+              <span className="font-[family-name:var(--font-instrument-serif)] text-3xl md:text-4xl text-foreground">Xilar</span>
             </Link>
             <Button
               variant="ghost"

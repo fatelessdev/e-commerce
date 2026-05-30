@@ -67,6 +67,12 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
     const pendingRestoreRef = useRef<ShopRestoreState | null>(null)
     const restoredRef = useRef(false)
 
+    useEffect(() => {
+        if (initialSearch !== undefined) {
+            setSearchQuery(initialSearch)
+        }
+    }, [initialSearch])
+
     const { data: products = [], isLoading: loading } = useShopCatalog(initialProducts)
 
     const filteredProducts = useMemo(() => {
@@ -150,7 +156,8 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
 
             pendingRestoreRef.current = saved
             const timer = window.setTimeout(() => {
-                setSearchQuery(saved.searchQuery)
+                const urlSearch = new URLSearchParams(window.location.search).get("search")
+                setSearchQuery(urlSearch !== null ? urlSearch : saved.searchQuery)
                 setSelectedCategory(fixedCategory || saved.selectedCategory || "All")
                 setSelectedSize(saved.selectedSize)
                 setSelectedPriceRange(

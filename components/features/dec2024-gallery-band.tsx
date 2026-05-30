@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useReducedMotion } from "framer-motion";
@@ -41,8 +41,24 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
     return repeated.slice(0, 32);
   }, [items]);
 
+  const [isVisible, setIsVisible] = useState(true);
+  const scrollTriggersRef = useRef<any[]>([]);
+
   useEffect(() => {
-    if (!rootRef.current || shouldReduceMotion) return;
+    if (!rootRef.current) return;
+
+    const el = rootRef.current;
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsVisible(entry.isIntersecting);
+    }, {
+      threshold: 0
+    });
+
+    observer.observe(el);
+
+    if (shouldReduceMotion) {
+      return () => observer.disconnect();
+    }
 
     const ctx = gsap.context(() => {
       const rows = gsap.utils.toArray<HTMLElement>("[data-xilar-origin-row]");
@@ -57,7 +73,7 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
         const startX = getStartX(index);
         gsap.set(row, { x: startX });
 
-        gsap.to(row, {
+        const anim = gsap.to(row, {
           scrollTrigger: {
             trigger: rootRef.current,
             start: "top bottom",
@@ -71,17 +87,38 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
             },
           },
         });
+
+        if (anim.scrollTrigger) {
+          scrollTriggersRef.current.push(anim.scrollTrigger);
+        }
       });
     }, rootRef);
 
-    return () => ctx.revert();
+    return () => {
+      observer.disconnect();
+      ctx.revert();
+      scrollTriggersRef.current = [];
+    };
   }, [shouldReduceMotion]);
+
+  useEffect(() => {
+    scrollTriggersRef.current.forEach((trigger) => {
+      if (trigger) {
+        if (isVisible) {
+          trigger.enable();
+        } else {
+          trigger.disable(false);
+        }
+      }
+    });
+  }, [isVisible]);
 
   const rows = [0, 1, 2, 3].map((row) => resolvedItems.slice(row * 8, row * 8 + 8));
 
   return (
     <section
       ref={rootRef}
+      style={{ visibility: isVisible ? "visible" : "hidden" }}
       className="relative min-h-[78svh] overflow-hidden border-t border-border/60 bg-background px-6 py-16 text-foreground md:min-h-[94svh] md:px-12 md:py-24"
       aria-label="XILAR moving product gallery"
       data-cursor="explore"
