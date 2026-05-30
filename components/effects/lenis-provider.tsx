@@ -4,6 +4,7 @@ import { ReactLenis, type LenisRef } from "lenis/react";
 import { useEffect, useState, useRef, type ReactNode } from "react";
 import { useReducedMotion } from "framer-motion";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const easeOutExpo = (t: number) => Math.min(1, 1.001 - 2 ** (-10 * t));
 
@@ -29,6 +30,23 @@ export function LenisProvider({ children }: { children: ReactNode }) {
 
     return () => {
       gsap.ticker.remove(update);
+    };
+  }, [shouldReduceMotion]);
+
+  useEffect(() => {
+    if (shouldReduceMotion) return;
+
+    const lenis = lenisRef.current?.lenis;
+    if (!lenis) return;
+
+    const handleScroll = () => ScrollTrigger.update();
+
+    lenis.on("scroll", handleScroll);
+    gsap.ticker.lagSmoothing(0);
+    ScrollTrigger.refresh();
+
+    return () => {
+      lenis.off("scroll", handleScroll);
     };
   }, [shouldReduceMotion]);
 

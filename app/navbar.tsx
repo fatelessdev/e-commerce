@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ShoppingBag, Heart, Menu, X, User, Package, ChevronLeft, ChevronRight, Bot, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { useLenis } from "lenis/react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
@@ -49,6 +50,7 @@ export function Navbar() {
   const [announcementIndex, setAnnouncementIndex] = useState(0);
   const firstMenuLinkRef = useRef<HTMLAnchorElement>(null);
   const shouldReduceMotion = useReducedMotion();
+  const lenis = useLenis();
 
   const navContainerRef = useRef<HTMLDivElement>(null);
   const menuOverlayRef = useRef<HTMLDivElement>(null);
@@ -171,6 +173,17 @@ export function Navbar() {
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [showMobileMenu]);
+
+  useEffect(() => {
+    if (!lenis) return;
+
+    if (showMobileMenu) {
+      lenis.stop();
+      return () => lenis.start();
+    }
+
+    lenis.start();
+  }, [lenis, showMobileMenu]);
 
   return (
     <div ref={navContainerRef} className="contents">

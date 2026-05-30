@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import gsap from "gsap";
+import { CustomEase } from "gsap/dist/CustomEase";
+import { useLenis } from "lenis/react";
 import { X, ArrowRight } from "lucide-react";
 import { useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -69,7 +72,13 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
   const [introDone, setIntroDone] = useState(false);
   const introRanRef = useRef(false);
   const shouldReduceMotion = useReducedMotion();
+  const lenis = useLenis();
   const galleryReady = introDone || shouldReduceMotion;
+
+  useEffect(() => {
+    gsap.registerPlugin(CustomEase);
+    CustomEase.create("hop", "0.9, 0, 0.1, 1");
+  }, []);
 
   const galleryItems = useMemo(() => {
     const clean = items
@@ -306,17 +315,43 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
   }, [active]);
 
   useEffect(() => {
+    if (!lenis) return;
+
+    if (active) {
+      lenis.stop();
+      return () => lenis.start();
+    }
+
+    lenis.start();
+  }, [active, lenis]);
+
+  useEffect(() => {
+    if (!active) return;
+
+    const documentElement = document.documentElement;
+    const body = document.body;
+    const previousDocumentOverflow = documentElement.style.overflow;
+    const previousBodyOverflow = body.style.overflow;
+    const previousBodyTouchAction = body.style.touchAction;
+
+    documentElement.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    body.style.touchAction = "none";
+
+    return () => {
+      documentElement.style.overflow = previousDocumentOverflow;
+      body.style.overflow = previousBodyOverflow;
+      body.style.touchAction = previousBodyTouchAction;
+    };
+  }, [active]);
+
+  useEffect(() => {
     if (!active || !activeCardRef.current || shouldReduceMotion) return;
 
     const card = activeCardRef.current;
     const text = activeTextRef.current;
-    let targetWidth = Math.min(window.innerWidth * 0.84, 560);
-    let targetHeight = targetWidth * 1.22;
-    const maxHeight = window.innerHeight * 0.68;
-    if (targetHeight > maxHeight) {
-      targetHeight = maxHeight;
-      targetWidth = targetHeight / 1.22;
-    }
+    const targetWidth = Math.min(window.innerWidth * 0.4, Math.max(0, (window.innerHeight - 64) / 1.2));
+    const targetHeight = targetWidth * 1.2;
     const targetLeft = (window.innerWidth - targetWidth) / 2;
     const targetTop = (window.innerHeight - targetHeight) / 2;
 
@@ -345,7 +380,7 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
         x: targetLeft,
         y: targetTop,
         duration: 1,
-        ease: "cubic-bezier(0.9, 0, 0.1, 1)",
+        ease: "hop",
       },
       0,
     );
@@ -477,7 +512,7 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
       x: active.rect.left,
       y: active.rect.top,
       duration: 1,
-      ease: "cubic-bezier(0.9, 0, 0.1, 1)",
+      ease: "hop",
     }, 0.44);
   }, [active, shouldReduceMotion]);
 
@@ -496,6 +531,81 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
   }, [active, closeActive]);
 
   const activePrice = formatPrice(active?.item.price);
+  const portalTarget = typeof document === "undefined" ? null : document.body;
+
+  const overlay = active ? (
+    <div className="fixed inset-0 z-[80] bg-background/96" onClick={closeActive}>
+      <div
+        ref={activeCardRef}
+        className="fixed overflow-hidden bg-muted shadow-2xl shadow-black/25"
+        onClick={(event) => event.stopPropagation()}
+        style={
+          shouldReduceMotion
+            ? {
+                left: "50%",
+                top: "50%",
+                width: "84vw",
+                height: "70svh",
+                transform: "translate(-50%, -50%)",
+              }
+            : {
+                left: 0,
+                top: 0,
+                transform: `translate(${active.rect.left}px, ${active.rect.top}px)`,
+                width: active.rect.width,
+                height: active.rect.height,
+              }
+        }
+      >
+        <img
+          src={active.item.src}
+          alt={active.item.title}
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/12 to-black/10" />
+        <button
+          type="button"
+          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-neutral-950 transition-transform duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          onClick={closeActive}
+          aria-label="Close gallery image"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div
+        ref={activeTextRef}
+        className="fixed z-[81] pointer-events-none p-5 text-white"
+        style={
+          shouldReduceMotion
+            ? { left: "50%", right: "auto", bottom: "12svh", transform: "translateX(-50%)" }
+            : { visibility: "hidden" }
+        }
+        onClick={(event) => event.stopPropagation()}
+      >
+        <p data-gallery-detail className="text-[10px] font-semibold uppercase tracking-[0.32em] text-white/65">
+          {activePrice || "XILAR"}
+        </p>
+        <h2 className="font-display mt-2 text-4xl leading-none md:text-5xl" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 0% 100%)" }}>
+          {active.item.title.split(" ").map((word, index) => (
+            <span key={`${word}-${index}`} data-gallery-word className="mr-[0.16em] inline-block will-change-transform">
+              {word}
+            </span>
+          ))}
+        </h2>
+        <Button
+          data-gallery-detail
+          asChild
+          className="mt-5 rounded-full bg-white px-6 text-xs font-semibold uppercase tracking-[0.18em] text-neutral-950 pointer-events-auto hover:bg-red-accent hover:text-white"
+        >
+          <Link href={active.item.href}>
+            Shop product
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </Button>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <div
@@ -512,89 +622,7 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
         style={{ pointerEvents: galleryReady ? "auto" : "none" }}
       />
 
-      {active && (
-        <div className="fixed inset-0 z-[80] bg-background/96" onClick={closeActive}>
-          {/* Expanded card — image only, no text inside */}
-          <div
-            ref={activeCardRef}
-            className="fixed overflow-hidden bg-muted shadow-2xl shadow-black/25"
-            onClick={(event) => event.stopPropagation()}
-            style={
-              shouldReduceMotion
-                ? {
-                    left: "8vw",
-                    top: "10svh",
-                    width: "84vw",
-                    height: "70svh",
-                  }
-                : {
-                    left: 0,
-                    top: 0,
-                    transform: `translate(${active.rect.left}px, ${active.rect.top}px)`,
-                    width: active.rect.width,
-                    height: active.rect.height,
-                  }
-            }
-          >
-            <img
-              src={active.item.src}
-              alt={active.item.title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/12 to-black/10" />
-            <button
-              type="button"
-              className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-neutral-950 transition-transform duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-              onClick={closeActive}
-              aria-label="Close gallery image"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          {/* Text overlay — separate from card, never clipped by overflow-hidden */}
-          <div
-            ref={activeTextRef}
-            className="fixed z-[81] p-5 text-white pointer-events-none"
-            style={shouldReduceMotion
-              ? { left: "8vw", right: "8vw", bottom: "calc(100svh - 10svh - 70svh)" }
-              : { visibility: "hidden" }
-            }
-            onClick={(event) => event.stopPropagation()}
-          >
-            <p
-              data-gallery-detail
-              className="text-[10px] font-semibold uppercase tracking-[0.32em] text-white/65"
-            >
-              {activePrice || "XILAR"}
-            </p>
-            <h2
-              className="font-display mt-2 text-4xl leading-none md:text-5xl"
-              style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 0% 100%)" }}
-            >
-              {active.item.title.split(" ").map((word, index) => (
-                <span
-                  key={`${word}-${index}`}
-                  data-gallery-word
-                  className="mr-[0.16em] inline-block will-change-transform"
-                >
-                  {word}
-                </span>
-              ))}
-            </h2>
-            <Button
-              data-gallery-detail
-              asChild
-              className="mt-5 rounded-full bg-white px-6 text-xs font-semibold uppercase tracking-[0.18em] text-neutral-950 hover:bg-red-accent hover:text-white pointer-events-auto"
-            >
-              <Link href={active.item.href}>
-                Shop product
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      )}
+      {portalTarget && overlay ? createPortal(overlay, portalTarget) : null}
     </div>
   );
 }

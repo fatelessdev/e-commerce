@@ -2,7 +2,6 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
-import { ScrollTextRevealStack } from "@/components/effects/scroll-text-reveal"
 import { Button } from "@/components/ui/button"
 import { JsonLd, breadcrumbJsonLd } from "@/components/seo/structured-data"
 import { CONTACT_EMAIL, CONTACT_PHONE } from "@/lib/constants"
@@ -69,12 +68,8 @@ const teamMembers = [
 
 export default function AboutPage() {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-    const storySentences = [
-        "XILAR is a Gen-Z focused streetwear label built on streetwise minimalism: sharp silhouettes, calm surfaces, and pieces that do not need noise to feel premium.",
-        "We make clothing for people who browse visually, decide quickly, and still care about fit, fabric, and the confidence of a clean rotation.",
-        "Founded in Lucknow, the brand turns everyday movement into a uniform: tees, shirts, cargos, denim, attars, and accessories that can be stacked without feeling overdone.",
-        "The product language is simple on purpose. Strong images, honest prices, durable details, and a little AI-native bargaining energy where it helps the purchase feel personal.",
-    ]
+    const manifestoText =
+        "We challenge norms, embrace change, pioneer progress. We are innovators merging art and technology to craft experiences that surprise, delight, and evolve."
 
     return (
         <div className="flex min-h-screen flex-col">
@@ -119,16 +114,14 @@ export default function AboutPage() {
                 <div className="mx-auto grid max-w-7xl gap-12 md:grid-cols-[0.78fr_1.22fr]">
                     <div>
                         <p className="sticky top-28 text-[10px] font-semibold uppercase tracking-[0.36em] text-muted-foreground">
-                            Our story
+                            Manifesto
                         </p>
                     </div>
                     <div className="min-h-[70svh] md:min-h-[85svh]">
                         <div className="sticky top-24 md:top-28">
-                            <ScrollTextRevealStack
-                                sentences={storySentences}
-                                className="max-w-[72ch]"
-                                sentenceClassName="text-2xl font-light leading-[1.32] md:text-4xl"
-                            />
+                            <h1 className="max-w-[72ch] font-display text-5xl leading-[1.125] md:text-7xl lg:text-[6.5rem]">
+                                {manifestoText}
+                            </h1>
                         </div>
                     </div>
                 </div>
