@@ -58,8 +58,21 @@ export function DirectionalMarquee({ items = DEFAULT_ITEMS }: { items?: string[]
 
     window.addEventListener("scroll", onScroll, { passive: true });
 
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        tweenRef.current?.play();
+      } else {
+        tweenRef.current?.pause();
+      }
+    }, {
+      threshold: 0.05 // Active when at least 5% is visible
+    });
+
+    observer.observe(rootRef.current);
+
     return () => {
       window.removeEventListener("scroll", onScroll);
+      observer.disconnect();
       tweenRef.current?.kill();
       tweenRef.current = null;
     };

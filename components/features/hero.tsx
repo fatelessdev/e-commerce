@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const EASE_OUT_EXPO = [0.32, 0.72, 0, 1] as const;
 const PANEL_TRANSITION = {
@@ -56,15 +56,33 @@ export function Hero() {
   const [slideDirection, setSlideDirection] = useState(1);
   const shouldReduceMotion = useReducedMotion();
   const activeSlide = HERO_IMAGES[activeIndex];
+  const heroRef = useRef<HTMLElement>(null);
+  const [isInViewport, setIsInViewport] = useState(true);
 
   useEffect(() => {
+    const el = heroRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsInViewport(entry.isIntersecting);
+    }, {
+      threshold: 0.05 // Active when at least 5% is visible
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isInViewport) return;
+
     const timer = window.setTimeout(() => {
       setSlideDirection(1);
       setActiveIndex((current) => (current + 1) % HERO_IMAGES.length);
     }, 2500);
 
     return () => window.clearTimeout(timer);
-  }, [activeIndex]);
+  }, [activeIndex, isInViewport]);
 
   const goToSlide = (index: number) => {
     const nextIndex = (index + HERO_IMAGES.length) % HERO_IMAGES.length;
@@ -77,7 +95,7 @@ export function Hero() {
   const visibleSlides = [getSlide(-1), activeSlide, getSlide(1)];
 
   return (
-    <section className="relative w-full overflow-hidden bg-background">
+    <section ref={heroRef} className="relative w-full overflow-hidden bg-background">
       <div className="relative mx-auto min-h-[calc(100dvh-7rem)] max-w-[1800px] overflow-hidden">
         <div className="absolute inset-0 hidden grid-cols-[0.34fr_0.92fr_0.34fr] gap-2 md:grid">
           <AnimatePresence initial={false} mode="popLayout">

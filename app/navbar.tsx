@@ -56,6 +56,8 @@ export function Navbar() {
   const menuOverlayRef = useRef<HTMLDivElement>(null);
   const menuContentRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
+  const announcementRef = useRef<HTMLDivElement>(null);
+  const [isAnnouncementInViewport, setIsAnnouncementInViewport] = useState(true);
 
   useGSAP(() => {
     const mainContainer = document.getElementById("main-content-container");
@@ -190,12 +192,28 @@ export function Navbar() {
   }, [showMobileMenu, shouldReduceMotion]);
 
   useEffect(() => {
+    const el = announcementRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsAnnouncementInViewport(entry.isIntersecting);
+    }, {
+      threshold: 0
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isAnnouncementInViewport) return;
+
     const timer = window.setInterval(() => {
       setAnnouncementIndex((current) => (current + 1) % ANNOUNCEMENT_MESSAGES.length);
     }, 5000);
 
     return () => window.clearInterval(timer);
-  }, []);
+  }, [isAnnouncementInViewport]);
 
   const rotateAnnouncement = (direction: 1 | -1) => {
     setAnnouncementIndex((current) => (
@@ -233,7 +251,7 @@ export function Navbar() {
   return (
     <div ref={navContainerRef} className="contents">
       {/* Rotating announcement bar */}
-      <div className="w-full bg-red-accent/8 border-b border-red-accent/10 py-1">
+      <div ref={announcementRef} className="w-full bg-red-accent/8 border-b border-red-accent/10 py-1">
         <div className="relative mx-auto flex max-w-7xl items-center justify-between px-5 md:px-8">
           <button
             type="button"
