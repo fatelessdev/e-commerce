@@ -15,15 +15,6 @@ test("gallery hides the shared footer through a route-aware shell", () => {
   assert.match(gate, /pathname === "\/gallery"/);
 });
 
-test("root layout wires Lenis smooth scrolling", () => {
-  const layout = read("app/layout.tsx");
-  const provider = read("components/effects/lenis-provider.tsx");
-
-  assert.match(layout, /<LenisProvider>/);
-  assert.match(provider, /ReactLenis/);
-  assert.match(provider, /smoothWheel/);
-  assert.match(provider, /syncTouch/);
-});
 
 test("footer and menu shells use theme tokens instead of fixed black and white", () => {
   const footer = read("components/layout/footer.tsx");

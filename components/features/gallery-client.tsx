@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import gsap from "gsap";
 import { CustomEase } from "gsap/dist/CustomEase";
-import { useLenis } from "lenis/react";
 import { X, ArrowRight } from "lucide-react";
 import { useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -73,7 +72,6 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
   const [introDone, setIntroDone] = useState(false);
   const introRanRef = useRef(false);
   const shouldReduceMotion = useReducedMotion();
-  const lenis = useLenis();
   const galleryReady = introDone || shouldReduceMotion;
   const [isMobile, setIsMobile] = useState(false);
 
@@ -326,16 +324,7 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
     }
   }, [active]);
 
-  useEffect(() => {
-    if (!lenis) return;
 
-    if (active) {
-      lenis.stop();
-      return () => lenis.start();
-    }
-
-    lenis.start();
-  }, [active, lenis]);
 
   useEffect(() => {
     if (!active) return;

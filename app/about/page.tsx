@@ -32,7 +32,7 @@ const teamMembers = [
                 Singh
             </>
         ),
-        image: "/team/meowl.jpg",
+        image: "/team/lead.jpg",
         description:
             "Aditya is a skilled developer with expertise in modern web technologies and a passion for creating seamless user experiences.",
     },

@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X, ChevronLeft, ChevronRight, Bot, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { useLenis } from "lenis/react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
@@ -58,7 +57,6 @@ export function Navbar() {
   const [announcementIndex, setAnnouncementIndex] = useState(0);
   const firstMenuLinkRef = useRef<HTMLAnchorElement>(null);
   const shouldReduceMotion = useReducedMotion();
-  const lenis = useLenis();
 
   const navContainerRef = useRef<HTMLDivElement>(null);
   const menuOverlayRef = useRef<HTMLDivElement>(null);
@@ -165,38 +163,61 @@ export function Navbar() {
         duration: 0.3,
         ease: "power2.out",
       });
+    } else {
+      const scrollY = window.scrollY;
+      const headerHeight = header.offsetHeight;
+      if (scrollY > 50) {
+        gsap.to(header, {
+          y: -headerHeight,
+          duration: 0.5,
+          ease: "power4.out",
+        });
+      } else {
+        gsap.to(header, {
+          y: 0,
+          duration: 0.5,
+          ease: "power4.out",
+        });
+      }
     }
   }, { dependencies: [showMobileMenu, shouldReduceMotion], scope: navContainerRef });
 
-  useLenis((lenisInstance) => {
+  useEffect(() => {
     const header = headerRef.current;
     if (!header || showMobileMenu || shouldReduceMotion) return;
 
-    const scroll = lenisInstance.scroll;
-    const direction = lenisInstance.direction;
-    const headerHeight = header.offsetHeight;
+    let lastScrollY = window.scrollY;
 
-    if (scroll <= 50) {
-      gsap.to(header, {
-        y: 0,
-        duration: 0.8,
-        ease: "power4.out",
-      });
-    } else if (direction === -1) {
-      // Scrolling DOWN -> Reveal Navbar
-      gsap.to(header, {
-        y: 0,
-        duration: 0.8,
-        ease: "power4.out",
-      });
-    } else if (direction === 1) {
-      // Scrolling UP -> Hide Navbar
-      gsap.to(header, {
-        y: -headerHeight,
-        duration: 0.8,
-        ease: "power4.out",
-      });
-    }
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const headerHeight = header.offsetHeight;
+
+      if (scrollY <= 50) {
+        gsap.to(header, {
+          y: 0,
+          duration: 0.8,
+          ease: "power4.out",
+        });
+      } else if (scrollY < lastScrollY) {
+        // Scrolling UP -> Reveal Navbar
+        gsap.to(header, {
+          y: 0,
+          duration: 0.8,
+          ease: "power4.out",
+        });
+      } else if (scrollY > lastScrollY) {
+        // Scrolling DOWN -> Hide Navbar
+        gsap.to(header, {
+          y: -headerHeight,
+          duration: 0.8,
+          ease: "power4.out",
+        });
+      }
+      lastScrollY = scrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [showMobileMenu, shouldReduceMotion]);
 
   useEffect(() => {
@@ -260,15 +281,14 @@ export function Navbar() {
   }, [showMobileMenu]);
 
   useEffect(() => {
-    if (!lenis) return;
-
-    if (showMobileMenu || showSearch) {
-      lenis.stop();
-      return () => lenis.start();
+    if (showSearch) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
     }
-
-    lenis.start();
-  }, [lenis, showMobileMenu, showSearch]);
+  }, [showSearch]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -4,7 +4,6 @@ import { Instrument_Serif, Outfit } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import { Navbar } from "@/app/navbar";
-import { LenisProvider } from "@/components/effects/lenis-provider";
 import { FooterGate } from "@/components/layout/footer-gate";
 import { CartProvider } from "@/lib/cart-context";
 import { WishlistProvider } from "@/lib/wishlist-context";
@@ -139,7 +138,6 @@ export default function RootLayout({
           <QueryProvider>
             <CartProvider>
               <WishlistProvider>
-                <LenisProvider>
                   <Navbar />
                   <div id="main-content-container" className="flex-1 flex flex-col">
                     <main className="flex-1 overflow-x-hidden relative">
@@ -152,7 +150,6 @@ export default function RootLayout({
                   </div>
                   <CartDrawer />
                 <CursorDotLoader />
-                </LenisProvider>
                 {/* Grain overlay for premium texture */}
                 <div
                   className="pointer-events-none fixed inset-0 z-[60] opacity-[0.025] dark:opacity-[0.03]"
