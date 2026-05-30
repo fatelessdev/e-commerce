@@ -12,7 +12,7 @@ interface ScrollRevealProps {
     direction?: "up" | "down" | "left" | "right" | "none"
     duration?: number
     once?: boolean
-    amount?: number
+    amount?: "some" | "all" | number
 }
 
 export function ScrollReveal({
@@ -22,7 +22,7 @@ export function ScrollReveal({
     direction = "up",
     duration = 0.7,
     once = true,
-    amount = 0.2,
+    amount = "some",
 }: ScrollRevealProps) {
     const shouldReduceMotion = useReducedMotion()
 
@@ -69,7 +69,7 @@ interface StaggerContainerProps {
     className?: string
     staggerDelay?: number
     once?: boolean
-    amount?: number
+    amount?: "some" | "all" | number
 }
 
 export function StaggerContainer({
@@ -77,7 +77,7 @@ export function StaggerContainer({
     className,
     staggerDelay = 0.06,
     once = true,
-    amount = 0.15,
+    amount = "some",
 }: StaggerContainerProps) {
     const shouldReduceMotion = useReducedMotion()
 

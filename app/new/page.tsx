@@ -42,7 +42,7 @@ export default async function NewArrivalsPage() {
                 <h1 className="font-display text-4xl md:text-6xl lg:text-7xl">New arrivals</h1>
                 <p className="text-sm text-muted-foreground mt-2">Fresh drops. First access.</p>
             </div>
-            <ProductGrid title="" isNew initialProducts={products} maxProducts={null} showGenderTabs={false} />
+            <ProductGrid title="" isNew initialProducts={products} maxProducts={null} showGenderTabs={false} enableInfiniteScroll={true} />
         </div>
     )
 }

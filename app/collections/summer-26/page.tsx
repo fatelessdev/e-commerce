@@ -43,7 +43,7 @@ export default async function Summer26Page() {
                 <h1 className="font-display text-4xl md:text-6xl lg:text-7xl">Summer &apos;26</h1>
                 <p className="text-sm text-muted-foreground mt-2">Light fabrics. Bold statements. Made for the heat.</p>
             </div>
-            <ProductGrid title="" initialProducts={products} />
+            <ProductGrid title="" initialProducts={products} maxProducts={null} showGenderTabs={false} enableInfiniteScroll={true} />
         </div>
     )
 }

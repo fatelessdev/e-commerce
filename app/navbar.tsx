@@ -214,14 +214,14 @@ export function Navbar() {
   }, []);
 
   useEffect(() => {
-    if (!isAnnouncementInViewport) return;
+    if (!isAnnouncementInViewport || showMobileMenu) return;
 
     const timer = window.setInterval(() => {
       setAnnouncementIndex((current) => (current + 1) % ANNOUNCEMENT_MESSAGES.length);
     }, 5000);
 
     return () => window.clearInterval(timer);
-  }, [isAnnouncementInViewport]);
+  }, [isAnnouncementInViewport, showMobileMenu]);
 
   const rotateAnnouncement = (direction: 1 | -1) => {
     setAnnouncementIndex((current) => (
@@ -249,6 +249,15 @@ export function Navbar() {
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [showMobileMenu, showSearch]);
+
+  useEffect(() => {
+    if (showMobileMenu) {
+      document.body.classList.add("mobile-menu-open");
+    } else {
+      document.body.classList.remove("mobile-menu-open");
+    }
+    window.dispatchEvent(new CustomEvent("xilar-mobile-menu", { detail: { open: showMobileMenu } }));
+  }, [showMobileMenu]);
 
   useEffect(() => {
     if (!lenis) return;

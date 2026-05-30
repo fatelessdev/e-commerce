@@ -72,15 +72,34 @@ export function ShopTheReels() {
         })
     }
 
+    const [isMenuOpen, setIsMenuOpen] = useState(false)
+    const intersectingIdsRef = useRef<Set<string>>(new Set())
+
+    useEffect(() => {
+        const handleMenuToggle = (e: Event) => {
+            setIsMenuOpen((e as CustomEvent).detail.open)
+        }
+        window.addEventListener("xilar-mobile-menu", handleMenuToggle)
+        setIsMenuOpen(document.body.classList.contains("mobile-menu-open"))
+        return () => {
+            window.removeEventListener("xilar-mobile-menu", handleMenuToggle)
+        }
+    }, [])
+
     useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach((entry) => {
                 const video = entry.target as HTMLVideoElement
+                const productId = video.getAttribute("data-product-id") || ""
                 if (entry.isIntersecting) {
-                    video.play().catch(() => {
-                        // ignore play interruption errors
-                    })
+                    intersectingIdsRef.current.add(productId)
+                    if (!document.body.classList.contains("mobile-menu-open")) {
+                        video.play().catch(() => {
+                            // ignore play interruption errors
+                        })
+                    }
                 } else {
+                    intersectingIdsRef.current.delete(productId)
                     video.pause()
                 }
             })
@@ -97,16 +116,28 @@ export function ShopTheReels() {
         }
     }, [])
 
+    useEffect(() => {
+        videoRefs.current.forEach((video, productId) => {
+            if (isMenuOpen) {
+                video.pause()
+            } else if (intersectingIdsRef.current.has(productId)) {
+                video.play().catch(() => {
+                    // ignore play interruption errors
+                })
+            }
+        })
+    }, [isMenuOpen])
+
     if (products.length === 0) return null
 
     return (
         <section className="border-t border-border/60 bg-background px-6 py-16 md:px-12 md:py-24">
             <div className="mx-auto max-w-7xl">
-                <div className="mb-10 text-center">
-                    <p className="mb-5 text-[10px] font-medium uppercase tracking-[0.45em] text-muted-foreground">
+                <div className="mb-8 md:mb-12 text-center">
+                    <p className="text-[10px] md:text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground mb-3">
                         Trending now
                     </p>
-                    <h2 className="font-display text-4xl font-normal tracking-normal md:text-5xl">Shop the Reels</h2>
+                    <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight">Shop the Reels</h2>
                 </div>
 
                 <div className="relative">
@@ -127,6 +158,7 @@ export function ShopTheReels() {
                                             videoRefs.current.delete(product.id)
                                         }
                                     }}
+                                    data-product-id={product.id}
                                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-[1.025]"
                                     src={product.src}
                                     muted={audibleProductId !== product.id}

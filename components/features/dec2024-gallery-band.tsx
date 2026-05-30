@@ -101,17 +101,28 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
     };
   }, [shouldReduceMotion]);
 
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleMenuToggle = (e: Event) => {
+      setIsMenuOpen((e as CustomEvent).detail.open);
+    };
+    window.addEventListener("xilar-mobile-menu", handleMenuToggle);
+    setIsMenuOpen(document.body.classList.contains("mobile-menu-open"));
+    return () => window.removeEventListener("xilar-mobile-menu", handleMenuToggle);
+  }, []);
+
   useEffect(() => {
     scrollTriggersRef.current.forEach((trigger) => {
       if (trigger) {
-        if (isVisible) {
+        if (isVisible && !isMenuOpen) {
           trigger.enable();
         } else {
           trigger.disable(false);
         }
       }
     });
-  }, [isVisible]);
+  }, [isVisible, isMenuOpen]);
 
   const rows = [0, 1, 2, 3].map((row) => resolvedItems.slice(row * 8, row * 8 + 8));
 

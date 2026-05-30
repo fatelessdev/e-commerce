@@ -32,7 +32,7 @@ const teamMembers = [
                 Singh
             </>
         ),
-        image: "/team/lead.jpg",
+        image: "/team/meowl.jpg",
         description:
             "Aditya is a skilled developer with expertise in modern web technologies and a passion for creating seamless user experiences.",
     },
@@ -84,7 +84,7 @@ export default function AboutPage() {
                 <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-[0.8fr_1.2fr] md:gap-14">
                     <div className="flex flex-col justify-between gap-8">
                         <p className="max-w-[24rem] text-[10px] font-semibold uppercase tracking-[0.36em] text-muted-foreground">
-                            Lucknow made. Street ready. Built for movement.
+                            Street ready. Built for movement.
                         </p>
                         <p className="max-w-[22rem] text-sm leading-7 text-muted-foreground">
                             We are building an Indian streetwear house for visual shoppers who want premium confidence without luxury-store distance.

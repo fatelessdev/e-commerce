@@ -5,8 +5,8 @@ import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/scr
 import { BargainDiscountStrip } from "@/components/ui/bargain-discount-strip"
 import Link from "next/link"
 import Image from "next/image"
-import { useMemo, useState } from "react"
-import { ArrowRight } from "lucide-react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { ArrowRight, Loader2 } from "lucide-react"
 import { normalizeProductImage } from "@/lib/image"
 import { getDisplaySizes, useShopCatalog, type CatalogProduct } from "@/components/features/use-shop-catalog"
 import { filterCatalogProducts } from "@/lib/catalog-filter"
@@ -63,6 +63,7 @@ export function ProductGrid({
     hideWhenEmpty = false,
     maxProducts = 8,
     showGenderTabs = true,
+    enableInfiniteScroll = false,
 }: {
     title?: string
     gender?: "men" | "women" | "unisex"
@@ -78,10 +79,13 @@ export function ProductGrid({
     hideWhenEmpty?: boolean
     maxProducts?: number | null
     showGenderTabs?: boolean
+    enableInfiniteScroll?: boolean
 }) {
     const [activeTab, setActiveTab] = useState<"men" | "women">(gender === "women" ? "women" : "men")
     const { data: catalogProducts = [], isLoading: loading } = useShopCatalog(initialProducts)
+    const [visibleCount, setVisibleCount] = useState(8)
     const hasHeaderContent = Boolean(title) || (showGenderTabs && !gender && !fixedCategory && layout !== "scroll")
+    const showTabs = showGenderTabs && !gender && !fixedCategory && layout !== "scroll"
     const products = useMemo(() => {
         const resolvedGender = gender || (!fixedCategory && showGenderTabs ? activeTab : "all")
         return filterCatalogProducts(catalogProducts, {
@@ -90,9 +94,35 @@ export function ProductGrid({
             isFeatured,
             isNew,
             isPremium,
-            limit: maxProducts,
+            limit: enableInfiniteScroll ? null : maxProducts,
         })
-    }, [activeTab, catalogProducts, fixedCategory, gender, isFeatured, isNew, isPremium, maxProducts, showGenderTabs])
+    }, [activeTab, catalogProducts, fixedCategory, gender, isFeatured, isNew, isPremium, maxProducts, showGenderTabs, enableInfiniteScroll])
+
+    const displayedProducts = useMemo(() => {
+        if (enableInfiniteScroll) {
+            return products.slice(0, visibleCount)
+        }
+        return products
+    }, [products, visibleCount, enableInfiniteScroll])
+
+    const hasMore = enableInfiniteScroll && visibleCount < products.length
+    const sentinelRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (!hasMore || loading) return
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    setVisibleCount((prev) => prev + 8)
+                }
+            },
+            { rootMargin: "200px" }
+        )
+        const el = sentinelRef.current
+        if (el) observer.observe(el)
+        return () => { if (el) observer.unobserve(el) }
+    }, [hasMore, loading])
+
     const gridAnimationKey = [
         layout,
         gender || activeTab,
@@ -100,6 +130,7 @@ export function ProductGrid({
         isFeatured ? "featured" : "regular",
         isNew ? "new" : "all",
         isPremium ? "premium" : "standard",
+        enableInfiniteScroll ? "infinite" : "static",
     ].join(":")
 
     const formatPrice = (price: string) => {
@@ -122,19 +153,22 @@ export function ProductGrid({
         <section
             className={cn(
                 "bg-background px-6 md:px-12",
-                hasHeaderContent ? "py-20 md:py-28" : "pt-8 pb-20 md:pt-12 md:pb-28",
+                hasHeaderContent ? "py-16 md:py-24" : "pt-6 pb-16 md:pt-8 md:pb-24",
             )}
         >
             {/* Header with tabs */}
             {hasHeaderContent && (
             <ScrollReveal>
-                <div className="flex flex-col items-center mb-14">
+                <div className={cn("flex flex-col items-center", showTabs ? "mb-10 md:mb-14" : "mb-8 md:mb-12")}>
                     {title && (
-                        <h2 className="font-display text-3xl font-normal tracking-normal md:text-4xl mb-8">{title}</h2>
+                        <h2 className={cn(
+                            "font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight",
+                            showTabs ? "mb-6 md:mb-8" : ""
+                        )}>{title}</h2>
                     )}
 
                     {/* FOR HIM / FOR HER Tabs */}
-                    {showGenderTabs && !gender && !fixedCategory && layout !== "scroll" && (
+                    {showTabs && (
                         <div className="flex items-center gap-8 text-sm" role="tablist" aria-label="Shop by gender">
                             <button
                                 role="tab"
@@ -190,7 +224,7 @@ export function ProductGrid({
             {!loading && products.length > 0 && (
                 layout === "scroll" ? (
                     <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-6 px-6 md:-mx-12 md:px-12">
-                        {products.map((product) => (
+                        {displayedProducts.map((product) => (
                             <div key={product.id} className="flex-shrink-0 w-[200px] sm:w-[240px] snap-start">
                                 <ViewportPrefetchLink href={`/product/${product.id}`}>
                                     <Card className="bg-transparent border-0 rounded-none hover-lift">
@@ -231,14 +265,78 @@ export function ProductGrid({
                             </div>
                         ))}
                     </div>
+                ) : enableInfiniteScroll ? (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                        {displayedProducts.map((product) => (
+                            <div key={product.id}>
+                                <ViewportPrefetchLink href={`/product/${product.id}`}>
+                                    <Card className="bg-transparent border-0 rounded-none hover-lift">
+                                        <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
+                                            {product.stock > 0 && (
+                                                <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-10" />
+                                            )}
+                                            {/* Sold Out Badge */}
+                                            {product.stock === 0 && (
+                                                <div className="absolute top-3 left-3 z-10 badge-sold-out">
+                                                    Sold Out
+                                                </div>
+                                            )}
+
+                                            {/* Product Image */}
+                                            <Image
+                                                src={normalizeProductImage(product.images?.[0])}
+                                                alt={product.name}
+                                                fill
+                                                sizes="(max-width: 640px) 50vw, 25vw"
+                                                className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
+                                            />
+
+                                            {/* Hover Overlay */}
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500" />
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
+                                                <div className="w-9 h-9 rounded-full bg-white/90 dark:bg-neutral-900/90 flex items-center justify-center shadow-lg shadow-black/5">
+                                                    <ArrowRight className="h-4 w-4 text-foreground" />
+                                                </div>
+                                            </div>
+                                        </CardContent>
+
+                                        <CardFooter className="flex flex-col items-start px-1 sm:px-2 pt-4 pb-2 space-y-1.5">
+                                            <div className="w-full">
+                                                <h3 className="font-medium tracking-tight text-sm uppercase leading-tight line-clamp-1">
+                                                    {product.name}
+                                                </h3>
+                                                <div className="flex max-w-full flex-nowrap items-center gap-1.5 mt-1 whitespace-nowrap">
+                                                    <p className="text-sm font-semibold tabular-nums">{formatPrice(product.sellingPrice)}</p>
+                                                    {parseFloat(product.mrp) > parseFloat(product.sellingPrice) && (
+                                                        <p className="truncate text-[10px] text-muted-foreground line-through tabular-nums">{formatPrice(product.mrp)}</p>
+                                                    )}
+                                                    {discountPercent(product) !== null && (
+                                                        <span className="flex-none bg-foreground px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-background">
+                                                            {discountPercent(product)}% off
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <SizeChips sizes={getDisplaySizes(product)} />
+                                            <ColorSwatches colors={product.colors} />
+                                        </CardFooter>
+                                    </Card>
+                                </ViewportPrefetchLink>
+                            </div>
+                        ))}
+                    </div>
                 ) : (
                     <StaggerContainer
                         key={gridAnimationKey}
                         amount={0.01}
                         className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6"
                     >
-                        {products.map((product, index) => (
-                            <StaggerItem key={product.id} className={index >= mobileLimit ? "hidden md:block" : undefined}>
+                        {displayedProducts.map((product, index) => (
+                            <StaggerItem 
+                                key={product.id} 
+                                className={index >= mobileLimit ? "hidden md:block" : undefined}
+                            >
                                 <ViewportPrefetchLink href={`/product/${product.id}`}>
                                     <Card className="bg-transparent border-0 rounded-none hover-lift">
                                         <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
@@ -300,7 +398,7 @@ export function ProductGrid({
             )}
 
             {/* View All Link */}
-            {layout !== "scroll" && (
+            {layout !== "scroll" && !enableInfiniteScroll && (
                 <ScrollReveal delay={0.2}>
                     <div className="text-center mt-14">
                         <Link
@@ -312,6 +410,13 @@ export function ProductGrid({
                         </Link>
                     </div>
                 </ScrollReveal>
+            )}
+
+            {/* Infinite scroll sentinel */}
+            {hasMore && !loading && (
+                <div ref={sentinelRef} className="py-8 flex justify-center mt-10">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
             )}
         </section>
     )

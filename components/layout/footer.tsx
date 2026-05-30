@@ -77,7 +77,7 @@ export function Footer() {
               </a>
               <a
                 className="group inline-flex h-16 w-16 items-center justify-center rounded-full border border-border transition-colors duration-300 hover:border-foreground/35 hover:text-foreground"
-                href="https://www.instagram.com/"
+                href="https://www.instagram.com/xilar.in"
                 rel="noreferrer"
                 target="_blank"
                 aria-label="Instagram"

@@ -43,11 +43,11 @@ export function RealReviews() {
     return (
         <section className="border-t border-border/60 bg-secondary/20 px-6 py-16 md:px-12 md:py-24">
             <div className="mx-auto max-w-7xl">
-                <div className="mb-12 text-center">
-                    <p className="mb-5 text-[10px] font-medium uppercase tracking-[0.45em] text-muted-foreground">
+                <div className="mb-8 md:mb-12 text-center">
+                    <p className="text-[10px] md:text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground mb-3">
                         Real reviews
                     </p>
-                    <h2 className="font-display text-4xl font-normal tracking-normal md:text-5xl">What Our Customers Say</h2>
+                    <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight">What Our Customers Say</h2>
                 </div>
 
                 <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">

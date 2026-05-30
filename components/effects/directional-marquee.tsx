@@ -29,6 +29,7 @@ export function DirectionalMarquee({ items = DEFAULT_ITEMS }: { items?: string[]
   const tweenRef = useRef<gsap.core.Tween | null>(null);
   const lastScrollRef = useRef(0);
   const shouldReduceMotion = useReducedMotion();
+  const isIntersectingRef = useRef(false);
 
   useEffect(() => {
     if (shouldReduceMotion || !rootRef.current) return;
@@ -59,14 +60,16 @@ export function DirectionalMarquee({ items = DEFAULT_ITEMS }: { items?: string[]
     window.addEventListener("scroll", onScroll, { passive: true });
 
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
+      isIntersectingRef.current = entry.isIntersecting;
+      if (entry.isIntersecting && !document.body.classList.contains("mobile-menu-open")) {
         tweenRef.current?.play();
       } else {
         tweenRef.current?.pause();
       }
     }, {
+      shadow: false,
       threshold: 0.05 // Active when at least 5% is visible
-    });
+    } as any);
 
     observer.observe(rootRef.current);
 
@@ -77,6 +80,21 @@ export function DirectionalMarquee({ items = DEFAULT_ITEMS }: { items?: string[]
       tweenRef.current = null;
     };
   }, [shouldReduceMotion]);
+
+  useEffect(() => {
+    const handleMenuToggle = (e: Event) => {
+      const isMenuOpen = (e as CustomEvent).detail.open;
+      if (isMenuOpen) {
+        tweenRef.current?.pause();
+      } else if (isIntersectingRef.current) {
+        tweenRef.current?.play();
+      }
+    };
+    window.addEventListener("xilar-mobile-menu", handleMenuToggle);
+    return () => {
+      window.removeEventListener("xilar-mobile-menu", handleMenuToggle);
+    };
+  }, []);
 
   const sequence = [...items, ...items];
 

@@ -313,10 +313,10 @@ export function ComboSection({
   }
 
   return (
-    <section className="py-20 md:py-28 px-6 md:px-12 bg-background">
-      <div className="flex flex-col items-center mb-12">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium mb-3">Bundle deals</p>
-        <h2 className="font-display text-3xl font-normal tracking-normal md:text-4xl">Combos</h2>
+    <section className="py-16 md:py-24 px-6 md:px-12 bg-background">
+      <div className="flex flex-col items-center mb-8 md:mb-12">
+        <p className="text-[10px] md:text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground mb-3">Bundle deals</p>
+        <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight">Combos</h2>
       </div>
 
       {loading ? (

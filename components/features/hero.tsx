@@ -73,8 +73,19 @@ export function Hero() {
     return () => observer.disconnect();
   }, []);
 
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   useEffect(() => {
-    if (!isInViewport) return;
+    const handleMenuToggle = (e: Event) => {
+      setIsMenuOpen((e as CustomEvent).detail.open);
+    };
+    window.addEventListener("xilar-mobile-menu", handleMenuToggle);
+    setIsMenuOpen(document.body.classList.contains("mobile-menu-open"));
+    return () => window.removeEventListener("xilar-mobile-menu", handleMenuToggle);
+  }, []);
+
+  useEffect(() => {
+    if (!isInViewport || isMenuOpen) return;
 
     const timer = window.setTimeout(() => {
       setSlideDirection(1);
@@ -82,7 +93,7 @@ export function Hero() {
     }, 2500);
 
     return () => window.clearTimeout(timer);
-  }, [activeIndex, isInViewport]);
+  }, [activeIndex, isInViewport, isMenuOpen]);
 
   const goToSlide = (index: number) => {
     const nextIndex = (index + HERO_IMAGES.length) % HERO_IMAGES.length;

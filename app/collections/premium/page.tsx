@@ -43,7 +43,7 @@ export default async function PremiumPage() {
                 <h1 className="font-display text-4xl md:text-6xl lg:text-7xl">Premium</h1>
                 <p className="text-sm text-muted-foreground mt-2">Elevated picks. Better fabrics. Stronger presence.</p>
             </div>
-            <ProductGrid title="" isPremium initialProducts={products} maxProducts={null} showGenderTabs={false} />
+            <ProductGrid title="" isPremium initialProducts={products} maxProducts={null} showGenderTabs={false} enableInfiniteScroll={true} />
         </div>
     )
 }
