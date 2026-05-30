@@ -285,3 +285,20 @@ body {
   will-change: transform;
   transform-origin: right top;
 }
+
+/* Global custom cursor — hide native cursor on fine-pointer (mouse) devices
+   when JS has loaded and applied the class. Safe fallback: no class = native cursor */
+@media (pointer: fine) {
+  body.xilar-custom-cursor,
+  body.xilar-custom-cursor * {
+    cursor: none !important;
+  }
+
+  /* Preserve native cursor in form inputs for usability */
+  body.xilar-custom-cursor input,
+  body.xilar-custom-cursor textarea,
+  body.xilar-custom-cursor select {
+    cursor: auto !important;
+  }
+}
+

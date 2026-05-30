@@ -17,6 +17,9 @@ const CartDrawer = dynamic(() =>
   { loading: () => null }
 );
 
+import { CursorDotLoader } from "@/components/effects/cursor-dot-loader";
+
+
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
@@ -148,6 +151,7 @@ export default function RootLayout({
                     </Suspense>
                   </div>
                   <CartDrawer />
+                <CursorDotLoader />
                 </LenisProvider>
                 {/* Grain overlay for premium texture */}
                 <div

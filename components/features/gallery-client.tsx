@@ -48,6 +48,7 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const activeCardRef = useRef<HTMLDivElement>(null);
   const activeTextRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef({
     targetX: 0,
     targetY: 0,
@@ -471,24 +472,20 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
     if (!active) return;
     const card = activeCardRef.current;
     const text = activeTextRef.current;
+    const overlay = overlayRef.current;
 
     if (!card || shouldReduceMotion) {
       setActive(null);
       return;
     }
 
-    gsap.killTweensOf([card, text, "[data-xilar-gallery-card]"]);
+    gsap.killTweensOf([card, text, overlay]);
 
     const words = text?.querySelectorAll("[data-gallery-word]") ?? [];
     const details = text?.querySelectorAll("[data-gallery-detail]") ?? [];
     const timeline = gsap.timeline({
       onComplete: () => {
         setActive(null);
-        gsap.to("[data-xilar-gallery-card]", {
-          opacity: 1,
-          duration: 0.5,
-          ease: "power2.out",
-        });
       },
     });
 
@@ -506,6 +503,14 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
       ease: "power2.in",
     }, 0);
     timeline.to(text, { opacity: 0, duration: 0.18, ease: "power2.out" }, 0.32);
+
+    // Fade gallery tiles back to visible (they were set to opacity:0 on expand)
+    timeline.to("[data-xilar-gallery-card]", {
+      opacity: 1,
+      duration: 0.5,
+      ease: "power2.out",
+    }, 0.55);
+
     timeline.to(card, {
       width: active.rect.width,
       height: active.rect.height,
@@ -534,7 +539,7 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
   const portalTarget = typeof document === "undefined" ? null : document.body;
 
   const overlay = active ? (
-    <div className="fixed inset-0 z-[80] bg-background/96" onClick={closeActive}>
+    <div ref={overlayRef} className="fixed inset-0 z-[80] bg-background/96" onClick={closeActive}>
       <div
         ref={activeCardRef}
         className="fixed overflow-hidden bg-muted shadow-2xl shadow-black/25"

@@ -18,9 +18,9 @@ import { useGSAP } from "@gsap/react";
 const EASE_OUT_EXPO = [0.32, 0.72, 0, 1] as const;
 
 const overlayLinks = [
-  { href: "/shop/men", label: "Men", img: "/hero/image(4).webp" },
-  { href: "/shop/women", label: "Women", img: "/clothes/topwear-women.jpeg" },
-  { href: "/shop/accessories", label: "Accessories", img: "/hero/image(5).webp" },
+  { href: "/shop/men", label: "Men", img: "/hero/image(7).webp" },
+  { href: "/shop/women", label: "Women", img: "/hero/image(12).webp" },
+  { href: "/shop/accessories", label: "Accessories", img: "/hero/image(13).webp" },
   { href: "/collections/premium", label: "Premium", img: "/hero/image(2).webp" },
   { href: "/collections/summer-26", label: "Summer '26", img: "/hero/image(3).webp" },
 ];

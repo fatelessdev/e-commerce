@@ -177,7 +177,7 @@ export function Hero() {
                           <Button
                             size="lg"
                             variant="outline"
-                            className="h-13 rounded-full border-white/35 bg-transparent px-8 text-xs font-semibold uppercase tracking-[0.2em] text-white transition-all duration-500 hover:border-white/70 hover:text-white"
+                            className="h-13 rounded-full border-white/35 bg-transparent px-8 text-xs font-semibold uppercase tracking-[0.2em] text-white transition-all duration-500 hover:border-white/70 hover:text-red-accent"
                           >
                             View all
                           </Button>

@@ -20,16 +20,13 @@ export const metadata: Metadata = {
 export default async function GalleryPage() {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const { products } = await getCatalogProducts({ limit: 24 });
-  const galleryItems: XilarGalleryItem[] = products.flatMap((product) => {
-    const images = product.images.length > 0 ? product.images : [undefined];
-    return images.slice(0, 2).map((image, index) => ({
-      id: `${product.id}-${index}`,
-      title: product.name,
-      src: normalizeProductImage(image),
-      href: `/product/${product.id}`,
-      price: product.sellingPrice,
-    }));
-  });
+  const galleryItems: XilarGalleryItem[] = products.map((product) => ({
+    id: product.id,
+    title: product.name,
+    src: normalizeProductImage(product.images[0]),
+    href: `/product/${product.id}`,
+    price: product.sellingPrice,
+  }));
 
   return (
     <>
