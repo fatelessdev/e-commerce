@@ -60,7 +60,7 @@ function ProductDetailSkeleton() {
                 <div className="relative overflow-hidden bg-muted/30">
                     <div className="aspect-[4/5] w-full animate-pulse bg-muted" />
                 </div>
-                <div className="lg:min-h-[calc(100dvh-8rem)] lg:sticky lg:top-20 p-8 lg:p-14 lg:pt-10 flex flex-col justify-start space-y-8">
+                <div className="lg:min-h-[calc(100svh-8rem)] lg:sticky lg:top-20 p-8 lg:p-14 lg:pt-10 flex flex-col justify-start space-y-8">
                     <div className="space-y-5">
                         <div className="h-3 w-32 animate-pulse bg-muted" />
                         <div className="space-y-3">
@@ -457,7 +457,7 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                 </div>
 
                 {/* Product Info Section */}
-                <div className="lg:min-h-[calc(100dvh-8rem)] lg:sticky lg:top-20 p-8 lg:p-14 lg:pt-10 flex flex-col justify-start space-y-8">
+                <div className="lg:min-h-[calc(100svh-8rem)] lg:sticky lg:top-20 p-8 lg:p-14 lg:pt-10 flex flex-col justify-start space-y-8">
                     <div className="space-y-5">
                         <div className="space-y-2">
                             <p className="text-[10px] font-medium tracking-[0.2em] text-muted-foreground uppercase">

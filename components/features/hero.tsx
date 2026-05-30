@@ -107,7 +107,7 @@ export function Hero() {
 
   return (
     <section ref={heroRef} className="relative w-full overflow-hidden bg-background">
-      <div className="relative mx-auto min-h-[calc(100dvh-7rem)] max-w-[1800px] overflow-hidden">
+      <div className="relative mx-auto min-h-[calc(100svh-7rem)] max-w-[1800px] overflow-hidden">
         <div className="absolute inset-0 hidden grid-cols-[0.34fr_0.92fr_0.34fr] gap-2 md:grid">
           <AnimatePresence initial={false} mode="popLayout">
             {visibleSlides.map((slide, panelIndex) => {
@@ -127,7 +127,7 @@ export function Hero() {
                   animate={{ opacity: 1, scale: 1, x: 0 }}
                   exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.82, x: slideDirection > 0 ? -120 : 120 }}
                   transition={shouldReduceMotion ? { duration: 0.01 } : PANEL_TRANSITION}
-                  className="group relative min-h-[calc(100dvh-8.5rem)] overflow-hidden bg-neutral-950 text-left will-change-transform"
+                  className="group relative min-h-[calc(100svh-8.5rem)] overflow-hidden bg-neutral-950 text-left will-change-transform"
                   onClick={() => {
                     if (!isActive) goToSlide(targetIndex);
                   }}
@@ -234,7 +234,7 @@ export function Hero() {
               animate={{ x: "0%", opacity: 1, scale: 1 }}
               exit={shouldReduceMotion ? { opacity: 0 } : { x: `${slideDirection * -14}%`, opacity: 1, scale: 0.985 }}
               transition={{ duration: shouldReduceMotion ? 0.01 : 0.46, ease: EASE_OUT_EXPO }}
-              className="group absolute inset-0 min-h-[72dvh] overflow-hidden bg-neutral-950 text-left"
+              className="group absolute inset-0 min-h-[72svh] overflow-hidden bg-neutral-950 text-left"
             >
               <Image
                 src={activeSlide.src}
