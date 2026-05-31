@@ -499,7 +499,7 @@ export async function cancelOrder(orderId: string) {
             eq(orders.id, orderId),
             eq(orders.userId, session.user.id),
             eq(orders.paymentMethod, "cod"),
-            sql`${orders.status} IN ('pending', 'confirmed')`
+            inArray(orders.status, ['pending', 'confirmed'])
           )
         )
         .returning({ id: orders.id });

@@ -1,0 +1,4 @@
+## 2025-05-18 - Replacing raw SQL templates with Drizzle built-in operators
+**Vulnerability:** Raw SQL template strings (e.g. `sql\`${column} LIKE 'pattern'\``) used for standard queries in `lib/actions/admin.ts` and `lib/actions/orders.ts`. Although the current values were hardcoded, this establishes an unsafe pattern that could lead to SQL injection during future refactoring if user input is introduced.
+**Learning:** Raw `sql` template literals bypass the ORM's automatic parameterization for specific clauses, relying on the developer to ensure no untrusted input is included. Using Drizzle ORM's built-in operators is safer by default.
+**Prevention:** Always use built-in operators like `like()` and `inArray()` from `drizzle-orm` instead of constructing raw SQL queries. This ensures proper parameterization and acts as a proactive defense-in-depth measure.
