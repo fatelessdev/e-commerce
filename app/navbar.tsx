@@ -452,7 +452,7 @@ export function Navbar() {
                 <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Search</span>
               </div>
               <div className="flex-1 flex justify-end">
-                <button onClick={() => setShowSearch(false)} className="p-2 -mr-2 text-foreground/80 hover:text-foreground transition-colors">
+                <button onClick={() => setShowSearch(false)} className="p-2 -mr-2 text-foreground/80 hover:text-foreground transition-colors" aria-label="Close search">
                   <X className="h-6 w-6 stroke-[1.5]" />
                 </button>
               </div>
@@ -468,7 +468,7 @@ export function Navbar() {
                   autoFocus
                   className="w-full bg-transparent border-b border-foreground/20 focus:border-foreground text-3xl md:text-5xl lg:text-6xl uppercase font-light pb-4 outline-none transition-colors placeholder:text-muted-foreground/30 font-display"
                 />
-                <button type="submit" className="absolute right-0 bottom-6 text-foreground hover:text-red-accent transition-colors">
+                <button type="submit" className="absolute right-0 bottom-6 text-foreground hover:text-red-accent transition-colors" aria-label="Submit search">
                   <ArrowRight className="h-8 w-8 md:h-10 md:w-10 stroke-[1.5]" />
                 </button>
               </form>
