@@ -546,7 +546,7 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
   const portalTarget = typeof document === "undefined" ? null : document.body;
 
   const overlay = active ? (
-    <div ref={overlayRef} className="fixed inset-0 z-[80] bg-background/96" onClick={closeActive}>
+    <div ref={overlayRef} style={{ willChange: "opacity" }} className="fixed inset-0 z-[80] bg-background/96" onClick={closeActive}>
       <div
         ref={activeCardRef}
         className="fixed overflow-hidden bg-muted shadow-2xl shadow-black/25"
@@ -573,6 +573,7 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
                 transform: `translate(${active.rect.left}px, ${active.rect.top}px)`,
                 width: active.rect.width,
                 height: active.rect.height,
+                willChange: "transform, width, height",
               }
         }
       >

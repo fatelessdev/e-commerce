@@ -339,6 +339,7 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0.4 }}
                                 transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+                                style={{ willChange: "opacity" }}
                             >
                                 <Image
                                     src={images[selectedImage]}
@@ -361,11 +362,13 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
                                     transition={{ duration: shouldReduceMotion ? 0.01 : 0.35, ease: [0.32, 0.72, 0, 1] }}
+                                    style={{ willChange: "opacity" }}
                                 >
                                     <motion.p
                                         initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: -22, filter: "blur(6px)" }}
                                         animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
                                         transition={{ duration: shouldReduceMotion ? 0.01 : 0.58, ease: [0.32, 0.72, 0, 1] }}
+                                        style={{ willChange: "transform, opacity, filter" }}
                                         className="font-display text-4xl leading-none md:text-5xl"
                                     >
                                         Style Spotlight

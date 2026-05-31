@@ -184,10 +184,28 @@ body {
 /* Premium transition utility */
 .hover-lift {
   transition: transform 0.5s var(--ease-spring), box-shadow 0.5s var(--ease-spring);
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
 }
 
 .hover-lift:hover {
-  transform: translateY(-3px);
+  transform: translate3d(0, -3px, 0);
+}
+
+/* Hardware accelerate scale transitions for product, gallery cards, images & video elements */
+.group img,
+[data-xilar-gallery-card],
+[data-xilar-gallery-card] img,
+video {
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Utility to force GPU compositing layer */
+.gpu-layer {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
 }
 
 /* Crimson red accent utilities */

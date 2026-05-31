@@ -98,6 +98,7 @@ export function Navbar() {
                 }}
                 animate={hidden ? "hidden" : "visible"}
                 transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }} // --ease-out-expo
+                style={{ willChange: "transform" }}
                 className={cn(
                     "fixed top-0 inset-x-0 z-50 w-full transition-colors duration-300",
                     isScrolled ? "bg-background/95 backdrop-blur-md border-b border-border/50" : "bg-transparent border-transparent"
@@ -155,6 +156,7 @@ export function Navbar() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.3 }}
+                        style={{ willChange: "opacity" }}
                         className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-xl flex flex-col"
                     >
                         <div className="flex justify-between items-center px-6 md:px-12 lg:px-16 h-20">
@@ -221,6 +223,7 @@ export function Navbar() {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: "-100%" }}
                         transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
+                        style={{ willChange: "transform, opacity" }}
                         className="fixed inset-0 z-[60] bg-background flex flex-col md:hidden"
                     >
                         <div className="flex justify-between items-center px-6 h-20 border-b border-border/50">

@@ -233,6 +233,7 @@ export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: C
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0.4 }}
                 transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+                style={{ willChange: "opacity" }}
               >
                 <Image
                   src={imagesA[selectedImageA]}
@@ -319,6 +320,7 @@ export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: C
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0.4 }}
                 transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+                style={{ willChange: "opacity" }}
               >
                 <Image
                   src={imagesB[selectedImageB]}

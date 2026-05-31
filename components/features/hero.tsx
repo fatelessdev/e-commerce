@@ -141,7 +141,7 @@ export function Hero() {
                   }}
                   aria-label={isActive ? undefined : `Show ${slide.title}`}
                 >
-                  <motion.div className="absolute inset-0" layout transition={shouldReduceMotion ? { duration: 0.01 } : PANEL_TRANSITION}>
+                  <motion.div style={{ willChange: "transform" }} className="absolute inset-0" layout transition={shouldReduceMotion ? { duration: 0.01 } : PANEL_TRANSITION}>
                     <Image
                       src={slide.src}
                       alt={slide.title}
@@ -234,6 +234,7 @@ export function Hero() {
               animate={{ x: "0%", opacity: 1, scale: 1 }}
               exit={shouldReduceMotion ? { opacity: 0 } : { x: `${slideDirection * -14}%`, opacity: 1, scale: 0.985 }}
               transition={{ duration: shouldReduceMotion ? 0.01 : 0.46, ease: EASE_OUT_EXPO }}
+              style={{ willChange: "transform, opacity" }}
               className="group absolute inset-0 min-h-[72svh] overflow-hidden bg-neutral-950 text-left"
             >
               <Image

@@ -444,6 +444,7 @@ export function Navbar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
+            style={{ willChange: "opacity" }}
             className="fixed inset-0 z-[110] bg-background/95 backdrop-blur-xl flex flex-col"
           >
             <div className="flex justify-between items-center px-6 md:px-12 lg:px-16 h-20">
@@ -513,6 +514,7 @@ export function Navbar() {
         style={{
           clipPath: "polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%)",
           pointerEvents: showMobileMenu ? "auto" : "none",
+          willChange: "clip-path",
         }}
       >
         <div
@@ -549,6 +551,7 @@ export function Navbar() {
                   animate={{ opacity: 1, scale: 1, rotate: 0 }}
                   exit={{ opacity: 0, scale: 1.05, rotate: -3 }}
                   transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
+                  style={{ willChange: "transform, opacity" }}
                   className="absolute inset-0"
                 >
                   <Image src={previewImage} alt="" fill sizes="34vw" className="object-cover" />

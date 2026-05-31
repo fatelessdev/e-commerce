@@ -201,9 +201,9 @@ export function PixelatedText({ text, className, textClassName, align = "center"
         }
       };
 
-      root.addEventListener("pointermove", onPointerMove);
-      root.addEventListener("pointerleave", onPointerLeave);
-      window.addEventListener("resize", onResize);
+      root.addEventListener("pointermove", onPointerMove, { passive: true });
+      root.addEventListener("pointerleave", onPointerLeave, { passive: true });
+      window.addEventListener("resize", onResize, { passive: true });
       setReady(true);
       render();
     });

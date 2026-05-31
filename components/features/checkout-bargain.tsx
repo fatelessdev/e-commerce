@@ -282,8 +282,14 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
 
             {/* Bargain Chatbot Modal */}
             {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="w-full max-w-md bg-background border border-border/60 shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+                <div 
+                    style={{ willChange: "opacity" }}
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+                >
+                    <div 
+                        style={{ willChange: "transform, opacity" }}
+                        className="w-full max-w-md bg-background border border-border/60 shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+                    >
                         {/* Header */}
                         <div className="p-4 bg-red-accent text-white flex items-center justify-between">
                             <div className="flex items-center gap-2">
