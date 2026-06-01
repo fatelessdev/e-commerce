@@ -170,6 +170,7 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
                       } ${available ? "" : "opacity-30 cursor-not-allowed"}`}
                       style={{ backgroundColor: color.hex }}
                       title={color.name}
+                      aria-label={`Select color ${color.name}`}
                     />
                   );
                 })}
@@ -210,6 +211,7 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
                       } ${available ? "" : "opacity-30 cursor-not-allowed"}`}
                       style={{ backgroundColor: color.hex }}
                       title={color.name}
+                      aria-label={`Select color ${color.name}`}
                     />
                   );
                 })}

@@ -165,7 +165,7 @@ export function Navbar() {
                                 <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Search</span>
                             </div>
                             <div className="flex-1 flex justify-end">
-                                <button onClick={() => setShowSearch(false)} className="p-2 -mr-2 text-foreground/80 hover:text-foreground">
+                                <button onClick={() => setShowSearch(false)} className="p-2 -mr-2 text-foreground/80 hover:text-foreground" aria-label="Close search">
                                     <X className="h-6 w-6 stroke-[1]" />
                                 </button>
                             </div>
@@ -181,7 +181,7 @@ export function Navbar() {
                                     autoFocus
                                     className="w-full bg-transparent border-b-2 border-foreground/20 focus:border-foreground text-2xl md:text-4xl lg:text-5xl uppercase font-light pb-4 outline-none transition-colors placeholder:text-muted-foreground/30"
                                 />
-                                <button type="submit" className="absolute right-0 bottom-4 text-foreground hover:text-[var(--red)] transition-colors">
+                                <button type="submit" className="absolute right-0 bottom-4 text-foreground hover:text-[var(--red)] transition-colors" aria-label="Submit search">
                                     <ArrowRight className="h-8 w-8 stroke-[1.5]" />
                                 </button>
                             </form>
@@ -228,7 +228,7 @@ export function Navbar() {
                     >
                         <div className="flex justify-between items-center px-6 h-20 border-b border-border/50">
                             <span className="text-[11px] uppercase tracking-widest font-medium">Menu</span>
-                            <button onClick={() => setShowMobileMenu(false)} className="p-2 -mr-2">
+                            <button onClick={() => setShowMobileMenu(false)} className="p-2 -mr-2" aria-label="Close menu">
                                 <X className="h-5 w-5 stroke-[1.5]" />
                             </button>
                         </div>
