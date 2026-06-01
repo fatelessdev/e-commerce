@@ -43,22 +43,6 @@ function formatPrice(value: string | number) {
   return `₹${amount.toLocaleString("en-IN")}`;
 }
 
-function getVariantStock(product: ComboProduct, size: string, color: string | null) {
-  if (!product.variants || product.variants.length === 0) {
-    return 0;
-  }
-
-  const variant = product.variants.find(
-    (row) => row.size === size && (row.color === color || (row.color === null && color === null))
-  );
-  return variant?.stock ?? 0;
-}
-
-function isColorAvailable(product: ComboProduct, colorName: string, selectedSize: string | null) {
-  if (!selectedSize) return false;
-  return getVariantStock(product, selectedSize, colorName) > 0;
-}
-
 function sizeOptions(product: ComboProduct) {
   if (NUMBER_SIZE_CATEGORIES.includes(product.category)) {
     return product.sizes.filter((size) => /^\d+$/.test(size));
@@ -74,6 +58,39 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
   const [selectedColorB, setSelectedColorB] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
 
+  // Memoize variants for O(1) lookups during render loop
+  const variantsA = combo.productA.variants;
+  const variantMapA = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!variantsA) return map;
+    variantsA.forEach((v) => {
+      const key = `${v.size}|${v.color}`;
+      map.set(key, v.stock);
+    });
+    return map;
+  }, [variantsA]);
+
+  const getStockA = (size: string, color: string | null): number => {
+    if (!variantsA || variantsA.length === 0) return 0;
+    return variantMapA.get(`${size}|${color}`) ?? 0;
+  };
+
+  const variantsB = combo.productB.variants;
+  const variantMapB = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!variantsB) return map;
+    variantsB.forEach((v) => {
+      const key = `${v.size}|${v.color}`;
+      map.set(key, v.stock);
+    });
+    return map;
+  }, [variantsB]);
+
+  const getStockB = (size: string, color: string | null): number => {
+    if (!variantsB || variantsB.length === 0) return 0;
+    return variantMapB.get(`${size}|${color}`) ?? 0;
+  };
+
   const maxDiscountAmount = Number(combo.discountAmount);
   const originalTotal = Number(combo.productA.sellingPrice) + Number(combo.productB.sellingPrice);
   const discountValue = Math.min(Math.max(0, maxDiscountAmount), originalTotal);
@@ -82,10 +99,10 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
   const requiredColorB = combo.productB.colors.length > 0;
 
   const selectedStockA = selectedSizeA
-    ? getVariantStock(combo.productA, selectedSizeA, requiredColorA ? selectedColorA : null)
+    ? getStockA(selectedSizeA, requiredColorA ? selectedColorA : null)
     : null;
   const selectedStockB = selectedSizeB
-    ? getVariantStock(combo.productB, selectedSizeB, requiredColorB ? selectedColorB : null)
+    ? getStockB(selectedSizeB, requiredColorB ? selectedColorB : null)
     : null;
 
   const canAdd = Boolean(
@@ -156,7 +173,7 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
             {requiredColorA && (
               <div className="flex flex-wrap gap-2">
                 {combo.productA.colors.map((color) => {
-                  const available = isColorAvailable(combo.productA, color.name, selectedSizeA);
+                  const available = selectedSizeA ? getStockA(selectedSizeA, color.name) > 0 : false;
                   return (
                     <button
                       key={`a-${color.name}`}
@@ -196,7 +213,7 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
             {requiredColorB && (
               <div className="flex flex-wrap gap-2">
                 {combo.productB.colors.map((color) => {
-                  const available = isColorAvailable(combo.productB, color.name, selectedSizeB);
+                  const available = selectedSizeB ? getStockB(selectedSizeB, color.name) > 0 : false;
                   return (
                     <button
                       key={`b-${color.name}`}
