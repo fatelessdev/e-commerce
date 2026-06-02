@@ -1,8 +1,7 @@
 import { db } from "@/lib/db";
 import { products, productVariants } from "@/lib/db/schema";
-import { CACHE_TAGS } from "@/lib/cache-tags";
-import { and, desc, eq, gt, gte, ilike, inArray, lte, or, sql } from "drizzle-orm";
-import { cacheLife, cacheTag } from "next/cache";
+import { and, desc, eq, gt, gte, inArray, lte, or, sql, type SQL } from "drizzle-orm";
+import { generateProductSearchEmbedding } from "@/lib/product-search-embedding";
 
 export type CatalogProduct = Pick<
   typeof products.$inferSelect,
@@ -35,6 +34,7 @@ type CatalogQuery = {
   category?: string | null;
   gender?: string | null;
   search?: string | null;
+  size?: string | null;
   minPrice?: string | null;
   maxPrice?: string | null;
   isNew?: boolean;
@@ -79,16 +79,22 @@ function buildCatalogConditions(query: CatalogQuery) {
     );
   }
 
-  if (query.search) {
-    conditions.push(or(ilike(products.name, `%${query.search}%`), ilike(products.description, `%${query.search}%`))!);
-  }
-
   if (query.minPrice) {
     conditions.push(gte(products.sellingPrice, query.minPrice));
   }
 
   if (query.maxPrice) {
     conditions.push(lte(products.sellingPrice, query.maxPrice));
+  }
+
+  if (query.size) {
+    conditions.push(sql`EXISTS (
+      SELECT 1
+      FROM ${productVariants}
+      WHERE ${productVariants.productId} = ${products.id}
+        AND ${productVariants.size} = ${query.size}
+        AND ${productVariants.stock} > 0
+    )`);
   }
 
   if (query.isNew) {
@@ -104,6 +110,54 @@ function buildCatalogConditions(query: CatalogQuery) {
   }
 
   return and(...conditions);
+}
+
+function buildCatalogSqlConditions(query: CatalogQuery) {
+  const conditions: SQL[] = [sql`${products.isActive} = true`];
+
+  if (query.category) {
+    conditions.push(sql`${products.category} = ${query.category}`);
+  }
+
+  if (query.gender) {
+    conditions.push(sql`(${products.gender} = ${query.gender} OR ${products.gender} = 'unisex')`);
+  }
+
+  if (query.minPrice) {
+    conditions.push(sql`${products.sellingPrice} >= ${query.minPrice}`);
+  }
+
+  if (query.maxPrice) {
+    conditions.push(sql`${products.sellingPrice} <= ${query.maxPrice}`);
+  }
+
+  if (query.isNew) {
+    conditions.push(sql`${products.isNew} = true`);
+  }
+
+  if (query.isFeatured) {
+    conditions.push(sql`${products.isFeatured} = true`);
+  }
+
+  if (query.isPremium) {
+    conditions.push(sql`${products.isPremium} = true`);
+  }
+
+  if (query.size) {
+    conditions.push(sql`EXISTS (
+      SELECT 1
+      FROM ${productVariants}
+      WHERE ${productVariants.productId} = ${products.id}
+        AND ${productVariants.size} = ${query.size}
+        AND ${productVariants.stock} > 0
+    )`);
+  }
+
+  return sql.join(conditions, sql` AND `);
+}
+
+function serializeVector(vector: number[]) {
+  return `[${vector.join(",")}]`;
 }
 
 async function addAvailableSizes(productRows: CatalogProductRow[]): Promise<CatalogProduct[]> {
@@ -142,11 +196,10 @@ async function addAvailableSizes(productRows: CatalogProductRow[]): Promise<Cata
 }
 
 export async function getCatalogProducts(query: CatalogQuery = {}) {
-  "use cache";
-
-  cacheLife("hours");
-  cacheTag(CACHE_TAGS.catalog);
-  cacheTag(CACHE_TAGS.products);
+  const search = query.search?.trim();
+  if (search) {
+    return getHybridCatalogProducts({ ...query, search });
+  }
 
   const where = buildCatalogConditions(query);
   const productQuery = db
@@ -173,17 +226,137 @@ export async function getCatalogProducts(query: CatalogQuery = {}) {
   return {
     products: productsWithAvailableSizes,
     total: query.includeTotal ? Number(countRows[0]?.count || 0) : productsWithAvailableSizes.length,
-    limit: query.limit,
+    limit: query.limit ?? productsWithAvailableSizes.length,
     offset: query.offset || 0,
   };
 }
 
+async function getHybridCatalogProducts(query: CatalogQuery & { search: string }) {
+  const limit = query.limit ?? 24;
+  const offset = query.offset ?? 0;
+  const where = buildCatalogSqlConditions(query);
+  let semanticVector: string | null = null;
+
+  if (query.search.length >= 2) {
+    try {
+      semanticVector = serializeVector(await generateProductSearchEmbedding(query.search));
+    } catch (error) {
+      console.warn(
+        "Semantic product search unavailable; falling back to keyword and typo ranking.",
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
+
+  const semanticCandidateSql = semanticVector
+    ? sql`
+      UNION ALL
+      SELECT id, 'semantic' AS source, semantic_rank AS rank
+      FROM (
+        SELECT
+          ${products.id} AS id,
+          row_number() OVER (ORDER BY ${products.searchEmbedding} <=> ${semanticVector}::vector) AS semantic_rank
+        FROM ${products}
+        WHERE ${where}
+          AND ${products.searchEmbedding} IS NOT NULL
+        ORDER BY ${products.searchEmbedding} <=> ${semanticVector}::vector
+        LIMIT 80
+      ) semantic_matches
+    `
+    : sql``;
+
+  const result = await db.execute<CatalogProductRow & { total: number }>(sql`
+    WITH search_query AS (
+      SELECT websearch_to_tsquery('english', ${query.search}) AS ts_query
+    ),
+    candidates AS (
+      SELECT id, 'keyword' AS source, keyword_rank AS rank
+      FROM (
+        SELECT
+          ${products.id} AS id,
+          row_number() OVER (
+            ORDER BY ts_rank_cd(${products.searchTokens}, search_query.ts_query) DESC,
+                     ${products.displayOrder} DESC,
+                     ${products.createdAt} DESC
+          ) AS keyword_rank
+        FROM ${products}, search_query
+        WHERE ${where}
+          AND ${products.searchTokens} @@ search_query.ts_query
+        LIMIT 80
+      ) keyword_matches
+
+      UNION ALL
+
+      SELECT id, 'typo' AS source, typo_rank AS rank
+      FROM (
+        SELECT
+          ${products.id} AS id,
+          row_number() OVER (
+            ORDER BY similarity(${products.searchText}, ${query.search}) DESC,
+                     ${products.displayOrder} DESC,
+                     ${products.createdAt} DESC
+          ) AS typo_rank
+        FROM ${products}
+        WHERE ${where}
+          AND similarity(${products.searchText}, ${query.search}) > 0.18
+        LIMIT 80
+      ) typo_matches
+
+      ${semanticCandidateSql}
+    ),
+    fused AS (
+      SELECT
+        id,
+        sum(
+          CASE source
+            WHEN 'keyword' THEN 1.3 / (60 + rank)
+            WHEN 'typo' THEN 0.9 / (60 + rank)
+            WHEN 'semantic' THEN 1.0 / (60 + rank)
+            ELSE 0
+          END
+        ) AS search_score
+      FROM candidates
+      GROUP BY id
+    ),
+    ranked_products AS (
+      SELECT
+        ${products.id} AS id,
+        ${products.name} AS name,
+        ${products.slug} AS slug,
+        ${products.sellingPrice} AS "sellingPrice",
+        ${products.mrp} AS mrp,
+        ${products.maxBargainDiscount} AS "maxBargainDiscount",
+        ${products.images} AS images,
+        ${products.category} AS category,
+        ${products.gender} AS gender,
+        ${products.sizes} AS sizes,
+        ${products.colors} AS colors,
+        ${products.isNew} AS "isNew",
+        ${products.isFeatured} AS "isFeatured",
+        ${products.isPremium} AS "isPremium",
+        ${products.stock} AS stock,
+        count(*) OVER() AS total
+      FROM fused
+      INNER JOIN ${products} ON ${products.id} = fused.id
+      ORDER BY fused.search_score DESC, ${products.displayOrder} DESC, ${products.createdAt} DESC
+      LIMIT ${limit}
+      OFFSET ${offset}
+    )
+    SELECT * FROM ranked_products
+  `);
+
+  const productRows = result.rows as (CatalogProductRow & { total: number })[];
+  const productsWithAvailableSizes = await addAvailableSizes(productRows);
+
+  return {
+    products: productsWithAvailableSizes,
+    total: Number(productRows[0]?.total || 0),
+    limit,
+    offset,
+  };
+}
+
 export async function getActiveProductIds() {
-  "use cache";
-
-  cacheLife("hours");
-  cacheTag(CACHE_TAGS.products);
-
   return db
     .select({ id: products.id })
     .from(products)

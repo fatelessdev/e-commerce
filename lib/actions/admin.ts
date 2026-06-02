@@ -9,6 +9,13 @@ import { generateSecureCode } from "@/lib/utils";
 import { revalidateComboSurfaces, revalidateProductSurfaces } from "@/lib/cache-tags";
 import { ADMIN_PRODUCTS_PAGE_SIZE } from "@/lib/admin-products-pagination";
 import {
+  buildProductSearchText,
+  PRODUCT_SEARCH_EMBEDDING_MODEL,
+  resolveProductSearchEmbedding,
+  type ProductSearchSource,
+} from "@/lib/product-search";
+import { generateProductSearchEmbedding } from "@/lib/product-search-embedding";
+import {
   ACCESSORY_SIZE,
   normalizeProductInput,
   normalizeProductPatch,
@@ -77,6 +84,19 @@ async function syncProductVariants(
   return recomputeProductStock(client, productId);
 }
 
+async function prepareProductSearchIndex(
+  product: ProductSearchSource,
+  current?: { hash?: string | null; embedding?: number[] | null }
+) {
+  const searchText = buildProductSearchText(product);
+  return resolveProductSearchEmbedding({
+    searchText,
+    currentHash: current?.hash,
+    currentEmbedding: current?.embedding,
+    embedSearchText: generateProductSearchEmbedding,
+  });
+}
+
 export async function createProduct(data: ProductInput) {
   await requireAdmin();
   const input = normalizeProductInput(data);
@@ -84,6 +104,11 @@ export async function createProduct(data: ProductInput) {
   const isAccessory = input.category === "accessory";
   const effectiveSizes = input.sizes || ["S", "M", "L", "XL"];
   const effectiveColors = input.colors || [];
+  const searchIndex = await prepareProductSearchIndex({
+    ...input,
+    sizes: effectiveSizes,
+    colors: effectiveColors,
+  });
 
   const product = await db.transaction(async (tx) => {
     const [createdProduct] = await tx
@@ -106,6 +131,10 @@ export async function createProduct(data: ProductInput) {
         features: input.features || [],
         sizes: effectiveSizes,
         colors: effectiveColors,
+        searchText: searchIndex.searchText,
+        searchEmbedding: searchIndex.embedding,
+        searchEmbeddingHash: searchIndex.hash,
+        searchEmbeddingModel: PRODUCT_SEARCH_EMBEDDING_MODEL,
         isNew: input.isNew ?? false,
         isFeatured: input.isFeatured ?? false,
         isPremium: input.isPremium ?? false,
@@ -181,11 +210,24 @@ export async function updateProduct(id: string, data: Partial<ProductInput>) {
     productData.features = [];
   }
 
+  const nextSearchSource: ProductSearchSource = {
+    ...existingProduct,
+    ...productData,
+  };
+  const searchIndex = await prepareProductSearchIndex(nextSearchSource, {
+    hash: existingProduct.searchEmbeddingHash,
+    embedding: existingProduct.searchEmbedding,
+  });
+
   const product = await db.transaction(async (tx) => {
     const [updatedProduct] = await tx
       .update(products)
       .set({
         ...productData,
+        searchText: searchIndex.searchText,
+        searchEmbedding: searchIndex.embedding,
+        searchEmbeddingHash: searchIndex.hash,
+        searchEmbeddingModel: PRODUCT_SEARCH_EMBEDDING_MODEL,
         updatedAt: new Date(),
       })
       .where(eq(products.id, id))

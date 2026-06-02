@@ -11,9 +11,11 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "search:backfill": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/backfill-product-search.ts"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.80",
     "@ai-sdk/react": "^3.0.64",
     "@gsap/react": "^2.1.2",
     "@neondatabase/serverless": "^1.0.2",

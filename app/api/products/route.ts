@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get("category");
     const gender = searchParams.get("gender");
     const search = searchParams.get("search");
+    const size = searchParams.get("size");
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
     const isNew = searchParams.get("isNew");
@@ -26,6 +27,7 @@ export async function GET(req: NextRequest) {
       category,
       gender,
       search,
+      size,
       minPrice,
       maxPrice,
       isNew: isNew === "true",

@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { connection } from "next/server"
 import { ShopClient } from "@/components/features/shop-client"
 import { ComboSection } from "@/components/features/combo-section"
 import { JsonLd, breadcrumbJsonLd, collectionJsonLd } from "@/components/seo/structured-data"
@@ -25,10 +26,12 @@ export default async function ShopMenPage({
 }: {
     searchParams: Promise<{ search?: string }>
 }) {
+    await connection()
+
     const { search } = await searchParams
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-    const [{ products }, combos] = await Promise.all([
-        getCatalogProducts(),
+    const [catalog, combos] = await Promise.all([
+        getCatalogProducts({ gender: "men", search, limit: 24, offset: 0, includeTotal: true }),
         getActiveCombosWithProducts(6),
     ])
 
@@ -54,7 +57,7 @@ export default async function ShopMenPage({
                 title="Men"
                 subtitle="Streetwear essentials for him"
                 initialSearch={search || ""}
-                initialProducts={products}
+                initialCatalog={catalog}
             />
             <ComboSection limit={6} interactive={false} initialCombos={combos} />
         </>

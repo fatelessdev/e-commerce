@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { connection } from "next/server"
 import { ShopClient } from "@/components/features/shop-client"
 import { Suspense } from "react"
 import { getCatalogProducts } from "@/lib/product-catalog"
@@ -28,8 +29,10 @@ export default async function ShopPage({
 }: {
     searchParams: Promise<{ search?: string }>
 }) {
+    await connection()
+
     const { search } = await searchParams
-    const { products } = await getCatalogProducts()
+    const catalog = await getCatalogProducts({ search, limit: 24, offset: 0, includeTotal: true })
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
 
     return (
@@ -54,7 +57,7 @@ export default async function ShopPage({
                 title="All Products"
                 subtitle="Explore the full XILAR collection"
                 initialSearch={search || ""}
-                initialProducts={products}
+                initialCatalog={catalog}
             />
         </Suspense>
     )

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { GalleryClient, type XilarGalleryItem } from "@/components/features/gallery-client";
 import { JsonLd, breadcrumbJsonLd } from "@/components/seo/structured-data";
 import { getCatalogProducts } from "@/lib/product-catalog";
@@ -18,6 +19,8 @@ export const metadata: Metadata = {
 };
 
 export default async function GalleryPage() {
+  await connection();
+
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const { products } = await getCatalogProducts({ limit: 24 });
   const galleryItems: XilarGalleryItem[] = products.map((product) => ({

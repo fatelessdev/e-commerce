@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { connection } from "next/server"
 import { ShopClient } from "@/components/features/shop-client"
 import { JsonLd, breadcrumbJsonLd, collectionJsonLd } from "@/components/seo/structured-data"
 import { getCatalogProducts } from "@/lib/product-catalog"
@@ -23,9 +24,11 @@ export default async function AccessoriesPage({
 }: {
     searchParams: Promise<{ search?: string }>
 }) {
+    await connection()
+
     const { search } = await searchParams
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-    const { products } = await getCatalogProducts({ category: "accessory" })
+    const catalog = await getCatalogProducts({ category: "accessory", search, limit: 24, offset: 0, includeTotal: true })
 
     return (
         <>
@@ -50,7 +53,7 @@ export default async function AccessoriesPage({
                 title="Accessories"
                 subtitle="Perfume and selected essentials"
                 initialSearch={search || ""}
-                initialProducts={products}
+                initialCatalog={catalog}
             />
         </>
     )

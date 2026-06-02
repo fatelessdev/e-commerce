@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
+import { connection } from "next/server";
 import { Hero } from "@/components/features/hero";
 import { ComboSection } from "@/components/features/combo-section";
 import { Dec2024GalleryBand } from "@/components/features/dec2024-gallery-band";
@@ -48,6 +49,8 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
+  await connection();
+
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const [{ products }, combos] = await Promise.all([
     getCatalogProducts(),

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
+import { createPortal } from "react-dom"
 import { Button } from "@/components/ui/button"
 import { X, Send, Copy, Check, Sparkles, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -230,6 +231,164 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
         return `${mins}:${secs.toString().padStart(2, '0')}`
     }
 
+    const bargainModal = isOpen && typeof document !== "undefined" ? createPortal(
+        <div
+            style={{ willChange: "opacity" }}
+            className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+        >
+            <div
+                style={{ willChange: "transform, opacity" }}
+                className="w-full max-w-md bg-background border border-border/60 shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+            >
+                {/* Header */}
+                <div className="p-4 bg-red-accent text-white flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+                        <span className="font-semibold tracking-[0.1em] uppercase text-[10px]">Bargain AI</span>
+                    </div>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-white hover:bg-white/10"
+                        onClick={() => setIsOpen(false)}
+                    >
+                        <X className="h-3.5 w-3.5" />
+                    </Button>
+                </div>
+
+                {/* Chat Area */}
+                <div ref={chatContainerRef} className="h-72 p-4 overflow-y-auto space-y-3 bg-secondary/10">
+                    {messages.map((msg) => (
+                        <div key={msg.id} className={cn("flex w-full", msg.role === 'user' ? "justify-end" : "justify-start")}>
+                            <div className={cn(
+                                "max-w-[85%] p-3 text-sm",
+                                msg.role === 'user'
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-card border border-border"
+                            )}>
+                                <div className="whitespace-pre-wrap">
+                                    {msg.content.split('**').map((part, i) =>
+                                        i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                    {isLoading && (
+                        <div className="flex justify-start">
+                            <div className="bg-card border border-border p-3 text-sm">
+                                <div className="flex gap-1">
+                                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Coupon Display & Timer */}
+                {couponGenerated && (
+                    <div className="p-4 border-t bg-background space-y-3">
+                        {/* Timer */}
+                        {timeRemaining !== null && (
+                            <div className={cn(
+                                "flex items-center justify-center gap-2 text-sm font-medium",
+                                couponExpired ? "text-red-500" : timeRemaining <= 60 ? "text-orange-500" : "text-green-600"
+                            )}>
+                                <Clock className="h-4 w-4" />
+                                {couponExpired ? (
+                                    <span>Code expired!</span>
+                                ) : (
+                                    <span>Expires in {formatTime(timeRemaining)}</span>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Coupon Display */}
+                        <div className={cn(
+                            "flex items-center gap-2 p-3 border",
+                            couponExpired
+                                ? "bg-red-500/10 border-red-500/30 opacity-60"
+                                : "bg-red-accent/10 border-red-accent/30"
+                        )}>
+                            <code className={cn(
+                                "flex-1 font-mono font-bold text-lg text-center",
+                                couponExpired && "line-through"
+                            )}>
+                                {couponGenerated.code}
+                            </code>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="rounded-none"
+                                onClick={handleCopyCode}
+                                disabled={couponExpired}
+                            >
+                                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                            </Button>
+                        </div>
+
+                        {/* Apply Button or Re-negotiate */}
+                        {couponExpired ? (
+                            <Button
+                                className="w-full h-11 rounded-none text-[10px] uppercase tracking-[0.15em]"
+                                onClick={handleReNegotiate}
+                            >
+                                Try again 🔄
+                            </Button>
+                        ) : !appliedCoupon ? (
+                            <Button
+                                className="w-full h-11 rounded-none text-[10px] uppercase tracking-[0.15em] bg-red-accent text-white hover:bg-[#8E0000]"
+                                onClick={handleApplyCoupon}
+                            >
+                                Apply ₹{couponGenerated.discount} discount
+                            </Button>
+                        ) : (
+                            <div className="text-center text-xs text-green-600 dark:text-green-400 font-medium py-2">
+                                ✓ Coupon applied
+                            </div>
+                        )}
+
+                        <Button
+                            variant="ghost"
+                            className="w-full text-[10px] text-muted-foreground uppercase tracking-[0.1em]"
+                            onClick={() => setIsOpen(false)}
+                        >
+                            Continue to checkout
+                        </Button>
+                    </div>
+                )}
+
+                {/* Chat Input (only if no coupon generated yet) */}
+                {!couponGenerated && (
+                    <form onSubmit={handleSubmit} className="p-4 border-t bg-background">
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={input}
+                                onChange={handleInputChange}
+                                placeholder="Ask for a discount..."
+                                aria-label="Bargain message input"
+                                className="flex-1 px-3 py-2 border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-red-accent"
+                                disabled={isLoading}
+                            />
+                            <Button
+                                type="submit"
+                                size="icon"
+                                className="rounded-none bg-red-accent text-white hover:bg-[#8E0000]"
+                                disabled={isLoading || !input.trim()}
+                            >
+                                <Send className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </form>
+                )}
+            </div>
+        </div>,
+        document.body
+    ) : null
+
     // If coupon already applied, don't show bargain option
     if (appliedCoupon && !isOpen) {
         return (
@@ -280,163 +439,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                 </div>
             )}
 
-            {/* Bargain Chatbot Modal */}
-            {isOpen && (
-                <div 
-                    style={{ willChange: "opacity" }}
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
-                >
-                    <div 
-                        style={{ willChange: "transform, opacity" }}
-                        className="w-full max-w-md bg-background border border-border/60 shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
-                    >
-                        {/* Header */}
-                        <div className="p-4 bg-red-accent text-white flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-                                <span className="font-semibold tracking-[0.1em] uppercase text-[10px]">Bargain AI</span>
-                            </div>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 text-white hover:bg-white/10"
-                                onClick={() => setIsOpen(false)}
-                            >
-                                <X className="h-3.5 w-3.5" />
-                            </Button>
-                        </div>
-
-                        {/* Chat Area */}
-                        <div ref={chatContainerRef} className="h-72 p-4 overflow-y-auto space-y-3 bg-secondary/10">
-                            {messages.map((msg) => (
-                                <div key={msg.id} className={cn("flex w-full", msg.role === 'user' ? "justify-end" : "justify-start")}>
-                                    <div className={cn(
-                                        "max-w-[85%] p-3 text-sm",
-                                        msg.role === 'user'
-                                            ? "bg-primary text-primary-foreground"
-                                            : "bg-card border border-border"
-                                    )}>
-                                        <div className="whitespace-pre-wrap">
-                                            {msg.content.split('**').map((part, i) =>
-                                                i % 2 === 1 ? <strong key={i}>{part}</strong> : part
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                            {isLoading && (
-                                <div className="flex justify-start">
-                                    <div className="bg-card border border-border p-3 text-sm">
-                                        <div className="flex gap-1">
-                                            <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                            <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                            <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Coupon Display & Timer */}
-                        {couponGenerated && (
-                            <div className="p-4 border-t bg-background space-y-3">
-                                {/* Timer */}
-                                {timeRemaining !== null && (
-                                    <div className={cn(
-                                        "flex items-center justify-center gap-2 text-sm font-medium",
-                                        couponExpired ? "text-red-500" : timeRemaining <= 60 ? "text-orange-500" : "text-green-600"
-                                    )}>
-                                        <Clock className="h-4 w-4" />
-                                        {couponExpired ? (
-                                            <span>Code expired!</span>
-                                        ) : (
-                                            <span>Expires in {formatTime(timeRemaining)}</span>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Coupon Display */}
-                                <div className={cn(
-                                    "flex items-center gap-2 p-3 border",
-                                    couponExpired 
-                                        ? "bg-red-500/10 border-red-500/30 opacity-60"
-                                        : "bg-red-accent/10 border-red-accent/30"
-                                )}>
-                                    <code className={cn(
-                                        "flex-1 font-mono font-bold text-lg text-center",
-                                        couponExpired && "line-through"
-                                    )}>
-                                        {couponGenerated.code}
-                                    </code>
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="rounded-none"
-                                        onClick={handleCopyCode}
-                                        disabled={couponExpired}
-                                    >
-                                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                                    </Button>
-                                </div>
-
-                                {/* Apply Button or Re-negotiate */}
-                                {couponExpired ? (
-                                    <Button
-                                        className="w-full h-11 rounded-none text-[10px] uppercase tracking-[0.15em]"
-                                        onClick={handleReNegotiate}
-                                    >
-                                        Try again 🔄
-                                    </Button>
-                                ) : !appliedCoupon ? (
-                                    <Button
-                                        className="w-full h-11 rounded-none text-[10px] uppercase tracking-[0.15em] bg-red-accent text-white hover:bg-[#8E0000]"
-                                        onClick={handleApplyCoupon}
-                                    >
-                                        Apply ₹{couponGenerated.discount} discount
-                                    </Button>
-                                ) : (
-                                    <div className="text-center text-xs text-green-600 dark:text-green-400 font-medium py-2">
-                                        ✓ Coupon applied
-                                    </div>
-                                )}
-
-                                <Button
-                                    variant="ghost"
-                                    className="w-full text-[10px] text-muted-foreground uppercase tracking-[0.1em]"
-                                    onClick={() => setIsOpen(false)}
-                                >
-                                    Continue to checkout
-                                </Button>
-                            </div>
-                        )}
-
-                        {/* Chat Input (only if no coupon generated yet) */}
-                        {!couponGenerated && (
-                            <form onSubmit={handleSubmit} className="p-4 border-t bg-background">
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={input}
-                                        onChange={handleInputChange}
-                                        placeholder="Ask for a discount..."
-                                        aria-label="Bargain message input"
-                                        className="flex-1 px-3 py-2 border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-red-accent"
-                                        disabled={isLoading}
-                                    />
-                                    <Button
-                                        type="submit"
-                                        size="icon"
-                                        className="rounded-none bg-red-accent text-white hover:bg-[#8E0000]"
-                                        disabled={isLoading || !input.trim()}
-                                    >
-                                        <Send className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            </form>
-                        )}
-                    </div>
-                </div>
-            )}
+            {bargainModal}
         </>
     )
 }

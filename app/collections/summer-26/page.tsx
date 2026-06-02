@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { connection } from "next/server"
 import { ProductGrid } from "@/components/features/product-grid"
 import { JsonLd, breadcrumbJsonLd, collectionJsonLd } from "@/components/seo/structured-data"
 import { getCatalogProducts } from "@/lib/product-catalog"
@@ -19,6 +20,8 @@ export const metadata: Metadata = {
 }
 
 export default async function Summer26Page() {
+    await connection()
+
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
     const { products } = await getCatalogProducts()
 

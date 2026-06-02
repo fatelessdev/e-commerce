@@ -10,8 +10,17 @@ import {
   pgEnum,
   uniqueIndex,
   index,
+  vector,
+  customType,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
+import { PRODUCT_SEARCH_EMBEDDING_DIMENSIONS } from "../product-search.ts";
+
+const tsvector = customType<{ data: string; driverData: string }>({
+  dataType() {
+    return "tsvector";
+  },
+});
 
 // Enums
 export const userRoleEnum = pgEnum("user_role", ["user", "admin"]);
@@ -148,6 +157,13 @@ export const products = pgTable("products", {
   // Size & Color variants
   sizes: json("sizes").$type<string[]>().default(["S", "M", "L", "XL"]),
   colors: json("colors").$type<{ name: string; hex: string; images?: string[] }[]>().default([]),
+
+  // Search index fields
+  searchText: text("search_text").notNull().default(""),
+  searchTokens: tsvector("search_tokens").generatedAlwaysAs(sql`to_tsvector('english', coalesce("search_text", ''))`),
+  searchEmbedding: vector("search_embedding", { dimensions: PRODUCT_SEARCH_EMBEDDING_DIMENSIONS }),
+  searchEmbeddingHash: text("search_embedding_hash"),
+  searchEmbeddingModel: text("search_embedding_model"),
   
   // Metadata
   isNew: boolean("is_new").notNull().default(false),

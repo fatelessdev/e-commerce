@@ -8,9 +8,8 @@ import { BargainDiscountStrip } from "@/components/ui/bargain-discount-strip"
 import Image from "next/image"
 import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react"
 import { normalizeProductImage } from "@/lib/image"
-import { getDisplaySizes, useShopCatalog, type CatalogProduct } from "@/components/features/use-shop-catalog"
+import { getDisplaySizes, useShopCatalog, type CatalogProduct, type ProductPageResponse, type ShopCatalogQuery } from "@/components/features/use-shop-catalog"
 import { ViewportPrefetchLink } from "@/components/ui/viewport-prefetch-link"
-import { filterCatalogProducts } from "@/lib/catalog-filter"
 
 const CATEGORIES = ["All", "tshirt", "shirt", "cargo", "jogger", "jeans", "hoodie", "jacket", "shorts", "accessory"]
 const CATEGORY_LABELS: Record<string, string> = {
@@ -57,6 +56,7 @@ interface ShopClientProps {
     isNew?: boolean
     isPremium?: boolean
     initialProducts?: CatalogProduct[]
+    initialCatalog?: ProductPageResponse
 }
 
 export function ShopClient({
@@ -68,6 +68,7 @@ export function ShopClient({
     isNew,
     isPremium,
     initialProducts,
+    initialCatalog,
 }: ShopClientProps) {
     const pathname = usePathname()
     const [searchQuery, setSearchQuery] = useState(initialSearch)
@@ -79,42 +80,57 @@ export function ShopClient({
     const pendingRestoreRef = useRef<ShopRestoreState | null>(null)
     const restoredRef = useRef(false)
 
-    const { data: products = [], isLoading: loading } = useShopCatalog(initialProducts)
+    const effectiveSelectedCategory = fixedCategory || selectedCategory
+    const catalogQuery = useMemo<ShopCatalogQuery>(() => {
+        const trimmedSearch = searchQuery.trim()
+        const query: ShopCatalogQuery = {
+            limit: 24,
+            search: trimmedSearch || undefined,
+            category: effectiveSelectedCategory === "All" ? undefined : effectiveSelectedCategory,
+            gender: genderFilter === "all" ? undefined : genderFilter,
+            size: selectedSize || undefined,
+            isNew: isNew || undefined,
+            isPremium: isPremium || undefined,
+        }
 
-    const filteredProducts = useMemo(() => {
-        const effectiveSelectedCategory = fixedCategory || selectedCategory
-        return filterCatalogProducts(products, {
-            gender: genderFilter,
-            fixedCategory: effectiveSelectedCategory === "All" ? undefined : effectiveSelectedCategory,
-            isNew,
-            isPremium,
-            searchQuery,
-            limit: null,
-        }).filter((product) => {
-            // Size
-            if (selectedSize && !getDisplaySizes(product).includes(selectedSize)) {
-                return false
-            }
-            // Price
-            const price = parseFloat(product.sellingPrice)
-            if (price < selectedPriceRange.min || price > selectedPriceRange.max) {
-                return false
-            }
-            return true
-        })
-    }, [fixedCategory, genderFilter, isNew, isPremium, products, searchQuery, selectedCategory, selectedSize, selectedPriceRange])
+        if (selectedPriceRange.min > 0) {
+            query.minPrice = String(selectedPriceRange.min)
+        }
+        if (Number.isFinite(selectedPriceRange.max)) {
+            query.maxPrice = String(selectedPriceRange.max)
+        }
 
-    const visibleProducts = filteredProducts.slice(0, visibleCount)
-    const hasMore = visibleCount < filteredProducts.length
+        return query
+    }, [effectiveSelectedCategory, genderFilter, isNew, isPremium, searchQuery, selectedPriceRange, selectedSize])
+
+    const {
+        data: products = [],
+        isLoading: loading,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useShopCatalog(catalogQuery, initialCatalog || (initialProducts ? {
+        products: initialProducts,
+        total: initialProducts.length,
+        limit: initialProducts.length,
+        offset: 0,
+    } : undefined))
+
+    const visibleProducts = products.slice(0, visibleCount)
+    const hasMore = visibleCount < products.length || Boolean(hasNextPage)
 
     // Infinite scroll sentinel
     const sentinelRef = useRef<HTMLDivElement>(null)
     useEffect(() => {
-        if (!hasMore || loading) return
+        if (!hasMore || loading || isFetchingNextPage) return
         const observer = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting) {
-                    setVisibleCount((prev) => prev + 8)
+                    if (visibleCount < products.length) {
+                        setVisibleCount((prev) => prev + 8)
+                    } else if (hasNextPage) {
+                        fetchNextPage()
+                    }
                 }
             },
             { rootMargin: "200px" }
@@ -122,7 +138,7 @@ export function ShopClient({
         const el = sentinelRef.current
         if (el) observer.observe(el)
         return () => { if (el) observer.unobserve(el) }
-    }, [hasMore, loading, filteredProducts.length])
+    }, [fetchNextPage, hasMore, hasNextPage, isFetchingNextPage, loading, products.length, visibleCount])
 
     useEffect(() => {
         if (restoredRef.current || typeof window === "undefined") return
@@ -175,9 +191,9 @@ export function ShopClient({
 
     useEffect(() => {
         const saved = pendingRestoreRef.current
-        if (!saved || loading || filteredProducts.length === 0) return
+        if (!saved || loading || products.length === 0) return
 
-        const clickedIndex = filteredProducts.findIndex((product) => product.id === saved.clickedProductId)
+        const clickedIndex = products.findIndex((product) => product.id === saved.clickedProductId)
         const requiredVisibleCount = Math.max(saved.visibleCount, clickedIndex >= 0 ? clickedIndex + 1 : 8)
 
         if (visibleCount < requiredVisibleCount) {
@@ -198,7 +214,7 @@ export function ShopClient({
         }
 
         window.requestAnimationFrame(restore)
-    }, [filteredProducts, loading, visibleCount])
+    }, [products, loading, visibleCount])
 
     const saveScrollState = (clickedProductId: string) => {
         if (typeof window === "undefined") return
@@ -245,8 +261,6 @@ export function ShopClient({
         selectedSize !== null,
         selectedPriceRange !== PRICE_RANGES[0],
     ].filter(Boolean).length
-    const effectiveSelectedCategory = fixedCategory || selectedCategory
-
     const formatPrice = (price: string) => {
         const num = parseFloat(price)
         return `₹${num.toLocaleString("en-IN")}`
@@ -395,7 +409,7 @@ export function ShopClient({
                     </div>
                 ) : (
                     <>
-                        <p className="text-[10px] text-muted-foreground mb-6 uppercase tracking-[0.15em] tabular-nums">{filteredProducts.length} products</p>
+                        <p className="text-[10px] text-muted-foreground mb-6 uppercase tracking-[0.15em] tabular-nums">{products.length} products</p>
                         {visibleProducts.length > 0 ? (
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                                 {visibleProducts.map((product) => (

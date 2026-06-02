@@ -33,6 +33,7 @@ RAZORPAY_KEY_ID=
 RAZORPAY_KEY_SECRET=
 NEXT_PUBLIC_RAZORPAY_KEY_ID=
 OPENROUTER_API_KEY=
+GEMINI_API_KEYS=
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
@@ -51,6 +52,7 @@ npm run db:studio
 ```
 
 Use `npm test`, `npm run lint`, and `npm run build` as the main quality gate before shipping.
+Run `npm run search:backfill` after adding or changing product fields that should affect search embeddings.
 
 ## Architecture
 
