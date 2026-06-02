@@ -8,8 +8,9 @@ import { BargainDiscountStrip } from "@/components/ui/bargain-discount-strip"
 import Image from "next/image"
 import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react"
 import { normalizeProductImage } from "@/lib/image"
-import { getDisplaySizes, productMatchesGender, useShopCatalog, type CatalogProduct } from "@/components/features/use-shop-catalog"
+import { getDisplaySizes, useShopCatalog, type CatalogProduct } from "@/components/features/use-shop-catalog"
 import { ViewportPrefetchLink } from "@/components/ui/viewport-prefetch-link"
+import { filterCatalogProducts } from "@/lib/catalog-filter"
 
 const CATEGORIES = ["All", "tshirt", "shirt", "cargo", "jogger", "jeans", "hoodie", "jacket", "shorts", "accessory"]
 const CATEGORY_LABELS: Record<string, string> = {
@@ -53,10 +54,21 @@ interface ShopClientProps {
     subtitle?: string
     initialSearch?: string
     fixedCategory?: string
+    isNew?: boolean
+    isPremium?: boolean
     initialProducts?: CatalogProduct[]
 }
 
-export function ShopClient({ genderFilter = "all", title = "All Products", subtitle, initialSearch = "", fixedCategory, initialProducts }: ShopClientProps) {
+export function ShopClient({
+    genderFilter = "all",
+    title = "All Products",
+    subtitle,
+    initialSearch = "",
+    fixedCategory,
+    isNew,
+    isPremium,
+    initialProducts,
+}: ShopClientProps) {
     const pathname = usePathname()
     const [searchQuery, setSearchQuery] = useState(initialSearch)
     const [selectedCategory, setSelectedCategory] = useState(fixedCategory || "All")
@@ -67,28 +79,18 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
     const pendingRestoreRef = useRef<ShopRestoreState | null>(null)
     const restoredRef = useRef(false)
 
-    useEffect(() => {
-        if (initialSearch !== undefined) {
-            setSearchQuery(initialSearch)
-        }
-    }, [initialSearch])
-
     const { data: products = [], isLoading: loading } = useShopCatalog(initialProducts)
 
     const filteredProducts = useMemo(() => {
         const effectiveSelectedCategory = fixedCategory || selectedCategory
-        return products.filter((product) => {
-            if (!productMatchesGender(product, genderFilter)) {
-                return false
-            }
-            // Search
-            if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-                return false
-            }
-            // Category
-            if (effectiveSelectedCategory !== "All" && product.category !== effectiveSelectedCategory) {
-                return false
-            }
+        return filterCatalogProducts(products, {
+            gender: genderFilter,
+            fixedCategory: effectiveSelectedCategory === "All" ? undefined : effectiveSelectedCategory,
+            isNew,
+            isPremium,
+            searchQuery,
+            limit: null,
+        }).filter((product) => {
             // Size
             if (selectedSize && !getDisplaySizes(product).includes(selectedSize)) {
                 return false
@@ -100,7 +102,7 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
             }
             return true
         })
-    }, [fixedCategory, genderFilter, products, searchQuery, selectedCategory, selectedSize, selectedPriceRange])
+    }, [fixedCategory, genderFilter, isNew, isPremium, products, searchQuery, selectedCategory, selectedSize, selectedPriceRange])
 
     const visibleProducts = filteredProducts.slice(0, visibleCount)
     const hasMore = visibleCount < filteredProducts.length
@@ -213,8 +215,24 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
         window.sessionStorage.setItem(`${SHOP_SCROLL_PREFIX}${pathname}`, JSON.stringify(state))
     }
 
+    const replaceUrlSearch = (value: string) => {
+        if (typeof window === "undefined") return
+
+        const params = new URLSearchParams(window.location.search)
+        const trimmedValue = value.trim()
+        if (trimmedValue) {
+            params.set("search", trimmedValue)
+        } else {
+            params.delete("search")
+        }
+
+        const query = params.toString()
+        window.history.replaceState(window.history.state, "", `${pathname}${query ? `?${query}` : ""}`)
+    }
+
     const clearFilters = () => {
         setSearchQuery("")
+        replaceUrlSearch("")
         setSelectedCategory(fixedCategory || "All")
         setSelectedSize(null)
         setSelectedPriceRange(PRICE_RANGES[0])
@@ -222,6 +240,7 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
     }
 
     const activeFilterCount = [
+        searchQuery.trim() !== "",
         !fixedCategory && selectedCategory !== "All",
         selectedSize !== null,
         selectedPriceRange !== PRICE_RANGES[0],
@@ -259,7 +278,9 @@ export function ShopClient({ genderFilter = "all", title = "All Products", subti
                         placeholder="Search products..."
                         value={searchQuery}
                         onChange={(e) => {
-                            setSearchQuery(e.target.value)
+                            const value = e.target.value
+                            setSearchQuery(value)
+                            replaceUrlSearch(value)
                             setVisibleCount(8)
                         }}
                         className="w-full h-10 pl-10 pr-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"

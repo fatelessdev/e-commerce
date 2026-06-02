@@ -80,8 +80,13 @@ export function Hero() {
       setIsMenuOpen((e as CustomEvent).detail.open);
     };
     window.addEventListener("xilar-mobile-menu", handleMenuToggle);
-    setIsMenuOpen(document.body.classList.contains("mobile-menu-open"));
-    return () => window.removeEventListener("xilar-mobile-menu", handleMenuToggle);
+    const timer = window.setTimeout(() => {
+      setIsMenuOpen(document.body.classList.contains("mobile-menu-open"));
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("xilar-mobile-menu", handleMenuToggle);
+    };
   }, []);
 
   useEffect(() => {

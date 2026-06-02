@@ -1,17 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createOrder, type OrderItemInput } from "@/lib/actions/orders";
-import { validateCoupon } from "@/lib/actions/admin";
+import { createOrderFromQuote } from "@/lib/actions/orders";
 import { getServerSession } from "@/lib/auth-server";
-import { db } from "@/lib/db";
-import { products } from "@/lib/db/schema";
-import { and, eq, inArray } from "drizzle-orm";
-import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE, COD_FEE, COD_ALLOWED_PINCODES } from "@/lib/constants";
-import { validateCartQuantities } from "@/lib/checkout-validation";
-
-type IncomingOrderItem = Omit<OrderItemInput, "unitPrice" | "totalPrice"> & {
-  unitPrice?: unknown;
-  totalPrice?: unknown;
-};
+import { COD_ALLOWED_PINCODES } from "@/lib/constants";
+import { CheckoutQuoteError, createCheckoutQuote } from "@/lib/checkout/quote";
 
 export async function POST(_req: NextRequest) {
   try {
@@ -39,74 +30,18 @@ export async function POST(_req: NextRequest) {
       );
     }
 
-    // Recompute totals from actual DB prices
-    const items = body.items as IncomingOrderItem[];
-    if (!validateCartQuantities(items)) {
-      return NextResponse.json(
-        { success: false, error: "Invalid item quantity" },
-        { status: 400 }
-      );
-    }
-
-    let subtotal = 0;
-    const verifiedItems: OrderItemInput[] = [];
-
-    const productIds = [...new Set(items.map((item) => item.productId))];
-    const productRows = productIds.length > 0 ? await db
-      .select({ id: products.id, sellingPrice: products.sellingPrice, name: products.name })
-      .from(products)
-      .where(and(inArray(products.id, productIds), eq(products.isActive, true))) : [];
-
-    const productMap = new Map(productRows.map((p) => [p.id, p]));
-
-    for (const item of items) {
-      const product = productMap.get(item.productId);
-
-      if (!product) {
-        return NextResponse.json(
-          { success: false, error: `Product not found: ${item.productId}` },
-          { status: 400 }
-        );
-      }
-
-      const realPrice = parseFloat(product.sellingPrice);
-      const itemTotal = realPrice * item.quantity;
-      subtotal += itemTotal;
-
-      verifiedItems.push({
-        ...item,
-        unitPrice: realPrice,
-        totalPrice: itemTotal,
-      });
-    }
-
-    const shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
-    const codFee = COD_FEE;
-
-    // Validate coupon using canonical rules
-    let couponDiscount = 0;
-    if (body.couponCode) {
-      const session = await getServerSession();
-      const couponResult = await validateCoupon(body.couponCode, subtotal, session?.user?.id);
-      if (couponResult.valid && couponResult.discount !== undefined) {
-        couponDiscount = couponResult.discount;
-      }
-    }
-
-    const discount = couponDiscount;
-    const total = subtotal + shippingCost + codFee - discount;
-
-    const result = await createOrder({
-      items: verifiedItems,
-      subtotal,
-      shippingCost,
-      discount,
-      couponDiscount,
+    const session = await getServerSession();
+    const quote = await createCheckoutQuote({
+      items: body.items,
       couponCode: body.couponCode,
-      codFee,
-      total,
+      paymentMethod: "cod",
+      userId: session?.user?.id,
+    });
+
+    const result = await createOrderFromQuote({
+      quote,
       shippingAddress: body.shippingAddress,
-      paymentMethod: body.paymentMethod,
+      paymentMethod: "cod",
     });
 
     if (!result.success) {
@@ -118,6 +53,13 @@ export async function POST(_req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
+    if (error instanceof CheckoutQuoteError) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: error.status }
+      );
+    }
+
     console.error("Order creation error:", error);
     return NextResponse.json(
       { success: false, error: "Failed to create order" },

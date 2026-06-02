@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, type FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { MessageCircle, X, Send, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -27,40 +27,33 @@ interface Message {
     content: string
 }
 
+function getWelcomeMessage(ctx?: ProductContext): Message {
+    return {
+        id: "welcome",
+        role: "assistant",
+        content: ctx
+            ? `Hey! 👋 Checking out the ${ctx.name}? Great choice! Ask me anything - sizing, fabric, styling tips, or care instructions!`
+            : "Hey! 👋 Got questions about this product? I'm here to help! Ask me about sizing, fabric, care, or anything else.",
+    }
+}
+
 /**
  * ProductAssistant - A Q&A chatbot for product inquiries
  * Note: For discount negotiation, use CheckoutBargain component at checkout instead.
  */
 export function ProductAssistant({ productContext }: ProductAssistantProps) {
     const [isOpen, setIsOpen] = useState(false)
-    const getWelcomeMessage = (ctx?: ProductContext): Message => ({
-        id: "welcome",
-        role: "assistant",
-        content: ctx
-            ? `Hey! 👋 Checking out the ${ctx.name}? Great choice! Ask me anything - sizing, fabric, styling tips, or care instructions!`
-            : "Hey! 👋 Got questions about this product? I'm here to help! Ask me about sizing, fabric, care, or anything else.",
-    })
-
     const [messages, setMessages] = useState<Message[]>([getWelcomeMessage(productContext)])
     const [input, setInput] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
-    const prevProductIdRef = useRef(productContext?.id)
 
     // Auto-scroll to bottom on new messages
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages])
 
-    // Reset chat when product changes
-    if (productContext?.id !== prevProductIdRef.current) {
-        prevProductIdRef.current = productContext?.id
-        if (productContext) {
-            setMessages([getWelcomeMessage(productContext)])
-        }
-    }
-
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault()
         if (!input.trim() || isLoading) return
 
@@ -126,7 +119,7 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
             )}
 
             {isOpen && (
-                <div className="w-80 sm:w-96 bg-background border border-border shadow-2xl rounded-lg overflow-hidden flex flex-col h-125 animate-in slide-in-from-bottom-5 fade-in duration-300">
+                <div className="w-80 sm:w-96 bg-background border border-border shadow-2xl rounded-lg overflow-hidden flex flex-col h-[31.25rem] animate-in slide-in-from-bottom-5 fade-in duration-300">
                     {/* Header */}
                     <div className="p-4 bg-foreground text-background flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -218,6 +211,3 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
         </div>
     )
 }
-
-// Keep old export for backwards compatibility (deprecated - use ProductAssistant instead)
-export const BargainAI = ProductAssistant

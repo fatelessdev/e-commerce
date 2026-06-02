@@ -3,7 +3,7 @@ import { isAdmin } from "@/lib/auth-server";
 import { getProductDetails } from "@/lib/product-detail";
 
 export async function GET(
-  req: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import gsap from "gsap";
@@ -178,7 +179,7 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
-      canvas.innerHTML = "";
+      canvas.replaceChildren();
     }
     stateRef.current.visibleTiles.clear();
 
@@ -577,9 +578,11 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
               }
         }
       >
-        <img
+        <Image
           src={active.item.src}
           alt={active.item.title}
+          fill
+          sizes={isMobile ? "100vw" : "84vw"}
           className="h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/12 to-black/10" />

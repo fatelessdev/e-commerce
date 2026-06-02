@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connection } from "next/server";
-import { parsePublicProductPagination } from "@/lib/checkout-validation";
+import { parsePublicProductPagination } from "@/lib/checkout/validation";
 import { getCatalogProducts } from "@/lib/product-catalog";
 
 export async function GET(req: NextRequest) {

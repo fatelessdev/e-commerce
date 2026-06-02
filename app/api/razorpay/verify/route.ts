@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validatePaymentVerification } from "razorpay/dist/utils/razorpay-utils";
-import { createOrder, type OrderItemInput } from "@/lib/actions/orders";
+import { createOrderFromQuote } from "@/lib/actions/orders";
 import razorpay from "@/lib/razorpay";
 import { db } from "@/lib/db";
-import { orders, products } from "@/lib/db/schema";
-import { and, eq, inArray, or } from "drizzle-orm";
-import { validateCoupon } from "@/lib/actions/admin";
+import { orders } from "@/lib/db/schema";
+import { eq, or } from "drizzle-orm";
 import { getServerSession } from "@/lib/auth-server";
-import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from "@/lib/constants";
-import { validateCartQuantities } from "@/lib/checkout-validation";
-
-type IncomingOrderItem = Omit<OrderItemInput, "unitPrice" | "totalPrice"> & {
-  unitPrice?: unknown;
-  totalPrice?: unknown;
-};
+import { CheckoutQuoteError, createCheckoutQuote } from "@/lib/checkout/quote";
+import { assertRazorpayAmountMatchesQuote } from "@/lib/checkout/pricing";
 
 export async function POST(req: NextRequest) {
   try {
@@ -79,61 +73,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // --- Server-side amount verification ---
-    // Recalculate total from actual DB prices to prevent tampering
-    const incomingItems = orderData.items as IncomingOrderItem[];
-    if (!validateCartQuantities(incomingItems)) {
-      return NextResponse.json(
-        { success: false, error: "Invalid item quantity" },
-        { status: 400 }
-      );
-    }
-
-    let serverSubtotal = 0;
-    const verifiedItems: OrderItemInput[] = [];
-
-    const productIds = [...new Set(incomingItems.map((item) => item.productId))];
-    const productRows = productIds.length > 0 ? await db
-      .select({ id: products.id, sellingPrice: products.sellingPrice, name: products.name })
-      .from(products)
-      .where(and(inArray(products.id, productIds), eq(products.isActive, true))) : [];
-
-    const productMap = new Map(productRows.map((p) => [p.id, p]));
-
-    for (const item of incomingItems) {
-      const product = productMap.get(item.productId);
-
-      if (!product) {
-        return NextResponse.json(
-          { success: false, error: `Product not found: ${item.productId}` },
-          { status: 400 }
-        );
-      }
-
-      const realPrice = parseFloat(product.sellingPrice);
-      const itemTotal = realPrice * item.quantity;
-      serverSubtotal += itemTotal;
-      verifiedItems.push({
-        ...item,
-        unitPrice: realPrice,
-        totalPrice: itemTotal,
-      });
-    }
-
-    const serverShipping = serverSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
-
-    // Validate coupon using canonical rules (expiry, usage limits, min order, etc.)
-    let couponDiscount = 0;
-    if (orderData.couponCode) {
-      const session = await getServerSession();
-      const couponResult = await validateCoupon(orderData.couponCode, serverSubtotal, session?.user?.id);
-      if (couponResult.valid && couponResult.discount) {
-        couponDiscount = couponResult.discount;
-      }
-    }
-
-    const serverDiscount = couponDiscount;
-    const serverTotal = serverSubtotal + serverShipping - serverDiscount;
+    const session = await getServerSession();
+    const quote = await createCheckoutQuote({
+      items: orderData.items,
+      couponCode: orderData.couponCode,
+      paymentMethod: orderData.paymentMethod,
+      userId: session?.user?.id,
+    });
 
     const payment = await razorpay.payments.fetch(razorpay_payment_id);
     if (
@@ -149,33 +95,23 @@ export async function POST(req: NextRequest) {
 
     // Fetch the Razorpay order to verify the paid amount matches
     const rzpOrder = await razorpay.orders.fetch(razorpay_order_id);
-    const paidAmountInRupees = Number(rzpOrder.amount) / 100;
-    const capturedAmountInRupees = Number(payment.amount) / 100;
-
-    // Allow ₹1 tolerance for rounding
-    if (
-      Math.abs(paidAmountInRupees - serverTotal) > 1 ||
-      Math.abs(capturedAmountInRupees - serverTotal) > 1
-    ) {
-      console.error(
-        `Amount mismatch: order ₹${paidAmountInRupees}, captured ₹${capturedAmountInRupees}, expected ₹${serverTotal}`
-      );
+    try {
+      assertRazorpayAmountMatchesQuote({
+        quoteTotal: quote.total,
+        orderAmountInPaise: Number(rzpOrder.amount),
+        capturedAmountInPaise: Number(payment.amount),
+      });
+    } catch (error) {
+      console.error(`Amount mismatch: order ₹${Number(rzpOrder.amount) / 100}, captured ₹${Number(payment.amount) / 100}, expected ₹${quote.total}`);
       return NextResponse.json(
-        { success: false, error: "Payment amount mismatch. Please contact support." },
+        { success: false, error: error instanceof Error ? error.message : "Payment amount mismatch. Please contact support." },
         { status: 400 }
       );
     }
 
     // Payment verified & amount validated — create the order with server-computed values
-    const result = await createOrder({
-      items: verifiedItems,
-      subtotal: serverSubtotal,
-      shippingCost: serverShipping,
-      discount: serverDiscount,
-      couponDiscount,
-      couponCode: orderData.couponCode,
-      codFee: 0,
-      total: serverTotal,
+    const result = await createOrderFromQuote({
+      quote,
       shippingAddress: orderData.shippingAddress,
       paymentMethod: orderData.paymentMethod,
       paymentStatus: "paid",
@@ -193,6 +129,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
+    if (error instanceof CheckoutQuoteError) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: error.status }
+      );
+    }
+
     console.error("Payment verification error:", error);
     return NextResponse.json(
       { success: false, error: "Payment verification failed" },

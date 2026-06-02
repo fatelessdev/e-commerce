@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { parsePublicProductPagination, validateCartQuantities } from "./checkout-validation.ts"
+import { parsePublicProductPagination, validateCartQuantities } from "./checkout/validation.ts"
 
 test("clamps public product pagination to safe bounds", () => {
   assert.deepEqual(parsePublicProductPagination("1000", "-20"), {

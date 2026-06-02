@@ -6,6 +6,7 @@ export type CatalogFilterOptions = {
   isFeatured?: boolean;
   isNew?: boolean;
   isPremium?: boolean;
+  searchQuery?: string;
   limit?: number | null;
 };
 
@@ -25,15 +26,18 @@ export function filterCatalogProducts(
     isFeatured,
     isNew,
     isPremium,
+    searchQuery,
     limit,
   }: CatalogFilterOptions,
 ) {
+  const normalizedSearchQuery = searchQuery?.trim().toLowerCase();
   const filteredProducts = products
     .filter((product) => productMatchesGender(product, gender))
     .filter((product) => !fixedCategory || product.category === fixedCategory)
     .filter((product) => !isFeatured || product.isFeatured)
     .filter((product) => !isNew || product.isNew)
-    .filter((product) => !isPremium || product.isPremium);
+    .filter((product) => !isPremium || product.isPremium)
+    .filter((product) => !normalizedSearchQuery || product.name.toLowerCase().includes(normalizedSearchQuery));
 
   return typeof limit === "number" ? filteredProducts.slice(0, limit) : filteredProducts;
 }

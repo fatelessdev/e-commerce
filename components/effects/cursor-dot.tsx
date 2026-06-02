@@ -74,7 +74,9 @@ export function CursorDot() {
   const labelRef = useRef<HTMLSpanElement>(null);
   const shouldReduceMotion = useReducedMotion();
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(() => (
+    typeof window !== "undefined" && window.matchMedia("(pointer: fine)").matches
+  ));
 
   // Skip on admin pages
   const isAdmin = pathname.startsWith("/admin");
@@ -83,9 +85,6 @@ export function CursorDot() {
     // Only mount on desktop devices with fine pointer
     if (typeof window === "undefined") return;
     const mql = window.matchMedia("(pointer: fine)");
-    if (!mql.matches) return;
-    setMounted(true);
-
     const onChange = (e: MediaQueryListEvent) => setMounted(e.matches);
     mql.addEventListener("change", onChange);
     return () => mql.removeEventListener("change", onChange);
@@ -139,7 +138,7 @@ export function CursorDot() {
       });
     };
 
-    const applyState = (state: CursorState, labelText: string | null, magneticEl: HTMLElement | null) => {
+    const applyState = (state: CursorState, labelText: string | null) => {
       if (state === currentState && state !== "explore") return;
       currentState = state;
 
@@ -183,7 +182,7 @@ export function CursorDot() {
       const target = e.target as HTMLElement;
       if (!target) return;
       const { state, label: labelText, magnetic } = resolveCursorState(target);
-      applyState(state, labelText, magnetic);
+      applyState(state, labelText);
 
       // Magnetic pull
       if (magnetic) {
@@ -210,8 +209,8 @@ export function CursorDot() {
         currentState = "default";
         return;
       }
-      const { state, label: labelText, magnetic } = resolveCursorState(related);
-      applyState(state, labelText, magnetic);
+      const { state, label: labelText } = resolveCursorState(related);
+      applyState(state, labelText);
     };
 
     window.addEventListener("pointermove", onMove, { passive: true });

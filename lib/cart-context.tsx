@@ -42,6 +42,19 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
+function readStoredCart() {
+    const stored = localStorage.getItem("xilar-cart")
+    if (!stored) return []
+
+    try {
+        const parsed = JSON.parse(stored)
+        return Array.isArray(parsed) ? parsed : []
+    } catch {
+        localStorage.removeItem("xilar-cart")
+        return []
+    }
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
     const [items, setItems] = useState<CartItem[]>([])
     const [isOpen, setIsOpen] = useState(false)
@@ -49,8 +62,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         queueMicrotask(() => {
-            const stored = localStorage.getItem("xilar-cart")
-            setItems(stored ? JSON.parse(stored) : [])
+            setItems(readStoredCart())
             setIsHydrated(true)
         })
     }, [])

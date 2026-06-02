@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useTransition } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -65,6 +65,8 @@ export default function EditProductPage() {
   const productId = params.id as string;
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const hydratedProductId = useRef<string | null>(null);
 
@@ -101,6 +103,7 @@ export default function EditProductPage() {
   const [newTag, setNewTag] = useState("");
   const [variantStock, setVariantStock] = useState<Record<string, number>>({});
   const isAccessory = formData.category === "accessory";
+  const isBusy = isLoading || isRedirecting || isPending;
 
   const queryClient = useQueryClient();
   const {
@@ -200,6 +203,8 @@ export default function EditProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isBusy) return;
+
     setIsLoading(true);
     setError("");
 
@@ -249,12 +254,16 @@ export default function EditProductPage() {
         queryClient.invalidateQueries({ queryKey: ["shop-the-reels"] }),
         queryClient.invalidateQueries({ queryKey: ["combos"] }),
       ]);
-      router.push("/admin/products");
+      setIsRedirecting(true);
+      startTransition(() => {
+        router.push("/admin/products");
+        router.refresh();
+      });
     } catch (err) {
       console.error("Failed to update product:", err);
       setError(err instanceof Error ? err.message : "Failed to update product");
-    } finally {
       setIsLoading(false);
+      setIsRedirecting(false);
     }
   };
 
@@ -998,11 +1007,11 @@ export default function EditProductPage() {
 
         {/* Submit */}
         <div className="flex gap-4">
-          <Button type="submit" disabled={isLoading} className="flex-1">
-            {isLoading ? (
+          <Button type="submit" disabled={isBusy} className="flex-1">
+            {isBusy ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
+                {isRedirecting || isPending ? "Opening products..." : "Saving..."}
               </>
             ) : (
               "Save Changes"
@@ -1012,7 +1021,7 @@ export default function EditProductPage() {
             type="button"
             variant="outline"
             onClick={() => router.back()}
-            disabled={isLoading}
+            disabled={isBusy}
           >
             Cancel
           </Button>

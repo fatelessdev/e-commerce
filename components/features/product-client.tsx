@@ -13,6 +13,7 @@ import Image from "next/image"
 import { normalizeProductImage } from "@/lib/image"
 import type { ProductDetails } from "@/lib/product-detail"
 import { ViewportPrefetchLink } from "@/components/ui/viewport-prefetch-link"
+import { ProductAssistant } from "@/components/features/bargain-ai"
 
 type Product = ProductDetails
 
@@ -258,6 +259,17 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
     const displayPrice = `₹${price.toLocaleString("en-IN")}`
     const displayMrp = `₹${mrp.toLocaleString("en-IN")}`
     const productSizes = product.sizes || []
+    const productAssistantContext = {
+        id: product.id,
+        name: product.name,
+        mrp,
+        sellingPrice: price,
+        category: product.category,
+        fabric: product.fabric ?? undefined,
+        features: product.features ?? undefined,
+        sizes: product.sizes ?? undefined,
+        description: product.description ?? undefined,
+    }
     const productColors = product.colors || []
     const productFeatures = product.features || []
 
@@ -323,6 +335,7 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
     }
 
     return (
+        <>
         <div className="min-h-screen bg-background pb-24 lg:pt-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
                 {/* Gallery Section — Horizontal Slider */}
@@ -752,5 +765,7 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                 )}
             </div>
         </div>
+        <ProductAssistant key={product.id} productContext={productAssistantContext} />
+        </>
     )
 }

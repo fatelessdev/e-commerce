@@ -1,4 +1,4 @@
-import { formatBargainDiscountLabel } from "@/lib/bargain-discount"
+import { formatBargainDiscountLabel } from "@/lib/bargain/discount"
 import { cn } from "@/lib/utils"
 
 interface BargainDiscountStripProps {

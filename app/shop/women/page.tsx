@@ -21,7 +21,12 @@ export const metadata: Metadata = {
     },
 }
 
-export default async function ShopWomenPage() {
+export default async function ShopWomenPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ search?: string }>
+}) {
+    const { search } = await searchParams
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
     const [{ products }, combos] = await Promise.all([
         getCatalogProducts(),
@@ -44,7 +49,14 @@ export default async function ShopWomenPage() {
                     url: "/shop/women",
                 })}
             />
-            <ShopClient genderFilter="women" title="Women" subtitle="Streetwear essentials for her" initialProducts={products} />
+            <ShopClient
+                key={search || ""}
+                genderFilter="women"
+                title="Women"
+                subtitle="Streetwear essentials for her"
+                initialSearch={search || ""}
+                initialProducts={products}
+            />
             <ComboSection limit={6} interactive={false} initialCombos={combos} />
         </>
     )
