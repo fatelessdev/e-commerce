@@ -193,15 +193,15 @@ export function AdminProductsClient({ initialPage }: { initialPage: AdminProduct
         </Link>
       </div>
 
-      <div className="overflow-hidden rounded-lg border">
+      <div className="overflow-x-auto rounded-lg border">
         <table className="w-full">
           <thead>
             <tr className="border-b bg-muted/50">
               <th className="text-left p-4 font-medium">Product</th>
-              <th className="text-left p-4 font-medium">Category</th>
+              <th className="text-left p-4 font-medium hidden md:table-cell">Category</th>
               <th className="text-left p-4 font-medium">Price</th>
-              <th className="text-left p-4 font-medium">Stock</th>
-              <th className="text-left p-4 font-medium">Status</th>
+              <th className="text-left p-4 font-medium hidden sm:table-cell">Stock</th>
+              <th className="text-left p-4 font-medium hidden sm:table-cell">Status</th>
               <th className="text-right p-4 font-medium">Actions</th>
             </tr>
           </thead>
@@ -221,7 +221,7 @@ export function AdminProductsClient({ initialPage }: { initialPage: AdminProduct
                 )}
                 {visibleProducts.map((product) => {
                 const isDeleting = deleteMutation.variables === product.id && deleteMutation.isPending;
-
+ 
                 return (
                   <tr
                     key={product.id}
@@ -243,14 +243,14 @@ export function AdminProductsClient({ initialPage }: { initialPage: AdminProduct
                           <div className="h-12 w-12 shrink-0 rounded bg-muted" />
                         )}
                         <div>
-                          <div className="font-medium">{product.name}</div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="font-medium line-clamp-1">{product.name}</div>
+                          <div className="text-sm text-muted-foreground line-clamp-1">
                             {product.slug}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 hidden md:table-cell">
                       <span className="capitalize">{product.category}</span>
                       <span className="text-muted-foreground"> / {product.gender}</span>
                     </td>
@@ -262,12 +262,12 @@ export function AdminProductsClient({ initialPage }: { initialPage: AdminProduct
                         </div>
                       )}
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 hidden sm:table-cell">
                       <span className={product.stock > 0 ? "" : "text-destructive"}>
                         {product.stock}
                       </span>
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 hidden sm:table-cell">
                       {product.isActive ? (
                         <span className="inline-flex items-center rounded-full bg-green-500/10 px-2 py-1 text-xs text-green-500">
                           Active

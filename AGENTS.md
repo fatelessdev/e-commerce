@@ -1,5 +1,9 @@
 # XILAR E-Commerce — Copilot Instructions
 
+> [!IMPORTANT]
+> **Design Philosophy & Visual Styling:**
+> For all design context, colors, typography, motion rules, animations, interactive mechanics, performance safeguards, and accessibility guidance, you **must** refer to [.impeccable.md](file:///c:/Users/fateless/Documents/Projects/xilar/.impeccable.md). Keep this instructions file focused on backend/frontend engineering architecture and implementation rules.
+
 CHECK IF YOU HAVE SKILLS FOR THE TECHNOLOGY YOU'RE TRYING TO IMPLEMENT. IF PRESENT, REFER TO THE SKILLS FIRST AND THEN PROCEED. USE THE ASK QUESTIONS TOOL AT THE SLIGHTEST BIT OF CONFUSION
 
 No bandaid fixes. Fix root causes.

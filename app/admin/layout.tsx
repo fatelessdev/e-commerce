@@ -74,7 +74,7 @@ export default async function AdminLayout({
           </nav>
 
           <div className="ml-auto flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-muted-foreground hidden sm:inline">
               {session.user.email}
             </span>
             <Link 
@@ -87,8 +87,17 @@ export default async function AdminLayout({
         </div>
       </header>
 
+      {/* Mobile navigation subheader */}
+      <div className="flex md:hidden border-b bg-background overflow-x-auto scrollbar-hide py-3 px-4 gap-5 sticky top-16 z-40">
+        <Link href="/admin" className="text-[10px] uppercase font-semibold tracking-[0.2em] text-muted-foreground hover:text-foreground shrink-0 transition-colors">Dashboard</Link>
+        <Link href="/admin/products" className="text-[10px] uppercase font-semibold tracking-[0.2em] text-muted-foreground hover:text-foreground shrink-0 transition-colors">Products</Link>
+        <Link href="/admin/combos" className="text-[10px] uppercase font-semibold tracking-[0.2em] text-muted-foreground hover:text-foreground shrink-0 transition-colors">Combos</Link>
+        <Link href="/admin/orders" className="text-[10px] uppercase font-semibold tracking-[0.2em] text-muted-foreground hover:text-foreground shrink-0 transition-colors">Orders</Link>
+        <Link href="/admin/coupons" className="text-[10px] uppercase font-semibold tracking-[0.2em] text-muted-foreground hover:text-foreground shrink-0 transition-colors">Coupons</Link>
+      </div>
+
       {/* Main Content */}
-      <main className="p-6">
+      <main className="p-4 sm:p-6">
         {children}
       </main>
     </div>

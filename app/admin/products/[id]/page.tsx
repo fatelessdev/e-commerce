@@ -319,7 +319,7 @@ export default function EditProductPage() {
             <CardTitle>Basic Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Product Name *</label>
                 <input
@@ -354,7 +354,7 @@ export default function EditProductPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Category *</label>
                 <select
@@ -413,7 +413,7 @@ export default function EditProductPage() {
             <CardTitle>Pricing</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">MRP (₹) *</label>
                 <input
@@ -563,7 +563,7 @@ export default function EditProductPage() {
           <CardContent className="space-y-4">
             {!isAccessory && (
             <>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Fabric</label>
                 <input

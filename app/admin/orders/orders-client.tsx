@@ -22,15 +22,15 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: AdminOrder
         <p className="text-muted-foreground">View and manage customer orders</p>
       </div>
 
-      <div className="overflow-hidden rounded-lg border">
+      <div className="overflow-x-auto rounded-lg border">
         <table className="w-full">
           <thead>
             <tr className="border-b bg-muted/50">
               <th className="text-left p-4 font-medium">Order ID</th>
-              <th className="text-left p-4 font-medium">Date</th>
-              <th className="text-left p-4 font-medium">Customer</th>
+              <th className="text-left p-4 font-medium hidden sm:table-cell">Date</th>
+              <th className="text-left p-4 font-medium hidden md:table-cell">Customer</th>
               <th className="text-left p-4 font-medium">Total</th>
-              <th className="text-left p-4 font-medium">Payment</th>
+              <th className="text-left p-4 font-medium hidden sm:table-cell">Payment</th>
               <th className="text-left p-4 font-medium">Status</th>
               <th className="text-right p-4 font-medium">Actions</th>
             </tr>
@@ -45,9 +45,9 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: AdminOrder
             ) : (
               orders.map((order) => (
                 <tr key={order.id} className="border-b last:border-0">
-                  <td className="p-4"><span className="font-mono text-sm">{order.id.slice(0, 8)}...</span></td>
-                  <td className="p-4">{new Date(order.createdAt).toLocaleDateString()}</td>
-                  <td className="p-4">
+                  <td className="p-4"><span className="font-mono text-sm">{order.id.slice(0, 8).toUpperCase()}...</span></td>
+                  <td className="p-4 hidden sm:table-cell">{new Date(order.createdAt).toLocaleDateString()}</td>
+                  <td className="p-4 hidden md:table-cell">
                     {order.shippingAddress?.name || "Guest"}
                     {order.shippingAddress?.phone && (
                       <div className="text-sm text-muted-foreground">{order.shippingAddress.phone}</div>
@@ -55,9 +55,9 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: AdminOrder
                   </td>
                   <td className="p-4">
                     <div className="font-medium">₹{order.total}</div>
-                    {order.couponCode && <div className="text-sm text-muted-foreground">Coupon: {order.couponCode}</div>}
+                    {order.couponCode && <div className="text-[10px] text-muted-foreground">Coupon: {order.couponCode}</div>}
                   </td>
-                  <td className="p-4">
+                  <td className="p-4 hidden sm:table-cell">
                     <div className="text-sm"><span className="uppercase">{order.paymentMethod || "—"}</span></div>
                     <div className={`text-xs ${order.paymentStatus === "paid" ? "text-green-600 dark:text-green-400" : "text-yellow-600 dark:text-yellow-400"}`}>
                       {order.paymentStatus === "paid" ? "Paid" : "Pending"}
@@ -68,7 +68,7 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: AdminOrder
                   </td>
                   <td className="p-4 text-right">
                     <Link href={`/admin/orders/${order.id}`}>
-                      <Button variant="ghost" size="sm">View Details</Button>
+                      <Button variant="ghost" size="sm">View</Button>
                     </Link>
                   </td>
                 </tr>
