@@ -178,6 +178,23 @@ export const products = pgTable("products", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const productSearchImages = pgTable("product_search_images", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  productId: uuid("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  imageUrl: text("image_url").notNull(),
+  imageIndex: integer("image_index").notNull().default(0),
+  imageEmbedding: vector("image_embedding", { dimensions: PRODUCT_SEARCH_EMBEDDING_DIMENSIONS }).notNull(),
+  imageEmbeddingHash: text("image_embedding_hash").notNull(),
+  imageEmbeddingModel: text("image_embedding_model").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("product_search_images_product_url_unique").on(table.productId, table.imageUrl),
+  index("product_search_images_product_id_idx").on(table.productId),
+]);
+
 // ============================================
 // PRODUCT VARIANTS TABLE (per-size-per-color stock)
 // ============================================
@@ -409,8 +426,16 @@ export const productsRelations = relations(products, ({ many }) => ({
   orderItems: many(orderItems),
   wishlist: many(wishlist),
   variants: many(productVariants),
+  searchImages: many(productSearchImages),
   combosAsA: many(combos, { relationName: "comboProductA" }),
   combosAsB: many(combos, { relationName: "comboProductB" }),
+}));
+
+export const productSearchImagesRelations = relations(productSearchImages, ({ one }) => ({
+  product: one(products, {
+    fields: [productSearchImages.productId],
+    references: [products.id],
+  }),
 }));
 
 export const productVariantsRelations = relations(productVariants, ({ one }) => ({

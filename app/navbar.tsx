@@ -12,6 +12,7 @@ import { useWishlist } from "@/lib/wishlist-context";
 import ThemeToggleButton from "@/components/ui/theme-toggle-button";
 import { ANNOUNCEMENT_MESSAGES } from "@/lib/constants";
 import { normalizeProductImage } from "@/lib/image";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
@@ -71,7 +72,9 @@ function CatalogSearchOverlay({
   const router = useRouter();
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
+  const [suggestionTerms, setSuggestionTerms] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   useEffect(() => {
@@ -91,13 +94,30 @@ function CatalogSearchOverlay({
   }, [setShowSearch, showSearch]);
 
   useEffect(() => {
-    if (showSearch) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
+    if (!showSearch) return;
+
+    const scrollY = window.scrollY;
+    const html = document.documentElement;
+    const originalHtmlOverflow = html.style.overflow;
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalBodyPosition = document.body.style.position;
+    const originalBodyTop = document.body.style.top;
+    const originalBodyWidth = document.body.style.width;
+
+    html.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+
+    return () => {
+      html.style.overflow = originalHtmlOverflow;
+      document.body.style.overflow = originalBodyOverflow;
+      document.body.style.position = originalBodyPosition;
+      document.body.style.top = originalBodyTop;
+      document.body.style.width = originalBodyWidth;
+      window.scrollTo({ top: scrollY });
+    };
   }, [showSearch]);
 
   const getSearchHref = (query: string) => {
@@ -115,40 +135,42 @@ function CatalogSearchOverlay({
   };
 
   useEffect(() => {
-    const query = searchQuery.trim();
-    if (!showSearch || query.length < 2) {
+    const query = debouncedSearchQuery.trim();
+    if (!showSearch) {
       setSuggestions([]);
+      setSuggestionTerms([]);
       setIsLoadingSuggestions(false);
       return;
     }
 
     const controller = new AbortController();
-    const timer = window.setTimeout(async () => {
+    void (async () => {
       setIsLoadingSuggestions(true);
       try {
         const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}`, {
           signal: controller.signal,
         });
         if (!response.ok) throw new Error("Failed to fetch suggestions");
-        const data = (await response.json()) as { products?: SearchSuggestion[] };
+        const data = (await response.json()) as { products?: SearchSuggestion[]; terms?: string[] };
         setSuggestions(data.products || []);
+        setSuggestionTerms(data.terms || []);
       } catch (error) {
         if (!controller.signal.aborted) {
           console.error("Failed to fetch search suggestions:", error);
           setSuggestions([]);
+          setSuggestionTerms([]);
         }
       } finally {
         if (!controller.signal.aborted) {
           setIsLoadingSuggestions(false);
         }
       }
-    }, 250);
+    })();
 
     return () => {
-      window.clearTimeout(timer);
       controller.abort();
     };
-  }, [searchQuery, showSearch]);
+  }, [debouncedSearchQuery, showSearch]);
 
   return (
     <AnimatePresence>
@@ -159,7 +181,7 @@ function CatalogSearchOverlay({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
           style={{ willChange: "opacity" }}
-          className="fixed inset-0 z-[110] bg-background/95 backdrop-blur-xl flex flex-col"
+          className="fixed inset-0 z-[110] flex flex-col overflow-y-auto overscroll-contain bg-background/95 backdrop-blur-xl"
         >
           <div className="flex justify-between items-center px-6 md:px-12 lg:px-16 h-20">
             <div className="flex-1" />
@@ -247,8 +269,38 @@ function CatalogSearchOverlay({
               ) : (
                 <div className="flex flex-col gap-6">
                   <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Trending Searches</p>
+                  {suggestions.length > 0 && (
+                    <div className="grid gap-3">
+                      {suggestions.slice(0, 3).map((product) => (
+                        <Link
+                          key={product.id}
+                          href={`/product/${product.id}`}
+                          onClick={() => {
+                            setShowSearch(false);
+                            setSearchQuery("");
+                          }}
+                          className="group grid grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border/70 pb-3 text-left"
+                        >
+                          <div className="relative aspect-[3/4] overflow-hidden bg-muted">
+                            <Image
+                              src={normalizeProductImage(product.images?.[0])}
+                              alt={product.name}
+                              fill
+                              sizes="56px"
+                              className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium uppercase tracking-[0.08em]">{product.name}</p>
+                            <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{product.category}</p>
+                          </div>
+                          <p className="text-sm font-semibold tabular-nums">₹{Number(product.sellingPrice).toLocaleString("en-IN")}</p>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-4 md:gap-6">
-                    {['Oversized Tees', 'Cargo Pants', 'Summer Collection', 'Premium Basics'].map((term) => (
+                    {suggestionTerms.slice(0, 4).map((term) => (
                       <button
                         key={term}
                         type="button"

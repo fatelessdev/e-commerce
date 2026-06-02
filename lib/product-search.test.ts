@@ -2,8 +2,15 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   buildProductSearchText,
+  createProductImageSearchHash,
   createProductSearchHash,
+  getLexicalMatchTier,
+  prepareProductDocumentEmbeddingInput,
+  prepareProductQueryEmbeddingInput,
   resolveProductSearchEmbedding,
+  resolveProductSearchImageEmbeddings,
+  semanticDistanceWithinThreshold,
+  PRODUCT_SEARCH_EMBEDDING_MODEL,
   type ProductSearchSource,
 } from "./product-search.ts";
 import {
@@ -55,11 +62,32 @@ test("buildProductSearchText includes every searchable product field in stable o
   );
 });
 
+test("uses Gemini Embedding 2 retrieval prompt formatting", () => {
+  const searchText = buildProductSearchText(product());
+
+  assert.equal(PRODUCT_SEARCH_EMBEDDING_MODEL, "gemini-embedding-2");
+  assert.equal(
+    prepareProductQueryEmbeddingInput("washed black tee"),
+    "task: search result | query: washed black tee",
+  );
+  assert.equal(
+    prepareProductDocumentEmbeddingInput({ title: "Oversized Polo Tee", searchText }),
+    `title: Oversized Polo Tee | text: ${searchText}`,
+  );
+});
+
 test("createProductSearchHash changes when a searchable field changes", () => {
   const before = createProductSearchHash(buildProductSearchText(product()));
   const after = createProductSearchHash(buildProductSearchText(product({ fabric: "Heavy cotton fleece" })));
 
   assert.notEqual(before, after);
+});
+
+test("createProductImageSearchHash changes when image url or model changes", () => {
+  const first = createProductImageSearchHash("https://cdn.example.com/a.webp");
+  const changed = createProductImageSearchHash("https://cdn.example.com/b.webp");
+
+  assert.notEqual(first, changed);
 });
 
 test("resolveProductSearchEmbedding skips unchanged search text and replaces changed embeddings", async () => {
@@ -95,6 +123,78 @@ test("resolveProductSearchEmbedding skips unchanged search text and replaces cha
   assert.equal(changed.replaced, true);
   assert.deepEqual(changed.embedding, [0.9, 0.8]);
   assert.equal(changed.hash, currentHash);
+});
+
+test("resolveProductSearchImageEmbeddings embeds changed images and deletes removed image rows", async () => {
+  const embeddedImages: string[] = [];
+  const currentRows = [
+    {
+      imageUrl: "https://cdn.example.com/kept.webp",
+      imageIndex: 4,
+      imageEmbeddingHash: createProductImageSearchHash("https://cdn.example.com/kept.webp"),
+      imageEmbedding: [0.1, 0.2],
+    },
+    {
+      imageUrl: "https://cdn.example.com/removed.webp",
+      imageIndex: 1,
+      imageEmbeddingHash: createProductImageSearchHash("https://cdn.example.com/removed.webp"),
+      imageEmbedding: [0.3, 0.4],
+    },
+  ];
+
+  const result = await resolveProductSearchImageEmbeddings({
+    images: ["https://cdn.example.com/kept.webp", "https://cdn.example.com/new.webp"],
+    currentRows,
+    embedImage: async (imageUrl) => {
+      embeddedImages.push(imageUrl);
+      return [0.9, 0.8];
+    },
+  });
+
+  assert.deepEqual(result.deleteImageUrls, ["https://cdn.example.com/removed.webp"]);
+  assert.deepEqual(embeddedImages, ["https://cdn.example.com/new.webp"]);
+  assert.deepEqual(
+    result.upserts.map((row) => ({
+      imageUrl: row.imageUrl,
+      imageIndex: row.imageIndex,
+      replaced: row.replaced,
+      embedding: row.imageEmbedding,
+    })),
+    [
+      {
+        imageUrl: "https://cdn.example.com/kept.webp",
+        imageIndex: 0,
+        replaced: false,
+        embedding: [0.1, 0.2],
+      },
+      {
+        imageUrl: "https://cdn.example.com/new.webp",
+        imageIndex: 1,
+        replaced: true,
+        embedding: [0.9, 0.8],
+      },
+    ],
+  );
+});
+
+test("lexical tiers rank exact and substring matches above semantic-only matches", () => {
+  const source = product({
+    name: "Washed Black Cargo Pants",
+    category: "cargo",
+    tags: ["utility"],
+  });
+
+  assert.equal(getLexicalMatchTier("Washed Black Cargo Pants", source), 1);
+  assert.equal(getLexicalMatchTier("washed", source), 2);
+  assert.equal(getLexicalMatchTier("cargo", source), 3);
+  assert.equal(getLexicalMatchTier("wide leg", source), null);
+});
+
+test("semanticDistanceWithinThreshold excludes low relevance tail matches", () => {
+  assert.equal(semanticDistanceWithinThreshold(0.37, "text"), true);
+  assert.equal(semanticDistanceWithinThreshold(0.39, "text"), false);
+  assert.equal(semanticDistanceWithinThreshold(0.34, "image"), true);
+  assert.equal(semanticDistanceWithinThreshold(0.36, "image"), false);
 });
 
 test("parseGeminiApiKeys accepts comma-separated keys and removes blanks", () => {

@@ -10,7 +10,16 @@ export async function GET(req: NextRequest) {
     const query = searchParams.get("q")?.trim();
 
     if (!query || query.length < 2) {
-      return NextResponse.json({ products: [] });
+      const fallback = await getCatalogProducts({
+        limit: 6,
+        offset: 0,
+        includeTotal: false,
+      });
+
+      return NextResponse.json({
+        products: fallback.products,
+        terms: fallback.products.map((product) => product.name),
+      });
     }
 
     const result = await getCatalogProducts({
@@ -20,7 +29,10 @@ export async function GET(req: NextRequest) {
       includeTotal: false,
     });
 
-    return NextResponse.json({ products: result.products });
+    return NextResponse.json({
+      products: result.products,
+      terms: result.products.map((product) => product.name),
+    });
   } catch (error) {
     console.error("Failed to fetch search suggestions:", error);
     return NextResponse.json(

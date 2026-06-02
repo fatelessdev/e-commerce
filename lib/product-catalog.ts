@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
-import { products, productVariants } from "@/lib/db/schema";
+import { productSearchImages, products, productVariants } from "@/lib/db/schema";
 import { and, desc, eq, gt, gte, inArray, lte, or, sql, type SQL } from "drizzle-orm";
-import { generateProductSearchEmbedding } from "@/lib/product-search-embedding";
+import { generateProductQuerySearchEmbedding } from "@/lib/product-search-embedding";
+import { getProductSearchSemanticDistanceThresholds } from "@/lib/product-search";
 
 export type CatalogProduct = Pick<
   typeof products.$inferSelect,
@@ -239,7 +240,7 @@ async function getHybridCatalogProducts(query: CatalogQuery & { search: string }
 
   if (query.search.length >= 2) {
     try {
-      semanticVector = serializeVector(await generateProductSearchEmbedding(query.search));
+      semanticVector = serializeVector(await generateProductQuerySearchEmbedding(query.search));
     } catch (error) {
       console.warn(
         "Semantic product search unavailable; falling back to keyword and typo ranking.",
@@ -247,11 +248,12 @@ async function getHybridCatalogProducts(query: CatalogQuery & { search: string }
       );
     }
   }
+  const semanticThresholds = getProductSearchSemanticDistanceThresholds();
 
   const semanticCandidateSql = semanticVector
     ? sql`
       UNION ALL
-      SELECT id, 'semantic' AS source, semantic_rank AS rank
+      SELECT id, 'text_semantic' AS source, semantic_rank AS rank
       FROM (
         SELECT
           ${products.id} AS id,
@@ -259,17 +261,102 @@ async function getHybridCatalogProducts(query: CatalogQuery & { search: string }
         FROM ${products}
         WHERE ${where}
           AND ${products.searchEmbedding} IS NOT NULL
+          AND (${products.searchEmbedding} <=> ${semanticVector}::vector) <= ${semanticThresholds.text}
         ORDER BY ${products.searchEmbedding} <=> ${semanticVector}::vector
         LIMIT 80
-      ) semantic_matches
+      ) text_semantic_matches
+
+      UNION ALL
+
+      SELECT id, 'image_semantic' AS source, image_semantic_rank AS rank
+      FROM (
+        SELECT
+          image_matches.id AS id,
+          row_number() OVER (ORDER BY image_matches.best_image_distance) AS image_semantic_rank
+        FROM (
+          SELECT
+            ${products.id} AS id,
+            min(${productSearchImages.imageEmbedding} <=> ${semanticVector}::vector) AS best_image_distance
+          FROM ${products}
+          INNER JOIN ${productSearchImages}
+            ON ${productSearchImages.productId} = ${products.id}
+          WHERE ${where}
+          GROUP BY ${products.id}
+        ) image_matches
+        WHERE image_matches.best_image_distance <= ${semanticThresholds.image}
+        ORDER BY image_matches.best_image_distance
+        LIMIT 80
+      ) image_semantic_matches
     `
     : sql``;
 
   const result = await db.execute<CatalogProductRow & { total: number }>(sql`
     WITH search_query AS (
-      SELECT websearch_to_tsquery('english', ${query.search}) AS ts_query
+      SELECT
+        websearch_to_tsquery('english', ${query.search}) AS ts_query,
+        lower(${query.search}) AS normalized_query,
+        lower(${query.search}) || '%' AS prefix_query,
+        '%' || lower(${query.search}) || '%' AS contains_query
     ),
     candidates AS (
+      SELECT id, 'exact' AS source, exact_rank AS rank
+      FROM (
+        SELECT
+          ${products.id} AS id,
+          row_number() OVER (
+            ORDER BY ${products.displayOrder} DESC,
+                     ${products.createdAt} DESC
+          ) AS exact_rank
+        FROM ${products}, search_query
+        WHERE ${where}
+          AND (
+            lower(${products.name}) = search_query.normalized_query
+            OR lower(${products.category}::text) = search_query.normalized_query
+            OR lower(${products.gender}::text) = search_query.normalized_query
+          )
+        LIMIT 80
+      ) exact_matches
+
+      UNION ALL
+
+      SELECT id, 'prefix' AS source, prefix_rank AS rank
+      FROM (
+        SELECT
+          ${products.id} AS id,
+          row_number() OVER (
+            ORDER BY ${products.displayOrder} DESC,
+                     ${products.createdAt} DESC
+          ) AS prefix_rank
+        FROM ${products}, search_query
+        WHERE ${where}
+          AND lower(${products.name}) LIKE search_query.prefix_query
+        LIMIT 80
+      ) prefix_matches
+
+      UNION ALL
+
+      SELECT id, 'substring' AS source, substring_rank AS rank
+      FROM (
+        SELECT
+          ${products.id} AS id,
+          row_number() OVER (
+            ORDER BY ${products.displayOrder} DESC,
+                     ${products.createdAt} DESC
+          ) AS substring_rank
+        FROM ${products}, search_query
+        WHERE ${where}
+          AND (
+            lower(${products.name}) LIKE search_query.contains_query
+            OR lower(${products.category}::text) LIKE search_query.contains_query
+            OR lower(${products.gender}::text) LIKE search_query.contains_query
+            OR lower(coalesce(${products.tags}::text, '')) LIKE search_query.contains_query
+            OR lower(coalesce(${products.fabric}, '')) LIKE search_query.contains_query
+          )
+        LIMIT 80
+      ) substring_matches
+
+      UNION ALL
+
       SELECT id, 'keyword' AS source, keyword_rank AS rank
       FROM (
         SELECT
@@ -309,9 +396,13 @@ async function getHybridCatalogProducts(query: CatalogQuery & { search: string }
         id,
         sum(
           CASE source
-            WHEN 'keyword' THEN 1.3 / (60 + rank)
-            WHEN 'typo' THEN 0.9 / (60 + rank)
-            WHEN 'semantic' THEN 1.0 / (60 + rank)
+            WHEN 'exact' THEN 100.0 + (1.0 / (60 + rank))
+            WHEN 'prefix' THEN 80.0 + (1.0 / (60 + rank))
+            WHEN 'substring' THEN 60.0 + (1.0 / (60 + rank))
+            WHEN 'keyword' THEN 30.0 + (1.3 / (60 + rank))
+            WHEN 'typo' THEN 20.0 + (0.9 / (60 + rank))
+            WHEN 'text_semantic' THEN 10.0 + (1.0 / (60 + rank))
+            WHEN 'image_semantic' THEN 8.0 + (0.8 / (60 + rank))
             ELSE 0
           END
         ) AS search_score

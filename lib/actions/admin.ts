@@ -1,9 +1,9 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { products, productVariants, coupons, orders, orderItems } from "@/lib/db/schema";
+import { products, productVariants, productSearchImages, coupons, orders, orderItems } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth-server";
-import { eq, desc, sql, and, gte } from "drizzle-orm";
+import { eq, desc, sql, and, gte, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { generateSecureCode } from "@/lib/utils";
 import { revalidateComboSurfaces, revalidateProductSurfaces } from "@/lib/cache-tags";
@@ -12,9 +12,13 @@ import {
   buildProductSearchText,
   PRODUCT_SEARCH_EMBEDDING_MODEL,
   resolveProductSearchEmbedding,
+  resolveProductSearchImageEmbeddings,
   type ProductSearchSource,
 } from "@/lib/product-search";
-import { generateProductSearchEmbedding } from "@/lib/product-search-embedding";
+import {
+  generateProductDocumentSearchEmbedding,
+  generateProductImageSearchEmbedding,
+} from "@/lib/product-search-embedding";
 import {
   ACCESSORY_SIZE,
   normalizeProductInput,
@@ -93,8 +97,61 @@ async function prepareProductSearchIndex(
     searchText,
     currentHash: current?.hash,
     currentEmbedding: current?.embedding,
-    embedSearchText: generateProductSearchEmbedding,
+    embedSearchText: (value) => generateProductDocumentSearchEmbedding({
+      title: product.name,
+      searchText: value,
+    }),
   });
+}
+
+async function prepareProductSearchImages(
+  images: string[],
+  currentRows: (typeof productSearchImages.$inferSelect)[] = [],
+) {
+  return resolveProductSearchImageEmbeddings({
+    images,
+    currentRows,
+    embedImage: generateProductImageSearchEmbedding,
+  });
+}
+
+async function syncProductSearchImages(
+  client: ProductMutationClient,
+  productId: string,
+  imageIndex: Awaited<ReturnType<typeof prepareProductSearchImages>>,
+) {
+  if (imageIndex.deleteImageUrls.length > 0) {
+    await client
+      .delete(productSearchImages)
+      .where(and(
+        eq(productSearchImages.productId, productId),
+        inArray(productSearchImages.imageUrl, imageIndex.deleteImageUrls),
+      ));
+  }
+
+  if (imageIndex.upserts.length > 0) {
+    await client
+      .insert(productSearchImages)
+      .values(imageIndex.upserts.map((image) => ({
+        productId,
+        imageUrl: image.imageUrl,
+        imageIndex: image.imageIndex,
+        imageEmbedding: image.imageEmbedding,
+        imageEmbeddingHash: image.imageEmbeddingHash,
+        imageEmbeddingModel: PRODUCT_SEARCH_EMBEDDING_MODEL,
+        updatedAt: new Date(),
+      })))
+      .onConflictDoUpdate({
+        target: [productSearchImages.productId, productSearchImages.imageUrl],
+        set: {
+          imageIndex: sql`excluded.image_index`,
+          imageEmbedding: sql`excluded.image_embedding`,
+          imageEmbeddingHash: sql`excluded.image_embedding_hash`,
+          imageEmbeddingModel: sql`excluded.image_embedding_model`,
+          updatedAt: new Date(),
+        },
+      });
+  }
 }
 
 export async function createProduct(data: ProductInput) {
@@ -109,6 +166,7 @@ export async function createProduct(data: ProductInput) {
     sizes: effectiveSizes,
     colors: effectiveColors,
   });
+  const imageIndex = await prepareProductSearchImages(input.images || []);
 
   const product = await db.transaction(async (tx) => {
     const [createdProduct] = await tx
@@ -142,6 +200,8 @@ export async function createProduct(data: ProductInput) {
         displayOrder: input.displayOrder ?? 0,
       })
       .returning();
+
+    await syncProductSearchImages(tx, createdProduct.id, imageIndex);
 
     // Create variant rows in the same transaction as the product row.
     if (isAccessory) {
@@ -214,10 +274,15 @@ export async function updateProduct(id: string, data: Partial<ProductInput>) {
     ...existingProduct,
     ...productData,
   };
+  const currentImageRows = await db
+    .select()
+    .from(productSearchImages)
+    .where(eq(productSearchImages.productId, id));
   const searchIndex = await prepareProductSearchIndex(nextSearchSource, {
     hash: existingProduct.searchEmbeddingHash,
     embedding: existingProduct.searchEmbedding,
   });
+  const imageIndex = await prepareProductSearchImages(nextSearchSource.images || [], currentImageRows);
 
   const product = await db.transaction(async (tx) => {
     const [updatedProduct] = await tx
@@ -232,6 +297,8 @@ export async function updateProduct(id: string, data: Partial<ProductInput>) {
       })
       .where(eq(products.id, id))
       .returning();
+
+    await syncProductSearchImages(tx, id, imageIndex);
 
     // Keep accessory inventory as a single no-color variant.
     if (isAccessory) {

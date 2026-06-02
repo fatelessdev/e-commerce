@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from "react"
-import { usePathname } from "next/navigation"
+import { useState, useEffect, useMemo, useRef, useCallback } from "react"
+import { usePathname, useRouter } from "next/navigation"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { BargainDiscountStrip } from "@/components/ui/bargain-discount-strip"
@@ -10,6 +10,7 @@ import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react"
 import { normalizeProductImage } from "@/lib/image"
 import { getDisplaySizes, useShopCatalog, type CatalogProduct, type ProductPageResponse, type ShopCatalogQuery } from "@/components/features/use-shop-catalog"
 import { ViewportPrefetchLink } from "@/components/ui/viewport-prefetch-link"
+import { useDebouncedValue } from "@/lib/use-debounced-value"
 
 const CATEGORIES = ["All", "tshirt", "shirt", "cargo", "jogger", "jeans", "hoodie", "jacket", "shorts", "accessory"]
 const CATEGORY_LABELS: Record<string, string> = {
@@ -71,7 +72,9 @@ export function ShopClient({
     initialCatalog,
 }: ShopClientProps) {
     const pathname = usePathname()
+    const router = useRouter()
     const [searchQuery, setSearchQuery] = useState(initialSearch)
+    const debouncedSearchQuery = useDebouncedValue(searchQuery, 300)
     const [selectedCategory, setSelectedCategory] = useState(fixedCategory || "All")
     const [selectedSize, setSelectedSize] = useState<string | null>(null)
     const [selectedPriceRange, setSelectedPriceRange] = useState(PRICE_RANGES[0])
@@ -82,7 +85,7 @@ export function ShopClient({
 
     const effectiveSelectedCategory = fixedCategory || selectedCategory
     const catalogQuery = useMemo<ShopCatalogQuery>(() => {
-        const trimmedSearch = searchQuery.trim()
+        const trimmedSearch = debouncedSearchQuery.trim()
         const query: ShopCatalogQuery = {
             limit: 24,
             search: trimmedSearch || undefined,
@@ -101,7 +104,21 @@ export function ShopClient({
         }
 
         return query
-    }, [effectiveSelectedCategory, genderFilter, isNew, isPremium, searchQuery, selectedPriceRange, selectedSize])
+    }, [debouncedSearchQuery, effectiveSelectedCategory, genderFilter, isNew, isPremium, selectedPriceRange, selectedSize])
+
+    const canUseInitialCatalog =
+        debouncedSearchQuery.trim() === initialSearch.trim() &&
+        effectiveSelectedCategory === (fixedCategory || "All") &&
+        selectedSize === null &&
+        selectedPriceRange === PRICE_RANGES[0]
+    const initialCatalogPage: ProductPageResponse | undefined = canUseInitialCatalog
+        ? initialCatalog || (initialProducts ? {
+            products: initialProducts,
+            total: initialProducts.length,
+            limit: initialProducts.length,
+            offset: 0,
+        } : undefined)
+        : undefined
 
     const {
         data: products = [],
@@ -109,12 +126,7 @@ export function ShopClient({
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
-    } = useShopCatalog(catalogQuery, initialCatalog || (initialProducts ? {
-        products: initialProducts,
-        total: initialProducts.length,
-        limit: initialProducts.length,
-        offset: 0,
-    } : undefined))
+    } = useShopCatalog(catalogQuery, initialCatalogPage)
 
     const visibleProducts = products.slice(0, visibleCount)
     const hasMore = visibleCount < products.length || Boolean(hasNextPage)
@@ -231,7 +243,7 @@ export function ShopClient({
         window.sessionStorage.setItem(`${SHOP_SCROLL_PREFIX}${pathname}`, JSON.stringify(state))
     }
 
-    const replaceUrlSearch = (value: string) => {
+    const navigateUrlSearch = useCallback((value: string, mode: "push" | "replace" = "replace") => {
         if (typeof window === "undefined") return
 
         const params = new URLSearchParams(window.location.search)
@@ -243,12 +255,30 @@ export function ShopClient({
         }
 
         const query = params.toString()
-        window.history.replaceState(window.history.state, "", `${pathname}${query ? `?${query}` : ""}`)
+        const nextUrl = `${pathname}${query ? `?${query}` : ""}`
+        const currentUrl = `${pathname}${window.location.search}`
+        if (nextUrl === currentUrl) return
+
+        if (mode === "push") {
+            router.push(nextUrl, { scroll: false })
+        } else {
+            router.replace(nextUrl, { scroll: false })
+        }
+    }, [pathname, router])
+
+    useEffect(() => {
+        navigateUrlSearch(debouncedSearchQuery, "replace")
+    }, [debouncedSearchQuery, navigateUrlSearch])
+
+    const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        navigateUrlSearch(searchQuery, "push")
+        setVisibleCount(8)
     }
 
     const clearFilters = () => {
         setSearchQuery("")
-        replaceUrlSearch("")
+        navigateUrlSearch("")
         setSelectedCategory(fixedCategory || "All")
         setSelectedSize(null)
         setSelectedPriceRange(PRICE_RANGES[0])
@@ -285,7 +315,7 @@ export function ShopClient({
             {/* Toolbar */}
             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 px-6 md:px-12 py-4 border-b border-border/60 sticky top-16 z-40 bg-background/80 backdrop-blur-xl">
                 {/* Search */}
-                <div className="relative flex-1 max-w-md">
+                <form onSubmit={submitSearch} className="relative flex-1 max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                     <input
                         type="text"
@@ -294,12 +324,11 @@ export function ShopClient({
                         onChange={(e) => {
                             const value = e.target.value
                             setSearchQuery(value)
-                            replaceUrlSearch(value)
                             setVisibleCount(8)
                         }}
                         className="w-full h-10 pl-10 pr-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
                     />
-                </div>
+                </form>
 
                 {/* Filter Toggle & Sort */}
                 <div className="flex items-center gap-2">
