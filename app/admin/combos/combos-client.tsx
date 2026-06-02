@@ -130,9 +130,9 @@ export function AdminCombosClient({
                       Max bargain discount: ₹{Number(combo.discountAmount).toLocaleString("en-IN")}
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-end gap-3 w-full">
                     <form
-                      className="flex flex-wrap gap-3 items-end"
+                      className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 items-end w-full sm:w-auto"
                       onSubmit={(event) => {
                         event.preventDefault();
                         const formData = new FormData(event.currentTarget);
@@ -146,24 +146,25 @@ export function AdminCombosClient({
                         });
                       }}
                     >
-                      <div className="space-y-1">
+                      <div className="space-y-1 col-span-1">
                         <label className="text-xs text-muted-foreground">Max Bargain Discount (₹)</label>
-                        <input type="number" name="discountAmount" min="0" step="0.01" defaultValue={Number(combo.discountAmount)} className="w-28 px-3 py-2 border rounded-lg bg-background text-sm" />
+                        <input type="number" name="discountAmount" min="0" step="0.01" defaultValue={Number(combo.discountAmount)} className="w-full sm:w-28 px-3 py-2 border rounded-lg bg-background text-sm" />
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1 col-span-1">
                         <label className="text-xs text-muted-foreground">Display Order</label>
-                        <input type="number" name="displayOrder" min="0" step="1" defaultValue={combo.displayOrder} className="w-28 px-3 py-2 border rounded-lg bg-background text-sm" />
+                        <input type="number" name="displayOrder" min="0" step="1" defaultValue={combo.displayOrder} className="w-full sm:w-28 px-3 py-2 border rounded-lg bg-background text-sm" />
                       </div>
-                      <label className="flex items-center gap-2 pb-2 text-sm">
+                      <label className="flex items-center gap-2 pb-2 text-sm col-span-2">
                         <input type="checkbox" name="isActive" defaultChecked={combo.isActive} />
                         Active
                       </label>
-                      <Button type="submit" variant="outline" size="sm" disabled={updateMutation.isPending}>Save</Button>
+                      <Button type="submit" variant="outline" size="sm" className="col-span-2 sm:w-auto" disabled={updateMutation.isPending}>Save</Button>
                     </form>
                     <Button
                       type="button"
                       variant="destructive"
                       size="sm"
+                      className="w-full sm:w-auto h-9"
                       onClick={() => deleteMutation.mutate(combo.id)}
                       disabled={deleteMutation.variables === combo.id && deleteMutation.isPending}
                     >

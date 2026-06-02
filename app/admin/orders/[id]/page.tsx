@@ -30,27 +30,29 @@ export default async function AdminOrderDetailPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/admin/orders">
-          <Button variant="ghost" size="icon" aria-label="Back to orders">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Order #{order.id.slice(0, 8).toUpperCase()}
-          </h1>
-          <p className="text-muted-foreground">
-            Placed on {new Date(order.createdAt).toLocaleDateString("en-IN", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-5">
+        <div className="flex items-center gap-4">
+          <Link href="/admin/orders">
+            <Button variant="ghost" size="icon" aria-label="Back to orders" className="rounded-none">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Order #{order.id.slice(0, 8).toUpperCase()}
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+              Placed on {new Date(order.createdAt).toLocaleDateString("en-IN", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+          </div>
         </div>
-        <div className="ml-auto">
+        <div className="flex items-center sm:ml-auto">
           <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
         </div>
       </div>

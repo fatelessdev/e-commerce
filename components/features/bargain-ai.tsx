@@ -108,32 +108,35 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
     return (
         <div className="fixed bottom-6 right-6 z-50">
             {!isOpen && (
-                <Button
+                <button
                     onClick={() => setIsOpen(true)}
-                    size="icon"
                     aria-label="Open Product Assistant"
-                    className="h-14 w-14 rounded-full shadow-2xl bg-foreground text-background hover:scale-110 transition-transform duration-300"
+                    className="h-11 px-5 bg-background text-foreground border border-foreground hover:bg-foreground hover:text-background tracking-[0.25em] uppercase text-[9px] font-bold transition-all duration-200 rounded-none flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.15)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.08)]"
                 >
-                    <MessageCircle className="h-6 w-6" />
-                </Button>
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    <span>Ask Xilar Bot</span>
+                </button>
             )}
 
             {isOpen && (
-                <div className="w-80 sm:w-96 bg-background border border-border shadow-2xl rounded-lg overflow-hidden flex flex-col h-[31.25rem] animate-in slide-in-from-bottom-5 fade-in duration-300">
+                <div className="w-80 sm:w-96 bg-background border border-foreground/20 shadow-[12px_12px_0px_0px_rgba(0,0,0,0.15)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,0.08)] rounded-none overflow-hidden flex flex-col h-[31.25rem] animate-in slide-in-from-bottom-5 fade-in duration-300 border-t-2 border-t-red-accent">
                     {/* Header */}
-                    <div className="p-4 bg-foreground text-background flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                            <span className="font-bold tracking-tight">Product Assistant</span>
+                    <div className="p-4 bg-background border-b border-foreground/10 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                            <span className="relative flex h-1.5 w-1.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-accent opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-accent"></span>
+                            </span>
+                            <span className="font-bold tracking-[0.25em] uppercase text-[10px] text-foreground">Xilar Bot</span>
                             {productContext && (
-                                <span className="text-xs opacity-70">• {productContext.name}</span>
+                                <span className="text-[9px] opacity-60 uppercase tracking-[0.15em] text-muted-foreground truncate max-w-[120px]">• {productContext.name}</span>
                             )}
                         </div>
                         <Button 
                             variant="ghost" 
                             size="icon" 
                             aria-label="Close Product Assistant"
-                            className="h-6 w-6 text-background hover:text-background/80" 
+                            className="h-6 w-6 text-foreground hover:bg-foreground/10 hover:text-foreground rounded-none" 
                             onClick={() => setIsOpen(false)}
                         >
                             <X className="h-4 w-4" />
@@ -141,7 +144,7 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
                     </div>
 
                     {/* Chat Area */}
-                    <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-secondary/30">
+                    <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-secondary/5 scrollbar-thin scrollbar-thumb-foreground/10 scrollbar-track-transparent">
                         {messages.map((msg) => (
                             <div 
                                 key={msg.id} 
@@ -151,10 +154,10 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
                                 )}
                             >
                                 <div className={cn(
-                                    "max-w-[80%] p-3 text-sm rounded-lg",
+                                    "max-w-[85%] p-3.5 text-[11px] leading-relaxed tracking-wide rounded-none font-medium",
                                     msg.role === "user"
-                                        ? "bg-primary text-primary-foreground rounded-br-none"
-                                        : "bg-card border border-border rounded-bl-none"
+                                        ? "bg-foreground text-background"
+                                        : "bg-card border border-foreground/10 text-foreground"
                                 )}>
                                     {msg.content}
                                 </div>
@@ -162,8 +165,12 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
                         ))}
                         {isLoading && messages[messages.length - 1]?.role === "user" && (
                             <div className="flex justify-start">
-                                <div className="bg-card border border-border rounded-lg rounded-bl-none p-3">
-                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                <div className="bg-card border border-foreground/10 rounded-none p-3.5 text-xs">
+                                    <div className="flex gap-1.5 items-center">
+                                        <span className="w-1.5 h-1.5 bg-red-accent rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                        <span className="w-1.5 h-1.5 bg-red-accent rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                        <span className="w-1.5 h-1.5 bg-red-accent rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -171,12 +178,12 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
                     </div>
 
                     {/* Quick Actions */}
-                    <div className="px-3 py-2 border-t bg-secondary/20 flex gap-2 overflow-x-auto">
+                    <div className="px-3 py-2.5 border-t border-foreground/10 bg-background flex gap-2 overflow-x-auto scrollbar-hide">
                         {["Size guide", "Fabric?", "Shipping", "Returns"].map((q) => (
                             <button
                                 key={q}
                                 onClick={() => setInput(q)}
-                                className="text-xs px-3 py-1 bg-secondary/50 hover:bg-secondary border border-border rounded-full whitespace-nowrap transition-colors"
+                                className="text-[9px] uppercase tracking-[0.15em] font-bold px-3 py-2 bg-background border border-foreground/10 hover:border-foreground transition-colors rounded-none whitespace-nowrap"
                             >
                                 {q}
                             </button>
@@ -184,10 +191,10 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
                     </div>
 
                     {/* Input Area */}
-                    <form onSubmit={handleSubmit} className="p-3 border-t bg-background flex gap-2">
+                    <form onSubmit={handleSubmit} className="p-3 border-t border-foreground/10 bg-background flex gap-2">
                         <input
-                            className="flex-1 bg-transparent border-none focus:outline-none text-sm px-2"
-                            placeholder="Ask about this product..."
+                            className="flex-1 bg-background border border-foreground/10 focus:border-foreground focus:outline-none text-[11px] px-3 py-2 tracking-wide placeholder:text-muted-foreground/30 uppercase rounded-none"
+                            placeholder="TYPE YOUR MESSAGE..."
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             disabled={isLoading}
@@ -196,13 +203,13 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
                             type="submit" 
                             size="icon" 
                             aria-label="Send message"
-                            className="rounded-full h-8 w-8"
+                            className="h-9 w-9 rounded-none bg-foreground text-background hover:bg-red-accent hover:text-white border-0 transition-colors"
                             disabled={isLoading || !input.trim()}
                         >
                             {isLoading ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             ) : (
-                                <Send className="h-4 w-4" />
+                                <Send className="h-3.5 w-3.5" />
                             )}
                         </Button>
                     </form>

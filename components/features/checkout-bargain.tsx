@@ -234,22 +234,25 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
     const bargainModal = isOpen && typeof document !== "undefined" ? createPortal(
         <div
             style={{ willChange: "opacity" }}
-            className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+            className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
         >
             <div
                 style={{ willChange: "transform, opacity" }}
-                className="w-full max-w-md bg-background border border-border/60 shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+                className="w-full max-w-md bg-background border border-foreground/20 shadow-[12px_12px_0px_0px_rgba(0,0,0,0.15)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,0.08)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 border-t-2 border-t-red-accent rounded-none"
             >
                 {/* Header */}
-                <div className="p-4 bg-red-accent text-white flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-                        <span className="font-semibold tracking-[0.1em] uppercase text-[10px]">Bargain AI</span>
+                <div className="p-4 bg-background border-b border-foreground/10 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                        <span className="relative flex h-1.5 w-1.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-accent opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-accent"></span>
+                        </span>
+                        <span className="font-bold tracking-[0.25em] uppercase text-[10px] text-foreground">Bargain Terminal</span>
                     </div>
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 text-white hover:bg-white/10"
+                        className="h-6 w-6 text-foreground hover:bg-foreground/10 hover:text-foreground rounded-none"
                         onClick={() => setIsOpen(false)}
                     >
                         <X className="h-3.5 w-3.5" />
@@ -257,18 +260,21 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                 </div>
 
                 {/* Chat Area */}
-                <div ref={chatContainerRef} className="h-72 p-4 overflow-y-auto space-y-3 bg-secondary/10">
+                <div 
+                    ref={chatContainerRef} 
+                    className="h-80 p-4 overflow-y-auto space-y-4 bg-secondary/5 scrollbar-thin scrollbar-thumb-foreground/10 scrollbar-track-transparent"
+                >
                     {messages.map((msg) => (
                         <div key={msg.id} className={cn("flex w-full", msg.role === 'user' ? "justify-end" : "justify-start")}>
                             <div className={cn(
-                                "max-w-[85%] p-3 text-sm",
+                                "max-w-[85%] p-3.5 text-[11px] leading-relaxed tracking-wide rounded-none font-medium",
                                 msg.role === 'user'
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-card border border-border"
+                                    ? "bg-foreground text-background"
+                                    : "bg-card border border-foreground/10 text-foreground"
                             )}>
                                 <div className="whitespace-pre-wrap">
                                     {msg.content.split('**').map((part, i) =>
-                                        i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+                                        i % 2 === 1 ? <strong key={i} className="font-bold">{part}</strong> : part
                                     )}
                                 </div>
                             </div>
@@ -276,11 +282,11 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                     ))}
                     {isLoading && (
                         <div className="flex justify-start">
-                            <div className="bg-card border border-border p-3 text-sm">
-                                <div className="flex gap-1">
-                                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                            <div className="bg-card border border-foreground/10 rounded-none p-3.5 text-xs">
+                                <div className="flex gap-1.5 items-center">
+                                    <span className="w-1.5 h-1.5 bg-red-accent rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                    <span className="w-1.5 h-1.5 bg-red-accent rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                    <span className="w-1.5 h-1.5 bg-red-accent rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                                 </div>
                             </div>
                         </div>
@@ -289,70 +295,71 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
 
                 {/* Coupon Display & Timer */}
                 {couponGenerated && (
-                    <div className="p-4 border-t bg-background space-y-3">
+                    <div className="p-4 border-t border-foreground/10 bg-background space-y-4">
                         {/* Timer */}
                         {timeRemaining !== null && (
                             <div className={cn(
-                                "flex items-center justify-center gap-2 text-sm font-medium",
-                                couponExpired ? "text-red-500" : timeRemaining <= 60 ? "text-orange-500" : "text-green-600"
+                                "flex items-center justify-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold",
+                                couponExpired ? "text-red-500" : timeRemaining <= 60 ? "text-orange-500 animate-pulse" : "text-green-600 dark:text-green-400"
                             )}>
-                                <Clock className="h-4 w-4" />
+                                <Clock className="h-3.5 w-3.5" />
                                 {couponExpired ? (
-                                    <span>Code expired!</span>
+                                    <span>Offer Expired</span>
                                 ) : (
-                                    <span>Expires in {formatTime(timeRemaining)}</span>
+                                    <span>Accept within {formatTime(timeRemaining)}</span>
                                 )}
                             </div>
                         )}
 
                         {/* Coupon Display */}
                         <div className={cn(
-                            "flex items-center gap-2 p-3 border",
+                            "flex items-center gap-3 p-4 border rounded-none",
                             couponExpired
-                                ? "bg-red-500/10 border-red-500/30 opacity-60"
-                                : "bg-red-accent/10 border-red-accent/30"
+                                ? "bg-red-500/5 border-red-500/20 opacity-50"
+                                : "bg-red-accent/5 border-red-accent/20"
                         )}>
                             <code className={cn(
-                                "flex-1 font-mono font-bold text-lg text-center",
+                                "flex-1 font-mono font-black text-xl text-center tracking-widest text-foreground",
                                 couponExpired && "line-through"
                             )}>
                                 {couponGenerated.code}
                             </code>
                             <Button
-                                size="sm"
+                                size="icon"
                                 variant="outline"
-                                className="rounded-none"
+                                className="rounded-none h-10 w-10 border-foreground/20 text-foreground hover:bg-foreground hover:text-background"
                                 onClick={handleCopyCode}
                                 disabled={couponExpired}
+                                aria-label="Copy coupon code"
                             >
-                                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                             </Button>
                         </div>
 
                         {/* Apply Button or Re-negotiate */}
                         {couponExpired ? (
                             <Button
-                                className="w-full h-11 rounded-none text-[10px] uppercase tracking-[0.15em]"
+                                className="w-full h-11 rounded-none text-[10px] uppercase tracking-[0.2em] font-bold bg-foreground text-background hover:bg-foreground/95"
                                 onClick={handleReNegotiate}
                             >
                                 Try again 🔄
                             </Button>
                         ) : !appliedCoupon ? (
                             <Button
-                                className="w-full h-11 rounded-none text-[10px] uppercase tracking-[0.15em] bg-red-accent text-white hover:bg-[#8E0000]"
+                                className="w-full h-11 rounded-none text-[10px] uppercase tracking-[0.2em] font-bold bg-red-accent text-white hover:bg-red-accent/90"
                                 onClick={handleApplyCoupon}
                             >
                                 Apply ₹{couponGenerated.discount} discount
                             </Button>
                         ) : (
-                            <div className="text-center text-xs text-green-600 dark:text-green-400 font-medium py-2">
-                                ✓ Coupon applied
+                            <div className="text-center text-[10px] uppercase tracking-[0.2em] text-green-600 dark:text-green-400 font-bold py-2">
+                                ✓ Coupon Applied Successfully
                             </div>
                         )}
 
                         <Button
                             variant="ghost"
-                            className="w-full text-[10px] text-muted-foreground uppercase tracking-[0.1em]"
+                            className="w-full text-[9px] text-muted-foreground uppercase tracking-[0.2em] rounded-none hover:bg-foreground/5 font-semibold"
                             onClick={() => setIsOpen(false)}
                         >
                             Continue to checkout
@@ -362,21 +369,21 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
 
                 {/* Chat Input (only if no coupon generated yet) */}
                 {!couponGenerated && (
-                    <form onSubmit={handleSubmit} className="p-4 border-t bg-background">
+                    <form onSubmit={handleSubmit} className="p-4 border-t border-foreground/10 bg-background">
                         <div className="flex gap-2">
                             <input
                                 type="text"
                                 value={input}
                                 onChange={handleInputChange}
-                                placeholder="Ask for a discount..."
+                                placeholder="NEGOTIATE YOUR PRICE..."
                                 aria-label="Bargain message input"
-                                className="flex-1 px-3 py-2 border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-red-accent"
+                                className="flex-1 px-3 py-2.5 border bg-background text-[11px] tracking-wider focus:outline-none focus:border-foreground border-foreground/15 rounded-none uppercase"
                                 disabled={isLoading}
                             />
                             <Button
                                 type="submit"
                                 size="icon"
-                                className="rounded-none bg-red-accent text-white hover:bg-[#8E0000]"
+                                className="rounded-none h-10 w-10 bg-foreground text-background hover:bg-red-accent hover:text-white transition-colors border-0"
                                 disabled={isLoading || !input.trim()}
                             >
                                 <Send className="h-4 w-4" />
@@ -392,10 +399,10 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
     // If coupon already applied, don't show bargain option
     if (appliedCoupon && !isOpen) {
         return (
-            <div className="p-4 bg-green-500/10 border border-green-500/30 mt-4">
-                <div className="flex items-center gap-2 text-sm">
+            <div className="p-4 bg-green-500/5 border border-green-500/20 mt-4 rounded-none">
+                <div className="flex items-center gap-2.5 text-xs uppercase tracking-[0.15em] font-bold">
                     <Check className="h-4 w-4 text-green-500" />
-                    <span className="font-medium text-green-600 dark:text-green-400">
+                    <span className="text-green-600 dark:text-green-400">
                         Coupon {appliedCoupon.code} applied! Saving ₹{appliedCoupon.discount}
                     </span>
                 </div>
@@ -407,29 +414,29 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
         <>
             {/* Bargain Prompt */}
             {showPrompt && !appliedCoupon && (
-                <div className="mt-6 p-4 bg-red-accent/5 border border-red-accent/20 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-red-accent/15 flex items-center justify-center">
+                <div className="mt-6 p-4 bg-red-accent/5 border border-red-accent/15 animate-in fade-in slide-in-from-bottom-2 duration-500 rounded-none shadow-[4px_4px_0px_0px_rgba(219,39,119,0.05)]">
+                    <div className="flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
+                        <div className="flex items-center gap-3.5">
+                            <div className="w-10 h-10 rounded-none bg-red-accent/10 flex items-center justify-center border border-red-accent/20">
                                 <Sparkles className="h-4 w-4 text-red-accent" />
                             </div>
                             <div>
-                                <p className="font-semibold text-xs">Want a bargain? 💰</p>
-                                <p className="text-[10px] text-muted-foreground">Negotiate with our AI for an exclusive discount</p>
+                                <p className="font-bold text-xs uppercase tracking-wider text-foreground">Want a bargain? 💰</p>
+                                <p className="text-[10px] text-muted-foreground mt-0.5 tracking-wide uppercase">Negotiate with our AI for an exclusive discount</p>
                             </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 w-full sm:w-auto justify-end">
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className="text-[10px] rounded-none uppercase tracking-[0.1em]"
+                                className="text-[9px] rounded-none uppercase tracking-[0.2em] font-bold border-foreground/20 hover:bg-foreground/5"
                                 onClick={handleSkip}
                             >
                                 Skip
                             </Button>
                             <Button
                                 size="sm"
-                                className="text-[10px] rounded-none bg-red-accent text-white hover:bg-[#8E0000] uppercase tracking-[0.1em]"
+                                className="text-[9px] rounded-none bg-red-accent text-white hover:bg-red-accent/90 uppercase tracking-[0.2em] font-bold border-0 shadow-sm"
                                 onClick={handleOpenBargain}
                             >
                                 Bargain

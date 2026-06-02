@@ -40,16 +40,16 @@ export function AdminCouponsClient({ initialCoupons }: { initialCoupons: AdminCo
         </Link>
       </div>
 
-      <div className="overflow-hidden rounded-lg border">
+      <div className="overflow-x-auto rounded-lg border">
         <table className="w-full">
           <thead>
             <tr className="border-b bg-muted/50">
               <th className="text-left p-4 font-medium">Code</th>
               <th className="text-left p-4 font-medium">Discount</th>
-              <th className="text-left p-4 font-medium">Min Order</th>
-              <th className="text-left p-4 font-medium">Usage</th>
-              <th className="text-left p-4 font-medium">Valid Until</th>
-              <th className="text-left p-4 font-medium">Status</th>
+              <th className="text-left p-4 font-medium hidden sm:table-cell">Min Order</th>
+              <th className="text-left p-4 font-medium hidden sm:table-cell">Usage</th>
+              <th className="text-left p-4 font-medium hidden md:table-cell">Valid Until</th>
+              <th className="text-left p-4 font-medium hidden sm:table-cell">Status</th>
               <th className="text-right p-4 font-medium">Actions</th>
             </tr>
           </thead>
@@ -77,10 +77,10 @@ export function AdminCouponsClient({ initialCoupons }: { initialCoupons: AdminCo
                         </>
                       ) : <>₹{coupon.discountValue}</>}
                     </td>
-                    <td className="p-4">{coupon.minOrderValue ? `₹${coupon.minOrderValue}` : "-"}</td>
-                    <td className="p-4">{coupon.usedCount}{coupon.maxUses && ` / ${coupon.maxUses}`}</td>
-                    <td className="p-4">{coupon.validUntil ? new Date(coupon.validUntil).toLocaleDateString() : "No expiry"}</td>
-                    <td className="p-4">
+                    <td className="p-4 hidden sm:table-cell">{coupon.minOrderValue ? `₹${coupon.minOrderValue}` : "-"}</td>
+                    <td className="p-4 hidden sm:table-cell">{coupon.usedCount}{coupon.maxUses && ` / ${coupon.maxUses}`}</td>
+                    <td className="p-4 hidden md:table-cell">{coupon.validUntil ? new Date(coupon.validUntil).toLocaleDateString() : "No expiry"}</td>
+                    <td className="p-4 hidden sm:table-cell">
                       {coupon.isActive ? (
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-500/10 text-green-500">Active</span>
                       ) : (
