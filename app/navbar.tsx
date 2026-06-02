@@ -1,19 +1,16 @@
 "use client";
 
-// NOTE: Search component overlay code is preserved at the bottom for future use.
-// The trigger button in the navbar has been commented out per request.
-
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Menu, X, ChevronLeft, ChevronRight, Bot, ArrowRight } from "lucide-react";
+import { Menu, X, ChevronLeft, ChevronRight, Bot, ArrowRight, Search } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
 import ThemeToggleButton from "@/components/ui/theme-toggle-button";
-import { ANNOUNCEMENT_MESSAGES, CONTACT_PHONE } from "@/lib/constants";
+import { ANNOUNCEMENT_MESSAGES } from "@/lib/constants";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
@@ -36,6 +33,15 @@ const utilityLinks = [
   { href: "/policies", label: "Policies" },
 ];
 
+const searchableCatalogPaths = new Set([
+  "/shop",
+  "/shop/men",
+  "/shop/women",
+  "/shop/accessories",
+  "/collections/premium",
+  "/new",
+]);
+
 function ArrowMarker() {
   return (
     <span className="hidden h-11 w-11 translate-x-2 items-center justify-center rounded-full border border-border opacity-0 transition-all duration-500 group-hover:translate-x-0 group-hover:opacity-100 md:flex">
@@ -46,6 +52,7 @@ function ArrowMarker() {
 
 export function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const { totalItems, setIsOpen, isHydrated: isCartHydrated } = useCart();
   const { items: wishlistItems, isHydrated: isWishlistHydrated } = useWishlist();
   
@@ -293,10 +300,15 @@ export function Navbar() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(getSearchHref(searchQuery.trim()));
       setShowSearch(false);
       setSearchQuery("");
     }
+  };
+
+  const getSearchHref = (query: string) => {
+    const targetPath = searchableCatalogPaths.has(pathname) ? pathname : "/shop";
+    return `${targetPath}?search=${encodeURIComponent(query)}`;
   };
 
   return (
@@ -383,6 +395,15 @@ export function Navbar() {
               </div>
             </Button>
 
+            <button
+              type="button"
+              onClick={() => setShowSearch(true)}
+              aria-label="Search products"
+              className="flex h-9 w-9 items-center justify-center text-muted-foreground transition-colors duration-500 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/60 sm:hidden"
+            >
+              <Search className="h-4 w-4 stroke-[1.5]" />
+            </button>
+
             <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
               {[
                 { href: "/shop/men", label: "For Him" },
@@ -410,12 +431,14 @@ export function Navbar() {
           <div className="flex-1 flex items-center justify-end space-x-5 lg:space-x-8">
             <ThemeToggleButton showLabel={false} variant="ghost" />
 
-            {/* <button 
-              onClick={() => setShowSearch(true)} 
-              className="hidden sm:block relative tracking-[0.15em] uppercase text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors duration-500 after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-foreground after:transition-all after:duration-500 after:ease-[cubic-bezier(0.32,0.72,0,1)]"
+            <button
+              type="button"
+              onClick={() => setShowSearch(true)}
+              aria-label="Search products"
+              className="hidden h-9 w-9 items-center justify-center text-muted-foreground transition-colors duration-500 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/60 sm:flex"
             >
-              SEARCH
-            </button> */}
+              <Search className="h-4 w-4 stroke-[1.5]" />
+            </button>
 
             <Link href="/account" className="hidden sm:block relative tracking-[0.15em] uppercase text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors duration-500 after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-foreground after:transition-all after:duration-500 after:ease-[cubic-bezier(0.32,0.72,0,1)]">
               ACCOUNT
@@ -488,7 +511,7 @@ export function Navbar() {
                       type="button"
                       onClick={() => {
                         setSearchQuery(term);
-                        router.push(`/shop?search=${encodeURIComponent(term)}`);
+                        router.push(getSearchHref(term));
                         setShowSearch(false);
                       }}
                       className="text-sm md:text-base font-light tracking-wide hover:text-red-accent transition-colors relative after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-red-accent after:transition-all after:duration-300"

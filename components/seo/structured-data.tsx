@@ -7,12 +7,7 @@ type JsonLdProps = {
 };
 
 export function JsonLd({ data }: JsonLdProps) {
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: safeJsonLdStringify(data) }}
-    />
-  );
+  return <script type="application/ld+json">{safeJsonLdStringify(data)}</script>;
 }
 
 export function organizationJsonLd(baseUrl: string) {

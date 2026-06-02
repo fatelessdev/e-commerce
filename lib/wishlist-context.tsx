@@ -21,14 +21,26 @@ interface WishlistContextType {
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined)
 
+function readStoredWishlist() {
+    const stored = localStorage.getItem("xilar-wishlist")
+    if (!stored) return []
+
+    try {
+        const parsed = JSON.parse(stored)
+        return Array.isArray(parsed) ? parsed : []
+    } catch {
+        localStorage.removeItem("xilar-wishlist")
+        return []
+    }
+}
+
 export function WishlistProvider({ children }: { children: ReactNode }) {
     const [items, setItems] = useState<WishlistItem[]>([])
     const [isHydrated, setIsHydrated] = useState(false)
 
     useEffect(() => {
         queueMicrotask(() => {
-            const stored = localStorage.getItem("xilar-wishlist")
-            setItems(stored ? JSON.parse(stored) : [])
+            setItems(readStoredWishlist())
             setIsHydrated(true)
         })
     }, [])

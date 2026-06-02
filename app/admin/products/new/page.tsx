@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +33,8 @@ const NUMBER_SIZE_CATEGORIES = ["jogger", "jeans", "cargo", "shorts"];
 export default function NewProductPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
   
   // Form state
@@ -70,6 +72,7 @@ export default function NewProductPage() {
   // Variant stock: keyed by "size|color" (color can be empty string for no-color products)
   const [variantStock, setVariantStock] = useState<Record<string, number>>({});
   const isAccessory = formData.category === "accessory";
+  const isBusy = isLoading || isRedirecting || isPending;
 
   // Auto-generate slug from name
   const handleNameChange = (name: string) => {
@@ -119,6 +122,8 @@ export default function NewProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isBusy) return;
+
     setIsLoading(true);
     setError("");
 
@@ -158,12 +163,16 @@ export default function NewProductPage() {
       };
 
       await createProduct(productData);
-      router.push("/admin/products");
+      setIsRedirecting(true);
+      startTransition(() => {
+        router.push("/admin/products");
+        router.refresh();
+      });
     } catch (err) {
       console.error("Failed to create product:", err);
       setError(err instanceof Error ? err.message : "Failed to create product");
-    } finally {
       setIsLoading(false);
+      setIsRedirecting(false);
     }
   };
 
@@ -880,11 +889,11 @@ export default function NewProductPage() {
 
         {/* Submit */}
         <div className="flex gap-4">
-          <Button type="submit" disabled={isLoading} className="flex-1">
-            {isLoading ? (
+          <Button type="submit" disabled={isBusy} className="flex-1">
+            {isBusy ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Creating...
+                {isRedirecting || isPending ? "Opening products..." : "Creating..."}
               </>
             ) : (
               "Create Product"
@@ -894,7 +903,7 @@ export default function NewProductPage() {
             type="button"
             variant="outline"
             onClick={() => router.back()}
-            disabled={isLoading}
+            disabled={isBusy}
           >
             Cancel
           </Button>

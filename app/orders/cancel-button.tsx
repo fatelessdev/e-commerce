@@ -1,17 +1,12 @@
 "use client"
 
-// COD temporarily disabled — cancel button hidden
-// import { useState } from "react"
-// import { useRouter } from "next/navigation"
-// import { Button } from "@/components/ui/button"
-// import { Loader2, XCircle } from "lucide-react"
-// import { cancelOrder } from "@/lib/actions/orders"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Loader2, XCircle } from "lucide-react"
+import { cancelOrder } from "@/lib/actions/orders"
 
 export function CancelOrderButton({ orderId }: { orderId: string }) {
-    void orderId
-    return null
-
-    /* COD CANCEL BUTTON — temporarily commented out
     const router = useRouter()
     const [confirming, setConfirming] = useState(false)
     const [cancelling, setCancelling] = useState(false)
@@ -71,5 +66,4 @@ export function CancelOrderButton({ orderId }: { orderId: string }) {
             </Button>
         </div>
     )
-    */
 }

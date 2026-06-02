@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getComboDetails } from "@/lib/combos";
 
 export async function GET(
-  req: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

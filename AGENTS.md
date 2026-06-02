@@ -29,7 +29,10 @@ components/
   layout/         → Navbar, sidebar
   ui/             → Primitives (Button, Card) — shadcn-style with variant props, NOT shadcn/ui
 lib/
-  actions/        → Server actions (admin.ts, orders.ts) — all DB mutations go here
+  actions/        → Server actions (admin.ts, orders.ts, bargain.ts) — all DB mutations go here
+  checkout/       → Server-owned checkout quote, pricing, and validation module
+  coupon-validation.ts → Public coupon validation and discount math; do not import public coupon rules from admin actions
+  bargain/        → Bargain prompt, display labels, pure rules, and DB eligibility context
   db/             → Drizzle schema & connection
   *-context.tsx   → Client providers (cart, wishlist, theme) using localStorage
 types/index.ts    → Shared TypeScript interfaces
@@ -51,14 +54,19 @@ Stored in `localStorage` (keys: `xilar-cart`, `xilar-wishlist`, `xilar-theme`). 
 
 ### Pricing & Security
 - Server always recalculates totals from DB prices — never trust client amounts
+- COD order creation, Razorpay order creation, and Razorpay verification must all use `createCheckoutQuote()` from `lib/checkout/quote.ts`
+- Pure money math belongs in `lib/checkout/pricing.ts`; route handlers should not duplicate subtotal/shipping/discount logic
 - Razorpay signature verification on payment confirmation (`app/api/razorpay/verify/route.ts`)
 - Coupon validation runs server-side with all business rules (expiry, limits, min order, user restrictions)
 - Shipping: free ≥ ₹999, else ₹99 (see `lib/constants.ts` for source of truth)
+- COD: ₹50 fee, cancellable by the owning customer only while `pending` or `confirmed`; cancellation restores stock and rolls back user metrics
 
 ### Bargain AI (Discount Negotiation)
 - Checkout component (`components/features/checkout-bargain.tsx`) streams AI chat via `/api/bargain`
-- Progressive discount: round 1 → 30-40%, round 2 → 50-60%, round 3+ → 80-90% of max allowed
-- Generates ephemeral coupons (prefix `BRG-`, 5-min expiry) stored in `coupons` and `bargainSessions` tables
+- Progressive offer and finalization rules live in `lib/bargain/logic.ts` and have unit tests
+- DB-backed bargain eligibility context lives in `lib/bargain/context.ts`; the route should not query product/combo caps inline
+- Coupon/session DB writes live in `lib/actions/bargain.ts`; `/api/bargain` should orchestrate streaming only
+- Generates ephemeral coupons (prefix `BRG-`, 5-min expiry) stored in `coupons` and `bargainSessions` tables only after persistence succeeds
 - Product page AI (`components/features/bargain-ai.tsx`) answers questions locally — no API calls
 
 ### Payment & Checkout Flow
@@ -67,6 +75,8 @@ Two payment paths in `app/checkout/page.tsx`:
 - **Online (Razorpay):** POST `/api/razorpay` (create order) → open Razorpay modal → POST `/api/razorpay/verify` (signature verification + amount check with ±₹1 tolerance) → `createOrder()` with `paymentStatus="paid"`
 - Server recalculates totals in both paths — client amounts are never trusted
 - Razorpay payment methods: UPI, Card, NetBanking (validated in verify route)
+- `createOrder()` stays the single order intake write path. Coupon consumption, stock mutation, user metrics, and order item snapshots must remain atomic.
+- Placeholder admin settings are intentionally removed. Do not re-add fake settings controls without a real persistence model.
 
 ### Store Credits & Refunds
 - `issueStoreCredit()` in `lib/actions/admin.ts` generates `CREDIT-XXXXXXXX` prefixed coupons

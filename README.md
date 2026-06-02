@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# XILAR E-Commerce
 
-## Getting Started
+XILAR is a Next.js storefront for apparel with a dark editorial frontend, admin catalog tools, Razorpay checkout, COD orders, coupon/store-credit support, and a checkout bargain AI that can issue short-lived coupons.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 App Router, React 19, TypeScript 5
+- Neon PostgreSQL through Drizzle ORM
+- Better Auth with admin role support
+- Razorpay orders and payment verification
+- NVIDIA NIM through the Vercel AI SDK
+- Cloudinary image delivery
+- Tailwind CSS 4, Lucide icons, Framer Motion, GSAP where the existing motion system uses it
+
+## Setup
+
+Install dependencies and run the local app:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Required environment variables:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+DATABASE_URL=
+BETTER_AUTH_SECRET=
+BETTER_AUTH_URL=
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
+NEXT_PUBLIC_RAZORPAY_KEY_ID=
+NIM_API_KEY=
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+NEXT_PUBLIC_APP_URL=
+```
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm test
+npm run lint
+npm run build
+npm run db:generate
+npm run db:push
+npm run db:studio
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Use `npm test`, `npm run lint`, and `npm run build` as the main quality gate before shipping.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Architecture
 
-## Deploy on Vercel
+- `app/` contains App Router pages and route handlers.
+- `components/features/` contains customer-facing domain components such as cart, checkout, product, shop, and bargain UI.
+- `components/ui/` contains local primitives. They are shadcn-style, not generated shadcn/ui.
+- `lib/db/` owns Drizzle schema and database connection.
+- `lib/actions/` owns database mutations and privileged server operations.
+- `lib/checkout/quote.ts` owns server-side checkout quote creation.
+- `lib/checkout/pricing.ts` owns pure quote math and Razorpay amount parity checks.
+- `lib/coupon-validation.ts` owns public coupon validation and discount math.
+- `lib/actions/orders.ts` owns atomic order creation and COD cancellation.
+- `lib/bargain/logic.ts` owns pure bargain cap, offer, and finalization rules.
+- `lib/bargain/context.ts` owns DB-backed bargain eligibility context.
+- `lib/actions/bargain.ts` owns persisted bargain coupon/session writes.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Checkout And Orders
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The client cart is intentionally localStorage-backed. The server never trusts client totals.
+
+Checkout route handlers call `createCheckoutQuote()` to resolve products, validate quantities, compute combo discounts, validate coupons, calculate shipping/COD fees, and produce verified order items. COD order creation, Razorpay order creation, and Razorpay payment verification all use that same quote path.
+
+Order creation in `createOrder()` is transactional: coupon consumption, order rows, order item snapshots, stock mutation, user order metrics, and cache revalidation are handled as one write path. COD cancellation is restored for owner-owned `pending` or `confirmed` COD orders and restores product/variant stock while rolling back user order metrics.
+
+## Bargain AI
+
+The checkout bargain API streams model output from `/api/bargain`, but persistence is separated:
+
+- `lib/bargain/logic.ts` calculates configured caps, offer progression, demand reasonableness, and finalization.
+- `lib/bargain/context.ts` loads product/combo caps and first-time-user eligibility.
+- `lib/actions/bargain.ts` creates `BRG-` coupons and `bargain_sessions` records transactionally.
+- Final coupon headers are only sent if the coupon was actually persisted.
+
+Bargain coupons are fixed-value, user-specific, single-use, and expire after five minutes.
+
+## Admin
+
+Admin pages require the Better Auth admin role. Catalog writes live in server actions and normalize product/variant input before touching the database. Products, combos, coupons, and orders are the real admin surfaces; the placeholder settings page was intentionally removed.
+
+Seeded rating/viewer merchandising stats are intentional presentation data. Do not remove them as "fake data" unless the merchandising model changes.
+
+## Quality Tools
+
+Desloppify is configured for cleanup scanning. Local/generated/source-material paths are excluded, including `.git`, `node_modules`, `.next`, `out`, `build`, `coverage`, `references`, `drizzle/meta`, `.env`, and `.env.local`.
+
+If `desloppify` is not on PATH on Windows, use the Python Scripts path shown by `python -m site --user-base`, for example:
+
+```powershell
+& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\Scripts\desloppify.exe" status
+```
+
+## Walkthroughs
+
+- `docs/walkthroughs/checkout-and-orders.md`
+- `docs/walkthroughs/bargain-ai-and-coupons.md`
+- `docs/walkthroughs/admin-catalog.md`

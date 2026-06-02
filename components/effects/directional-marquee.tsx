@@ -67,9 +67,8 @@ export function DirectionalMarquee({ items = DEFAULT_ITEMS }: { items?: string[]
         tweenRef.current?.pause();
       }
     }, {
-      shadow: false,
       threshold: 0.05 // Active when at least 5% is visible
-    } as any);
+    });
 
     observer.observe(rootRef.current);
 

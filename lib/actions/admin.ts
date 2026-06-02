@@ -181,25 +181,28 @@ export async function updateProduct(id: string, data: Partial<ProductInput>) {
     productData.features = [];
   }
 
-  const [product] = await db
-    .update(products)
-    .set({
-      ...productData,
-      updatedAt: new Date(),
-    })
-    .where(eq(products.id, id))
-    .returning();
+  const product = await db.transaction(async (tx) => {
+    const [updatedProduct] = await tx
+      .update(products)
+      .set({
+        ...productData,
+        updatedAt: new Date(),
+      })
+      .where(eq(products.id, id))
+      .returning();
 
-  // Keep accessory inventory as a single no-color variant.
-  if (isAccessory) {
-    const accessoryStock =
-      variants?.[0]?.stock ??
-      (typeof data.stock === "number" ? data.stock : existingProduct.stock);
-    await syncProductVariants(db, id, [{ size: ACCESSORY_SIZE, color: null, stock: Math.max(0, accessoryStock) }]);
-  } else if (variants) {
-    // If variants are provided, sync them
-    await syncProductVariants(db, id, variants);
-  }
+    // Keep accessory inventory as a single no-color variant.
+    if (isAccessory) {
+      const accessoryStock =
+        variants?.[0]?.stock ??
+        (typeof data.stock === "number" ? data.stock : existingProduct.stock);
+      await syncProductVariants(tx, id, [{ size: ACCESSORY_SIZE, color: null, stock: Math.max(0, accessoryStock) }]);
+    } else if (variants) {
+      await syncProductVariants(tx, id, variants);
+    }
+
+    return updatedProduct;
+  });
 
   revalidateAdminProductSurfaces(id);
 
@@ -391,63 +394,6 @@ export async function getCoupons(options?: { isActive?: boolean }) {
     .orderBy(desc(coupons.createdAt));
 
   return result;
-}
-
-export async function validateCoupon(code: string, orderTotal: number, userId?: string) {
-  const [coupon] = await db
-    .select()
-    .from(coupons)
-    .where(eq(coupons.code, code.toUpperCase()));
-
-  if (!coupon) {
-    return { valid: false, error: "Invalid coupon code" };
-  }
-
-  if (!coupon.isActive) {
-    return { valid: false, error: "This coupon is no longer active" };
-  }
-
-  const now = new Date();
-  
-  // Check bargain coupon expiry (5-minute time limit)
-  if (coupon.isBargainGenerated && coupon.expiresAt && coupon.expiresAt < now) {
-    return { valid: false, error: "This bargain code has expired. Try negotiating again!" };
-  }
-
-  if (coupon.validUntil && coupon.validUntil < now) {
-    return { valid: false, error: "This coupon has expired" };
-  }
-
-  if (coupon.validFrom > now) {
-    return { valid: false, error: "This coupon is not yet valid" };
-  }
-
-  if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) {
-    return { valid: false, error: "This coupon has reached its usage limit" };
-  }
-
-  if (coupon.minOrderValue && orderTotal < parseFloat(coupon.minOrderValue)) {
-    return { valid: false, error: `Minimum order value is ₹${coupon.minOrderValue}` };
-  }
-
-  if (coupon.userId && coupon.userId !== userId) {
-    return { valid: false, error: "This coupon is not valid for your account" };
-  }
-
-  // Calculate discount
-  let discount = parseFloat(coupon.discountValue);
-  if (coupon.discountType === "percentage") {
-    discount = (orderTotal * discount) / 100;
-    if (coupon.maxDiscount) {
-      discount = Math.min(discount, parseFloat(coupon.maxDiscount));
-    }
-  }
-
-  return {
-    valid: true,
-    coupon,
-    discount: Math.min(discount, orderTotal),
-  };
 }
 
 // ============================================

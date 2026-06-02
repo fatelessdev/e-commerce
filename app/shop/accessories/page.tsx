@@ -18,7 +18,12 @@ export const metadata: Metadata = {
     },
 }
 
-export default async function AccessoriesPage() {
+export default async function AccessoriesPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ search?: string }>
+}) {
+    const { search } = await searchParams
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
     const { products } = await getCatalogProducts({ category: "accessory" })
 
@@ -39,10 +44,12 @@ export default async function AccessoriesPage() {
                 })}
             />
             <ShopClient
+                key={search || ""}
                 genderFilter="all"
                 fixedCategory="accessory"
                 title="Accessories"
                 subtitle="Perfume and selected essentials"
+                initialSearch={search || ""}
                 initialProducts={products}
             />
         </>

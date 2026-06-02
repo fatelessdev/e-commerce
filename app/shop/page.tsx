@@ -23,7 +23,12 @@ export const metadata: Metadata = {
     },
 }
 
-export default async function ShopPage() {
+export default async function ShopPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ search?: string }>
+}) {
+    const { search } = await searchParams
     const { products } = await getCatalogProducts()
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
 
@@ -44,9 +49,11 @@ export default async function ShopPage() {
                 })}
             />
             <ShopClient
+                key={search || ""}
                 genderFilter="all"
                 title="All Products"
                 subtitle="Explore the full XILAR collection"
+                initialSearch={search || ""}
                 initialProducts={products}
             />
         </Suspense>

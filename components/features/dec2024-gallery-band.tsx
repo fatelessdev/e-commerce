@@ -42,7 +42,7 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
   }, [items]);
 
   const [isVisible, setIsVisible] = useState(true);
-  const scrollTriggersRef = useRef<any[]>([]);
+  const scrollTriggersRef = useRef<ScrollTrigger[]>([]);
 
   useEffect(() => {
     if (!rootRef.current) return;
@@ -108,8 +108,13 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
       setIsMenuOpen((e as CustomEvent).detail.open);
     };
     window.addEventListener("xilar-mobile-menu", handleMenuToggle);
-    setIsMenuOpen(document.body.classList.contains("mobile-menu-open"));
-    return () => window.removeEventListener("xilar-mobile-menu", handleMenuToggle);
+    const timer = window.setTimeout(() => {
+      setIsMenuOpen(document.body.classList.contains("mobile-menu-open"));
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("xilar-mobile-menu", handleMenuToggle);
+    };
   }, []);
 
   useEffect(() => {

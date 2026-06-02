@@ -36,3 +36,15 @@ test("filterCatalogProducts returns only premium products when requested", () =>
     ["premium"],
   );
 });
+
+test("filterCatalogProducts narrows products by search query", () => {
+  const products = [
+    product({ id: "polo", name: "Oversized Polo Tee" }),
+    product({ id: "cargo", name: "Utility Cargo Pants" }),
+  ];
+
+  assert.deepEqual(
+    filterCatalogProducts(products, { searchQuery: "polo" }).map((item) => item.id),
+    ["polo"],
+  );
+});

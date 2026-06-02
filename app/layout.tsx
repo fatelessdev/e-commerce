@@ -138,11 +138,12 @@ export default function RootLayout({
           <QueryProvider>
             <CartProvider>
               <WishlistProvider>
+                <Suspense fallback={null}>
                   <Navbar />
+                </Suspense>
                   <div id="main-content-container" className="flex-1 flex flex-col">
                     <main className="flex-1 overflow-x-hidden relative">
                       <Suspense fallback={null}>{children}</Suspense>
-                      {/* <BargainAI /> */}
                     </main>
                     <Suspense fallback={null}>
                       <FooterGate />

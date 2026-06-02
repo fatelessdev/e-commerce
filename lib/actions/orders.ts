@@ -6,6 +6,9 @@ import { getServerSession } from "@/lib/auth-server";
 import { eq, desc, sql, and, isNull, inArray, or, gt, lt, lte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { revalidateProductSurfaces } from "@/lib/cache-tags";
+import { getCustomerCodCancellationFailure } from "@/lib/order-cancellation";
+import { calculateCouponDiscount } from "@/lib/coupon-validation";
+import type { CheckoutQuote } from "@/lib/checkout/pricing";
 
 // ============================================
 // ORDER TYPES
@@ -37,6 +40,7 @@ export interface CreateOrderInput {
   subtotal: number;
   shippingCost: number;
   discount: number;
+  comboDiscount?: number;
   couponDiscount?: number;
   couponCode?: string;
   codFee?: number;
@@ -49,24 +53,170 @@ export interface CreateOrderInput {
   razorpaySignature?: string;
 }
 
+export type CreateOrderFromQuoteInput = {
+  quote: CheckoutQuote;
+  shippingAddress: ShippingAddress;
+  paymentMethod: CreateOrderInput["paymentMethod"];
+  paymentStatus?: CreateOrderInput["paymentStatus"];
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
+};
+
+type OrderMutationClient = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+type InventoryMutationItem = {
+  productId: string | null;
+  productName: string;
+  size: string;
+  color?: string | null;
+  quantity: number;
+};
+
+function describeInventoryItem(item: InventoryMutationItem) {
+  return `${item.productName} (${item.size}${item.color ? `, ${item.color}` : ""})`;
+}
+
+function variantColorCondition(item: InventoryMutationItem) {
+  return item.color
+    ? eq(productVariants.color, item.color)
+    : isNull(productVariants.color);
+}
+
+async function productHasVariants(tx: OrderMutationClient, productId: string) {
+  const [variantCountRow] = await tx
+    .select({ count: sql<number>`count(*)` })
+    .from(productVariants)
+    .where(eq(productVariants.productId, productId));
+
+  return Number(variantCountRow?.count ?? 0) > 0;
+}
+
+async function recalculateProductStockFromVariants(tx: OrderMutationClient, productId: string) {
+  const [stockRow] = await tx
+    .select({ totalStock: sql<number>`COALESCE(SUM(${productVariants.stock}), 0)` })
+    .from(productVariants)
+    .where(eq(productVariants.productId, productId));
+
+  await tx
+    .update(products)
+    .set({
+      stock: Number(stockRow?.totalStock ?? 0),
+      updatedAt: new Date(),
+    })
+    .where(eq(products.id, productId));
+}
+
+async function decrementOrderItemStock(tx: OrderMutationClient, item: InventoryMutationItem) {
+  if (!item.productId) {
+    throw new Error(`Product is unavailable: ${item.productName}`);
+  }
+
+  const [activeProduct] = await tx
+    .select({ id: products.id })
+    .from(products)
+    .where(and(eq(products.id, item.productId), eq(products.isActive, true)));
+
+  if (!activeProduct) {
+    throw new Error(`Product is unavailable: ${item.productName}`);
+  }
+
+  if (await productHasVariants(tx, item.productId)) {
+    const decrementedVariant = await tx
+      .update(productVariants)
+      .set({
+        stock: sql`${productVariants.stock} - ${item.quantity}`,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(productVariants.productId, item.productId),
+          eq(productVariants.size, item.size),
+          variantColorCondition(item),
+          sql`${productVariants.stock} >= ${item.quantity}`
+        )
+      )
+      .returning({ id: productVariants.id });
+
+    if (decrementedVariant.length === 0) {
+      const [variant] = await tx
+        .select({ id: productVariants.id })
+        .from(productVariants)
+        .where(
+          and(
+            eq(productVariants.productId, item.productId),
+            eq(productVariants.size, item.size),
+            variantColorCondition(item)
+          )
+        );
+
+      if (!variant) {
+        throw new Error(`Selected variant is unavailable for ${describeInventoryItem(item)}`);
+      }
+
+      throw new Error(`Insufficient stock for ${describeInventoryItem(item)}`);
+    }
+
+    await recalculateProductStockFromVariants(tx, item.productId);
+    return;
+  }
+
+  const decrementedProduct = await tx
+    .update(products)
+    .set({
+      stock: sql`${products.stock} - ${item.quantity}`,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(products.id, item.productId),
+        eq(products.isActive, true),
+        sql`${products.stock} >= ${item.quantity}`
+      )
+    )
+    .returning({ id: products.id });
+
+  if (decrementedProduct.length === 0) {
+    throw new Error(`Insufficient stock for ${item.productName}`);
+  }
+}
+
+async function restoreOrderItemStock(tx: OrderMutationClient, item: InventoryMutationItem) {
+  if (!item.productId) return null;
+
+  if (await productHasVariants(tx, item.productId)) {
+    await tx
+      .update(productVariants)
+      .set({
+        stock: sql`${productVariants.stock} + ${item.quantity}`,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(productVariants.productId, item.productId),
+          eq(productVariants.size, item.size),
+          variantColorCondition(item)
+        )
+      );
+
+    await recalculateProductStockFromVariants(tx, item.productId);
+    return item.productId;
+  }
+
+  await tx
+    .update(products)
+    .set({
+      stock: sql`${products.stock} + ${item.quantity}`,
+      updatedAt: new Date(),
+    })
+    .where(eq(products.id, item.productId));
+
+  return item.productId;
+}
+
 // ============================================
 // ORDER ACTIONS
 // ============================================
-
-function calculateCouponDiscount(
-  coupon: typeof coupons.$inferSelect,
-  orderTotal: number
-) {
-  let discount = parseFloat(coupon.discountValue);
-  if (coupon.discountType === "percentage") {
-    discount = (orderTotal * discount) / 100;
-    if (coupon.maxDiscount) {
-      discount = Math.min(discount, parseFloat(coupon.maxDiscount));
-    }
-  }
-
-  return Math.min(discount, orderTotal);
-}
 
 async function consumeCouponForOrder(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
@@ -160,64 +310,6 @@ export async function createOrder(input: CreateOrderInput) {
     };
   }
 
-  // Validate per-variant stock for all items
-  for (const item of input.items) {
-    const [productState] = await db
-      .select({ stock: products.stock, isActive: products.isActive })
-      .from(products)
-      .where(eq(products.id, item.productId));
-
-    if (!productState?.isActive) {
-      return {
-        success: false,
-        error: `Product is unavailable: ${item.productName}`,
-      };
-    }
-
-    const [variantCountRow] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(productVariants)
-      .where(eq(productVariants.productId, item.productId));
-    const hasVariants = Number(variantCountRow?.count ?? 0) > 0;
-
-    const colorCondition = item.color
-      ? eq(productVariants.color, item.color)
-      : isNull(productVariants.color);
-
-    const [variant] = await db
-      .select({ stock: productVariants.stock })
-      .from(productVariants)
-      .where(
-        and(
-          eq(productVariants.productId, item.productId),
-          eq(productVariants.size, item.size),
-          colorCondition
-        )
-      );
-
-    if (!variant) {
-      if (hasVariants) {
-        return {
-          success: false,
-          error: `Selected variant is unavailable for ${item.productName} (${item.size}${item.color ? `, ${item.color}` : ""})`,
-        };
-      }
-
-      // Fallback: check product-level stock only for legacy products without variants
-      if (productState.stock < item.quantity) {
-        return {
-          success: false,
-          error: `Insufficient stock for ${item.productName} (${item.size}${item.color ? `, ${item.color}` : ""})`,
-        };
-      }
-    } else if (variant.stock < item.quantity) {
-      return {
-        success: false,
-        error: `Insufficient stock for ${item.productName} (${item.size}${item.color ? `, ${item.color}` : ""})`,
-      };
-    }
-  }
-
   let order;
   try {
     order = await db.transaction(async (tx) => {
@@ -237,8 +329,12 @@ export async function createOrder(input: CreateOrderInput) {
       }
 
       const codFee = input.codFee ?? 0;
-      const discount = couponDiscount;
+      const discount = input.discount;
       const total = input.subtotal + input.shippingCost + codFee - discount;
+
+      if (discount < couponDiscount) {
+        throw new Error("Invalid order discount");
+      }
 
       if (total <= 0) {
         throw new Error("Invalid order total");
@@ -256,7 +352,6 @@ export async function createOrder(input: CreateOrderInput) {
           couponCode,
           couponDiscount: couponCode ? couponDiscount.toString() : null,
           codFee: codFee ? codFee.toString() : null,
-          // codRemainingAmount: input.paymentMethod === "cod" ? input.total.toString() : null, // COD temporarily disabled
           shippingAddress: {
             name: input.shippingAddress.name,
             phone: input.shippingAddress.phone,
@@ -274,15 +369,6 @@ export async function createOrder(input: CreateOrderInput) {
         .returning();
 
       for (const item of input.items) {
-        const [activeProduct] = await tx
-          .select({ id: products.id })
-          .from(products)
-          .where(and(eq(products.id, item.productId), eq(products.isActive, true)));
-
-        if (!activeProduct) {
-          throw new Error(`Product is unavailable: ${item.productName}`);
-        }
-
         await tx.insert(orderItems).values({
           orderId: createdOrder.id,
           productId: item.productId,
@@ -295,69 +381,7 @@ export async function createOrder(input: CreateOrderInput) {
           totalPrice: item.totalPrice.toString(),
         });
 
-        const [variantCountRow] = await tx
-          .select({ count: sql<number>`count(*)` })
-          .from(productVariants)
-          .where(eq(productVariants.productId, item.productId));
-        const hasVariants = Number(variantCountRow?.count ?? 0) > 0;
-
-        if (hasVariants) {
-          const colorCondition = item.color
-            ? eq(productVariants.color, item.color)
-            : isNull(productVariants.color);
-
-          const decrementedVariant = await tx
-            .update(productVariants)
-            .set({
-              stock: sql`${productVariants.stock} - ${item.quantity}`,
-              updatedAt: new Date(),
-            })
-            .where(
-              and(
-                eq(productVariants.productId, item.productId),
-                eq(productVariants.size, item.size),
-                colorCondition,
-                sql`${productVariants.stock} >= ${item.quantity}`
-              )
-            )
-            .returning();
-
-          if (decrementedVariant.length === 0) {
-            throw new Error(`Insufficient stock for ${item.productName} (${item.size}${item.color ? `, ${item.color}` : ""})`);
-          }
-
-          const [stockRow] = await tx
-            .select({ totalStock: sql<number>`COALESCE(SUM(${productVariants.stock}), 0)` })
-            .from(productVariants)
-            .where(eq(productVariants.productId, item.productId));
-
-          await tx
-            .update(products)
-            .set({
-              stock: Number(stockRow?.totalStock ?? 0),
-              updatedAt: new Date(),
-            })
-            .where(eq(products.id, item.productId));
-        } else {
-          const decrementedProduct = await tx
-            .update(products)
-            .set({
-              stock: sql`${products.stock} - ${item.quantity}`,
-              updatedAt: new Date(),
-            })
-            .where(
-              and(
-                eq(products.id, item.productId),
-                eq(products.isActive, true),
-                sql`${products.stock} >= ${item.quantity}`
-              )
-            )
-            .returning();
-
-          if (decrementedProduct.length === 0) {
-            throw new Error(`Insufficient stock for ${item.productName}`);
-          }
-        }
+        await decrementOrderItemStock(tx, item);
       }
 
       await tx
@@ -415,6 +439,26 @@ export async function createOrder(input: CreateOrderInput) {
   };
 }
 
+export async function createOrderFromQuote(input: CreateOrderFromQuoteInput) {
+  return createOrder({
+    items: input.quote.items,
+    subtotal: input.quote.subtotal,
+    shippingCost: input.quote.shippingCost,
+    discount: input.quote.discount,
+    comboDiscount: input.quote.comboDiscount,
+    couponDiscount: input.quote.couponDiscount,
+    couponCode: input.quote.couponCode,
+    codFee: input.quote.codFee,
+    total: input.quote.total,
+    shippingAddress: input.shippingAddress,
+    paymentMethod: input.paymentMethod,
+    paymentStatus: input.paymentStatus,
+    razorpayOrderId: input.razorpayOrderId,
+    razorpayPaymentId: input.razorpayPaymentId,
+    razorpaySignature: input.razorpaySignature,
+  });
+}
+
 export async function getUserOrders() {
   const session = await getServerSession();
   
@@ -457,10 +501,9 @@ export async function getUserOrders() {
 }
 
 // ============================================
-// CANCEL ORDER (COD only, pending/confirmed) — temporarily disabled
+// CANCEL ORDER (COD only, pending/confirmed)
 // ============================================
 
-/* COD CANCEL ORDER — temporarily commented out
 export async function cancelOrder(orderId: string) {
   const session = await getServerSession();
   if (!session?.user?.id) {
@@ -476,24 +519,28 @@ export async function cancelOrder(orderId: string) {
     return { success: false, error: "Order not found" };
   }
 
-  if (order.userId !== session.user.id) {
-    return { success: false, error: "You can only cancel your own orders" };
+  const cancellationFailure = getCustomerCodCancellationFailure({
+    orderUserId: order.userId,
+    currentUserId: session.user.id,
+    paymentMethod: order.paymentMethod,
+    status: order.status,
+  });
+
+  if (cancellationFailure) {
+    return { success: false, error: cancellationFailure };
   }
 
-  if (order.paymentMethod !== "cod") {
-    return { success: false, error: "Only COD orders can be cancelled online. For paid orders, please contact support." };
-  }
-
-  if (!["pending", "confirmed"].includes(order.status)) {
-    return { success: false, error: `Cannot cancel an order that is already ${order.status}` };
-  }
+  const productIds = new Set<string>();
 
   try {
     await db.transaction(async (tx) => {
-      // Mark order as cancelled only if still eligible (prevents race-condition double cancel)
       const cancelledOrder = await tx
         .update(orders)
-        .set({ status: "cancelled", updatedAt: new Date() })
+        .set({
+          status: "cancelled",
+          paymentStatus: "cancelled",
+          updatedAt: new Date(),
+        })
         .where(
           and(
             eq(orders.id, orderId),
@@ -508,64 +555,24 @@ export async function cancelOrder(orderId: string) {
         throw new Error("Order is no longer cancellable");
       }
 
-      // Fetch order items for stock restoration
       const items = await tx
         .select()
         .from(orderItems)
         .where(eq(orderItems.orderId, orderId));
 
-      // Restore stock for each item
       for (const item of items) {
-        if (!item.productId) continue;
-
-        const [variantCountRow] = await tx
-          .select({ count: sql<number>`count(*)` })
-          .from(productVariants)
-          .where(eq(productVariants.productId, item.productId));
-        const hasVariants = Number(variantCountRow?.count ?? 0) > 0;
-
-        if (hasVariants) {
-          const colorCondition = item.color
-            ? eq(productVariants.color, item.color)
-            : isNull(productVariants.color);
-
-          await tx
-            .update(productVariants)
-            .set({
-              stock: sql`${productVariants.stock} + ${item.quantity}`,
-              updatedAt: new Date(),
-            })
-            .where(
-              and(
-                eq(productVariants.productId, item.productId),
-                eq(productVariants.size, item.size),
-                colorCondition
-              )
-            );
-
-          // Recalculate product-level stock from variants
-          const [stockRow] = await tx
-            .select({ totalStock: sql<number>`COALESCE(SUM(${productVariants.stock}), 0)` })
-            .from(productVariants)
-            .where(eq(productVariants.productId, item.productId));
-
-          await tx
-            .update(products)
-            .set({
-              stock: Number(stockRow?.totalStock ?? 0),
-              updatedAt: new Date(),
-            })
-            .where(eq(products.id, item.productId));
-        } else {
-          await tx
-            .update(products)
-            .set({
-              stock: sql`${products.stock} + ${item.quantity}`,
-              updatedAt: new Date(),
-            })
-            .where(eq(products.id, item.productId));
-        }
+        const restoredProductId = await restoreOrderItemStock(tx, item);
+        if (restoredProductId) productIds.add(restoredProductId);
       }
+
+      await tx
+        .update(user)
+        .set({
+          ordersCount: sql`GREATEST(${user.ordersCount} - 1, 0)`,
+          totalSpent: sql`GREATEST(${user.totalSpent} - ${Number(order.total)}, 0)`,
+          updatedAt: new Date(),
+        })
+        .where(eq(user.id, session.user.id));
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to cancel order";
@@ -578,10 +585,10 @@ export async function cancelOrder(orderId: string) {
 
   revalidatePath("/orders");
   revalidatePath("/admin/orders");
+  productIds.forEach((productId) => revalidateProductSurfaces(productId));
 
   return { success: true };
 }
-*/
 
 // ============================================
 // SHIPPING ADDRESS (saved on user profile)

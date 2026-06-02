@@ -8,7 +8,6 @@ import {
   Layers,
   ShoppingCart,
   Ticket,
-  Settings,
 } from "lucide-react";
 
 export default async function AdminLayout({
@@ -71,13 +70,6 @@ export default async function AdminLayout({
             >
               <Ticket className="h-4 w-4" />
               Coupons
-            </Link>
-            <Link 
-              href="/admin/settings" 
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
-            >
-              <Settings className="h-4 w-4" />
-              Settings
             </Link>
           </nav>
 
