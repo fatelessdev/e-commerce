@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Menu, X, ChevronLeft, ChevronRight, Bot, ArrowRight, Search } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -50,15 +50,134 @@ function ArrowMarker() {
   );
 }
 
-export function Navbar() {
+function CatalogSearchOverlay({
+  showSearch,
+  setShowSearch,
+  shouldReduceMotion,
+}: {
+  showSearch: boolean;
+  setShowSearch: (open: boolean) => void;
+  shouldReduceMotion: boolean | null;
+}) {
   const router = useRouter();
   const pathname = usePathname();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (!showSearch) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowSearch(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [setShowSearch, showSearch]);
+
+  useEffect(() => {
+    if (showSearch) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [showSearch]);
+
+  const getSearchHref = (query: string) => {
+    const targetPath = searchableCatalogPaths.has(pathname) ? pathname : "/shop";
+    return `${targetPath}?search=${encodeURIComponent(query)}`;
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(getSearchHref(searchQuery.trim()));
+      setShowSearch(false);
+      setSearchQuery("");
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {showSearch && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
+          style={{ willChange: "opacity" }}
+          className="fixed inset-0 z-[110] bg-background/95 backdrop-blur-xl flex flex-col"
+        >
+          <div className="flex justify-between items-center px-6 md:px-12 lg:px-16 h-20">
+            <div className="flex-1" />
+            <div className="flex-1 flex justify-center">
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Search</span>
+            </div>
+            <div className="flex-1 flex justify-end">
+              <button onClick={() => setShowSearch(false)} className="p-2 -mr-2 text-foreground/80 hover:text-foreground transition-colors">
+                <X className="h-6 w-6 stroke-[1.5]" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col items-center justify-center px-6 pb-32">
+            <form onSubmit={handleSearchSubmit} className="w-full max-w-3xl relative">
+              <input
+                type="text"
+                placeholder="WHAT ARE YOU LOOKING FOR?"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+                className="w-full bg-transparent border-b border-foreground/20 focus:border-foreground text-3xl md:text-5xl lg:text-6xl uppercase font-light pb-4 outline-none transition-colors placeholder:text-muted-foreground/30 font-display"
+              />
+              <button type="submit" className="absolute right-0 bottom-6 text-foreground hover:text-red-accent transition-colors">
+                <ArrowRight className="h-8 w-8 md:h-10 md:w-10 stroke-[1.5]" />
+              </button>
+            </form>
+
+            <motion.div
+              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15, duration: shouldReduceMotion ? 0.01 : 0.6, ease: EASE_OUT_EXPO }}
+              className="mt-16 w-full max-w-3xl flex flex-col gap-6"
+            >
+              <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Trending Searches</p>
+              <div className="flex flex-wrap gap-4 md:gap-6">
+                {['Oversized Tees', 'Cargo Pants', 'Summer Collection', 'Premium Basics'].map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery(term);
+                      router.push(getSearchHref(term));
+                      setShowSearch(false);
+                    }}
+                    className="text-sm md:text-base font-light tracking-wide hover:text-red-accent transition-colors relative after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-red-accent after:transition-all after:duration-300"
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+export function Navbar() {
   const { totalItems, setIsOpen, isHydrated: isCartHydrated } = useCart();
   const { items: wishlistItems, isHydrated: isWishlistHydrated } = useWishlist();
   
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   
   const [previewImage, setPreviewImage] = useState(overlayLinks[0].img);
   const [announcementIndex, setAnnouncementIndex] = useState(0);
@@ -258,7 +377,7 @@ export function Navbar() {
   };
 
   useEffect(() => {
-    if (!showMobileMenu && !showSearch) return;
+    if (!showMobileMenu) return;
 
     if (showMobileMenu) {
       window.setTimeout(() => firstMenuLinkRef.current?.focus(), 120);
@@ -267,7 +386,6 @@ export function Navbar() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setShowMobileMenu(false);
-        setShowSearch(false);
       }
     };
 
@@ -276,7 +394,7 @@ export function Navbar() {
     return () => {
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [showMobileMenu, showSearch]);
+  }, [showMobileMenu]);
 
   useEffect(() => {
     if (showMobileMenu) {
@@ -286,30 +404,6 @@ export function Navbar() {
     }
     window.dispatchEvent(new CustomEvent("xilar-mobile-menu", { detail: { open: showMobileMenu } }));
   }, [showMobileMenu]);
-
-  useEffect(() => {
-    if (showSearch) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
-  }, [showSearch]);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(getSearchHref(searchQuery.trim()));
-      setShowSearch(false);
-      setSearchQuery("");
-    }
-  };
-
-  const getSearchHref = (query: string) => {
-    const targetPath = searchableCatalogPaths.has(pathname) ? pathname : "/shop";
-    return `${targetPath}?search=${encodeURIComponent(query)}`;
-  };
 
   return (
     <div ref={navContainerRef} className="contents">
@@ -459,72 +553,13 @@ export function Navbar() {
         </div>
       </header>
 
-      {/* Search Overlay */}
-      <AnimatePresence>
-        {showSearch && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
-            style={{ willChange: "opacity" }}
-            className="fixed inset-0 z-[110] bg-background/95 backdrop-blur-xl flex flex-col"
-          >
-            <div className="flex justify-between items-center px-6 md:px-12 lg:px-16 h-20">
-              <div className="flex-1" />
-              <div className="flex-1 flex justify-center">
-                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Search</span>
-              </div>
-              <div className="flex-1 flex justify-end">
-                <button onClick={() => setShowSearch(false)} className="p-2 -mr-2 text-foreground/80 hover:text-foreground transition-colors">
-                  <X className="h-6 w-6 stroke-[1.5]" />
-                </button>
-              </div>
-            </div>
-            
-            <div className="flex-1 flex flex-col items-center justify-center px-6 pb-32">
-              <form onSubmit={handleSearchSubmit} className="w-full max-w-3xl relative">
-                <input
-                  type="text"
-                  placeholder="WHAT ARE YOU LOOKING FOR?"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  autoFocus
-                  className="w-full bg-transparent border-b border-foreground/20 focus:border-foreground text-3xl md:text-5xl lg:text-6xl uppercase font-light pb-4 outline-none transition-colors placeholder:text-muted-foreground/30 font-display"
-                />
-                <button type="submit" className="absolute right-0 bottom-6 text-foreground hover:text-red-accent transition-colors">
-                  <ArrowRight className="h-8 w-8 md:h-10 md:w-10 stroke-[1.5]" />
-                </button>
-              </form>
-              
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15, duration: 0.6, ease: EASE_OUT_EXPO }}
-                className="mt-16 w-full max-w-3xl flex flex-col gap-6"
-              >
-                <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Trending Searches</p>
-                <div className="flex flex-wrap gap-4 md:gap-6">
-                  {['Oversized Tees', 'Cargo Pants', 'Summer Collection', 'Premium Basics'].map((term) => (
-                    <button 
-                      key={term}
-                      type="button"
-                      onClick={() => {
-                        setSearchQuery(term);
-                        router.push(getSearchHref(term));
-                        setShowSearch(false);
-                      }}
-                      className="text-sm md:text-base font-light tracking-wide hover:text-red-accent transition-colors relative after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-red-accent after:transition-all after:duration-300"
-                    >
-                      {term}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Suspense fallback={null}>
+        <CatalogSearchOverlay
+          showSearch={showSearch}
+          setShowSearch={setShowSearch}
+          shouldReduceMotion={shouldReduceMotion}
+        />
+      </Suspense>
 
       {/* Left Editorial Menu */}
       <div

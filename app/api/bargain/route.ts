@@ -1,5 +1,5 @@
 import { streamText } from "ai";
-import { bargainModel } from "@/lib/nim";
+import { bargainModel } from "@/lib/openrouter";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { BARGAIN_SYSTEM_PROMPT } from "@/lib/bargain/prompt";

@@ -12,7 +12,7 @@ For each task map out the full scope where the changes are needed like db, api, 
 - **Database:** Neon PostgreSQL (serverless) via Drizzle ORM (`lib/db/schema.ts`, `lib/db/index.ts`)
 - **Auth:** Better Auth with admin plugin (`lib/auth.ts`, `lib/auth-server.ts`, `lib/auth-client.ts`)
 - **Payments:** Razorpay (order creation + signature verification) — `lib/razorpay.ts`, `app/api/razorpay/`
-- **AI:** NVIDIA NIM (Qwen3 model) via Vercel AI SDK — `lib/nim.ts`, `app/api/bargain/route.ts`
+- **AI:** OpenRouter via Vercel AI SDK — `lib/openrouter.ts`, `app/api/bargain/route.ts`
 - **Images:** Cloudinary CDN with auto-format/quality — `lib/cloudinary.ts`
 - **Styling:** Tailwind CSS 4 + `cn()` utility from `lib/utils.ts`, Lucide icons, Framer Motion
 
@@ -101,7 +101,7 @@ Schema in `lib/db/schema.ts`. Key tables: `user`, `products`, `orders`, `order_i
 
 ## Environment Variables
 
-Required: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `NIM_API_KEY`, `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_RAZORPAY_KEY_ID`
+Required: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `OPENROUTER_API_KEY`, `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_RAZORPAY_KEY_ID`
 
 ## Conventions
 

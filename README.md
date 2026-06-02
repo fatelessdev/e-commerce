@@ -8,7 +8,7 @@ XILAR is a Next.js storefront for apparel with a dark editorial frontend, admin 
 - Neon PostgreSQL through Drizzle ORM
 - Better Auth with admin role support
 - Razorpay orders and payment verification
-- NVIDIA NIM through the Vercel AI SDK
+- OpenRouter through the Vercel AI SDK
 - Cloudinary image delivery
 - Tailwind CSS 4, Lucide icons, Framer Motion, GSAP where the existing motion system uses it
 
@@ -32,7 +32,7 @@ BETTER_AUTH_URL=
 RAZORPAY_KEY_ID=
 RAZORPAY_KEY_SECRET=
 NEXT_PUBLIC_RAZORPAY_KEY_ID=
-NIM_API_KEY=
+OPENROUTER_API_KEY=
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
