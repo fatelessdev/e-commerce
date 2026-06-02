@@ -301,6 +301,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                 size="icon"
                                 className="h-6 w-6 text-white hover:bg-white/10"
                                 onClick={() => setIsOpen(false)}
+                                aria-label="Close bargain chatbot"
                             >
                                 <X className="h-3.5 w-3.5" />
                             </Button>
@@ -428,6 +429,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                         size="icon"
                                         className="rounded-none bg-red-accent text-white hover:bg-[#8E0000]"
                                         disabled={isLoading || !input.trim()}
+                                        aria-label="Send message"
                                     >
                                         <Send className="h-4 w-4" />
                                     </Button>
