@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
@@ -51,21 +51,6 @@ function formatPrice(value: string | number) {
   return `₹${amount.toLocaleString("en-IN")}`
 }
 
-function getVariantStock(product: ComboProduct, size: string, color: string | null) {
-  if (!product.variants || product.variants.length === 0) {
-    return 0
-  }
-
-  const variant = product.variants.find(
-    (row) => row.size === size && (row.color === color || (row.color === null && color === null))
-  )
-  return variant?.stock ?? 0
-}
-
-function isColorAvailable(product: ComboProduct, colorName: string, selectedSize: string | null) {
-  if (!selectedSize) return false
-  return getVariantStock(product, selectedSize, colorName) > 0
-}
 
 export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: Combo }) {
   const [selectedImageA, setSelectedImageA] = useState(0)
@@ -97,14 +82,59 @@ export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: C
     staleTime: 1000 * 60 * 5,
   })
 
+  // O(1) Lookups for Variants
+  const variantsA = combo?.productA.variants
+  const variantMapA = useMemo(() => {
+    const map = new Map<string, number>()
+    if (!variantsA) return map
+    variantsA.forEach(v => {
+      const key = `${v.size}|${v.color}`
+      map.set(key, v.stock)
+    })
+    return map
+  }, [variantsA])
+
+  const variantsB = combo?.productB.variants
+  const variantMapB = useMemo(() => {
+    const map = new Map<string, number>()
+    if (!variantsB) return map
+    variantsB.forEach(v => {
+      const key = `${v.size}|${v.color}`
+      map.set(key, v.stock)
+    })
+    return map
+  }, [variantsB])
+
+  const getVariantStockA = (size: string, color: string | null) => {
+    if (!variantsA || variantsA.length === 0) return 0
+    const exactKey = `${size}|${color}`
+    return variantMapA.get(exactKey) ?? 0
+  }
+
+  const getVariantStockB = (size: string, color: string | null) => {
+    if (!variantsB || variantsB.length === 0) return 0
+    const exactKey = `${size}|${color}`
+    return variantMapB.get(exactKey) ?? 0
+  }
+
+  const isColorAvailableA = (colorName: string, selectedSize: string | null) => {
+    if (!selectedSize) return false
+    return getVariantStockA(selectedSize, colorName) > 0
+  }
+
+  const isColorAvailableB = (colorName: string, selectedSize: string | null) => {
+    if (!selectedSize) return false
+    return getVariantStockB(selectedSize, colorName) > 0
+  }
+
   const requiredColorA = combo?.productA.colors.length ? true : false
   const requiredColorB = combo?.productB.colors.length ? true : false
 
   const selectedStockA = selectedSizeA
-    ? getVariantStock(combo!.productA, selectedSizeA, requiredColorA ? selectedColorA : null)
+    ? getVariantStockA(selectedSizeA, requiredColorA ? selectedColorA : null)
     : null
   const selectedStockB = selectedSizeB
-    ? getVariantStock(combo!.productB, selectedSizeB, requiredColorB ? selectedColorB : null)
+    ? getVariantStockB(selectedSizeB, requiredColorB ? selectedColorB : null)
     : null
 
   const canAdd = Boolean(
@@ -441,7 +471,7 @@ export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: C
                   <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium">Color</p>
                   <div className="flex flex-wrap gap-2">
                     {combo.productA.colors.map((color) => {
-                      const available = isColorAvailable(combo.productA, color.name, selectedSizeA)
+                      const available = isColorAvailableA(color.name, selectedSizeA)
                       return (
                         <button
                           key={color.name}
@@ -503,7 +533,7 @@ export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: C
                   <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium">Color</p>
                   <div className="flex flex-wrap gap-2">
                     {combo.productB.colors.map((color) => {
-                      const available = isColorAvailable(combo.productB, color.name, selectedSizeB)
+                      const available = isColorAvailableB(color.name, selectedSizeB)
                       return (
                         <button
                           key={color.name}

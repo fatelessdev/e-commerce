@@ -1,0 +1,3 @@
+## 2024-06-04 - O(1) Lookups for Repetitive Data Traversal in Client Components
+**Learning:** Repetitive array traversals with `Array.find()` inside React component render functions, especially for mapping over options like sizes and colors, result in O(N) operations that can scale poorly and block the main thread.
+**Action:** When optimizing repetitive lookups, map nested data to a memoized `Map` instance using `useMemo` indexing elements via unique composite string keys (e.g. `\${size}|\${color}`). This converts O(N) array traversals to O(1) lookups during rapid render cycles. Make sure nested properties accessed in dependencies array are mapped to top level block variables to avoid React compiler warnings.
