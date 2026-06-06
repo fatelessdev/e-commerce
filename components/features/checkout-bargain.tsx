@@ -252,6 +252,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                     <Button
                         variant="ghost"
                         size="icon"
+                        aria-label="Close bargain terminal"
                         className="h-6 w-6 text-foreground hover:bg-foreground/10 hover:text-foreground rounded-none"
                         onClick={() => setIsOpen(false)}
                     >
@@ -383,6 +384,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                             <Button
                                 type="submit"
                                 size="icon"
+                                aria-label="Send message"
                                 className="rounded-none h-10 w-10 bg-foreground text-background hover:bg-red-accent hover:text-white transition-colors border-0"
                                 disabled={isLoading || !input.trim()}
                             >
