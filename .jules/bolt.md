@@ -1,0 +1,4 @@
+
+## 2024-03-01 - O(N) Array Lookups in React Component Render Loops
+**Learning:** Calling `.find()` repeatedly during render (e.g. within a `.map` loop mapping over colors to check variant availability) results in $O(N)$ operations multiplied by the number of iterations, degrading performance on product combos with many variants. Furthermore, when using `useMemo` to construct $O(1)$ lookup maps in React Compiler optimized components, optional chaining in the dependency array (e.g. `combo.productA?.variants`) causes dependency mismatch warnings and skips optimization.
+**Action:** Extract nested arrays into local variables (e.g., `const variantsA = combo.productA.variants`) to safely use as memoization dependencies. Then, use those dependencies to create a memoized Map indexed by composite keys (`${size}|${color}`) for fast $O(1)$ access within render loops.
