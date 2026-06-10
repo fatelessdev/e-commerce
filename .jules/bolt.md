@@ -1,0 +1,3 @@
+## 2024-03-24 - O(1) Map Lookups for React Component Variant Stock
+**Learning:** In e-commerce client components (`combo-client.tsx`, `combo-section.tsx`), searching through arrays inside render components (e.g. \`product.variants.find\`) scales poorly for heavily variant-dependent interactions (like color mappings that call it multiple times per size). This repetitive `O(N)` lookup inside the render cycle can cause perceivable layout lag or input delay.
+**Action:** Always extract repeated variant search logic and memoize into a \`Map\` with composite keys (e.g., \`\${v.size}|\${v.color}\`) using \`useMemo\` inside the render function. This grants O(1) lookups that scale perfectly regardless of variant complexity.
