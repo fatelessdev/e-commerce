@@ -43,20 +43,14 @@ function formatPrice(value: string | number) {
   return `₹${amount.toLocaleString("en-IN")}`;
 }
 
-function getVariantStock(product: ComboProduct, size: string, color: string | null) {
-  if (!product.variants || product.variants.length === 0) {
-    return 0;
-  }
-
-  const variant = product.variants.find(
-    (row) => row.size === size && (row.color === color || (row.color === null && color === null))
-  );
-  return variant?.stock ?? 0;
+// Optimized map lookup for variant stock
+function getVariantStockMap(variantMap: Map<string, number>, size: string, color: string | null) {
+  return variantMap.get(`${size}|${color}`) ?? 0;
 }
 
-function isColorAvailable(product: ComboProduct, colorName: string, selectedSize: string | null) {
+function isColorAvailableMap(variantMap: Map<string, number>, colorName: string, selectedSize: string | null) {
   if (!selectedSize) return false;
-  return getVariantStock(product, selectedSize, colorName) > 0;
+  return getVariantStockMap(variantMap, selectedSize, colorName) > 0;
 }
 
 function sizeOptions(product: ComboProduct) {
@@ -74,6 +68,30 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
   const [selectedColorB, setSelectedColorB] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
 
+  // Extract variants to local variables to avoid optional chaining in dependency arrays
+  const variantsA = combo.productA.variants;
+  const variantsB = combo.productB.variants;
+
+  // Memoize variants for O(1) lookups during render loops
+  // Maps `${size}|${color}` composite keys to stock values
+  const variantMapA = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!variantsA) return map;
+    variantsA.forEach(v => {
+      map.set(`${v.size}|${v.color}`, v.stock);
+    });
+    return map;
+  }, [variantsA]);
+
+  const variantMapB = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!variantsB) return map;
+    variantsB.forEach(v => {
+      map.set(`${v.size}|${v.color}`, v.stock);
+    });
+    return map;
+  }, [variantsB]);
+
   const maxDiscountAmount = Number(combo.discountAmount);
   const originalTotal = Number(combo.productA.sellingPrice) + Number(combo.productB.sellingPrice);
   const discountValue = Math.min(Math.max(0, maxDiscountAmount), originalTotal);
@@ -82,10 +100,10 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
   const requiredColorB = combo.productB.colors.length > 0;
 
   const selectedStockA = selectedSizeA
-    ? getVariantStock(combo.productA, selectedSizeA, requiredColorA ? selectedColorA : null)
+    ? getVariantStockMap(variantMapA, selectedSizeA, requiredColorA ? selectedColorA : null)
     : null;
   const selectedStockB = selectedSizeB
-    ? getVariantStock(combo.productB, selectedSizeB, requiredColorB ? selectedColorB : null)
+    ? getVariantStockMap(variantMapB, selectedSizeB, requiredColorB ? selectedColorB : null)
     : null;
 
   const canAdd = Boolean(
@@ -156,7 +174,7 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
             {requiredColorA && (
               <div className="flex flex-wrap gap-2">
                 {combo.productA.colors.map((color) => {
-                  const available = isColorAvailable(combo.productA, color.name, selectedSizeA);
+                  const available = isColorAvailableMap(variantMapA, color.name, selectedSizeA);
                   return (
                     <button
                       key={`a-${color.name}`}
@@ -196,7 +214,7 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
             {requiredColorB && (
               <div className="flex flex-wrap gap-2">
                 {combo.productB.colors.map((color) => {
-                  const available = isColorAvailable(combo.productB, color.name, selectedSizeB);
+                  const available = isColorAvailableMap(variantMapB, color.name, selectedSizeB);
                   return (
                     <button
                       key={`b-${color.name}`}
