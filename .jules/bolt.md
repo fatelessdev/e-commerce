@@ -1,0 +1,3 @@
+## 2024-05-18 - [Optimize Variant Lookups with Maps]
+**Learning:** React client components checking inventory availability (like `getVariantStock` or `isColorAvailable`) often loop through product variant arrays (O(N) operations) inside render methods. While the N per component might be small, rendering multiple `ComboCard` elements on a page multiplies this issue, especially when checking every color option per product inside combinations.
+**Action:** When optimizing repetitive data lookups in React client components (e.g., product variants), use a memoized `Map` via `useMemo` to index data by composite keys (e.g., `size|color`) for O(1) access instead of O(N) array traversals.
