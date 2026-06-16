@@ -1,0 +1,3 @@
+## 2026-06-16 - [Memoization Pattern for O(1) Variant Lookups]
+**Learning:** When trying to manually memoize data derived from optionally chained properties (e.g. `combo?.productA.variants`), React Compiler can issue a dependency mismatch warning. This disrupts compilation optimizations.
+**Action:** Extract the target property to a local variable (e.g. `const variants = combo?.productA.variants`) prior to calling `useMemo`. Pass the local variable directly into the dependency array without using optional chaining. By mapping the arrays with composite string keys (e.g. `${size}|${color}`) to a `Map` instance, you can safely eliminate O(N) `.find()` traversal per render cycle and maintain optimal React Compiler integration.
