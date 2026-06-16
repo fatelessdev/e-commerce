@@ -254,6 +254,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                         size="icon"
                         className="h-6 w-6 text-foreground hover:bg-foreground/10 hover:text-foreground rounded-none"
                         onClick={() => setIsOpen(false)}
+                        aria-label="Close terminal"
                     >
                         <X className="h-3.5 w-3.5" />
                     </Button>
@@ -385,6 +386,7 @@ export function CheckoutBargain({ cartItems, totalPrice, onApplyCoupon, appliedC
                                 size="icon"
                                 className="rounded-none h-10 w-10 bg-foreground text-background hover:bg-red-accent hover:text-white transition-colors border-0"
                                 disabled={isLoading || !input.trim()}
+                                aria-label="Send message"
                             >
                                 <Send className="h-4 w-4" />
                             </Button>
