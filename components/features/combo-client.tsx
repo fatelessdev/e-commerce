@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useVariantStock } from "@/lib/hooks/use-variant-stock"
 import { useQuery } from "@tanstack/react-query"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
@@ -51,22 +52,6 @@ function formatPrice(value: string | number) {
   return `₹${amount.toLocaleString("en-IN")}`
 }
 
-function getVariantStock(product: ComboProduct, size: string, color: string | null) {
-  if (!product.variants || product.variants.length === 0) {
-    return 0
-  }
-
-  const variant = product.variants.find(
-    (row) => row.size === size && (row.color === color || (row.color === null && color === null))
-  )
-  return variant?.stock ?? 0
-}
-
-function isColorAvailable(product: ComboProduct, colorName: string, selectedSize: string | null) {
-  if (!selectedSize) return false
-  return getVariantStock(product, selectedSize, colorName) > 0
-}
-
 export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: Combo }) {
   const [selectedImageA, setSelectedImageA] = useState(0)
   const [selectedImageB, setSelectedImageB] = useState(0)
@@ -97,14 +82,16 @@ export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: C
     staleTime: 1000 * 60 * 5,
   })
 
+  const { getVariantStockA, getVariantStockB, isColorAvailableA, isColorAvailableB } = useVariantStock(combo?.productA?.variants, combo?.productB?.variants);
+
   const requiredColorA = combo?.productA.colors.length ? true : false
   const requiredColorB = combo?.productB.colors.length ? true : false
 
   const selectedStockA = selectedSizeA
-    ? getVariantStock(combo!.productA, selectedSizeA, requiredColorA ? selectedColorA : null)
+    ? getVariantStockA(selectedSizeA, requiredColorA ? selectedColorA : null)
     : null
   const selectedStockB = selectedSizeB
-    ? getVariantStock(combo!.productB, selectedSizeB, requiredColorB ? selectedColorB : null)
+    ? getVariantStockB(selectedSizeB, requiredColorB ? selectedColorB : null)
     : null
 
   const canAdd = Boolean(
@@ -441,7 +428,7 @@ export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: C
                   <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium">Color</p>
                   <div className="flex flex-wrap gap-2">
                     {combo.productA.colors.map((color) => {
-                      const available = isColorAvailable(combo.productA, color.name, selectedSizeA)
+                      const available = isColorAvailableA(color.name, selectedSizeA)
                       return (
                         <button
                           key={color.name}
@@ -503,7 +490,7 @@ export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: C
                   <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium">Color</p>
                   <div className="flex flex-wrap gap-2">
                     {combo.productB.colors.map((color) => {
-                      const available = isColorAvailable(combo.productB, color.name, selectedSizeB)
+                      const available = isColorAvailableB(color.name, selectedSizeB)
                       return (
                         <button
                           key={color.name}

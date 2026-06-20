@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useVariantStock } from "@/lib/hooks/use-variant-stock";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -43,22 +44,6 @@ function formatPrice(value: string | number) {
   return `₹${amount.toLocaleString("en-IN")}`;
 }
 
-function getVariantStock(product: ComboProduct, size: string, color: string | null) {
-  if (!product.variants || product.variants.length === 0) {
-    return 0;
-  }
-
-  const variant = product.variants.find(
-    (row) => row.size === size && (row.color === color || (row.color === null && color === null))
-  );
-  return variant?.stock ?? 0;
-}
-
-function isColorAvailable(product: ComboProduct, colorName: string, selectedSize: string | null) {
-  if (!selectedSize) return false;
-  return getVariantStock(product, selectedSize, colorName) > 0;
-}
-
 function sizeOptions(product: ComboProduct) {
   if (NUMBER_SIZE_CATEGORIES.includes(product.category)) {
     return product.sizes.filter((size) => /^\d+$/.test(size));
@@ -67,6 +52,7 @@ function sizeOptions(product: ComboProduct) {
 }
 
 export function ComboCard({ combo, interactive }: { combo: Combo; interactive: boolean }) {
+    const { getVariantStockA, getVariantStockB, isColorAvailableA, isColorAvailableB } = useVariantStock(combo.productA.variants, combo.productB.variants);
   const { addCombo } = useCart();
   const [selectedSizeA, setSelectedSizeA] = useState<string | null>(null);
   const [selectedColorA, setSelectedColorA] = useState<string | null>(null);
@@ -82,10 +68,10 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
   const requiredColorB = combo.productB.colors.length > 0;
 
   const selectedStockA = selectedSizeA
-    ? getVariantStock(combo.productA, selectedSizeA, requiredColorA ? selectedColorA : null)
+    ? getVariantStockA(selectedSizeA, requiredColorA ? selectedColorA : null)
     : null;
   const selectedStockB = selectedSizeB
-    ? getVariantStock(combo.productB, selectedSizeB, requiredColorB ? selectedColorB : null)
+    ? getVariantStockB(selectedSizeB, requiredColorB ? selectedColorB : null)
     : null;
 
   const canAdd = Boolean(
@@ -156,7 +142,7 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
             {requiredColorA && (
               <div className="flex flex-wrap gap-2">
                 {combo.productA.colors.map((color) => {
-                  const available = isColorAvailable(combo.productA, color.name, selectedSizeA);
+                  const available = isColorAvailableA(color.name, selectedSizeA);
                   return (
                     <button
                       key={`a-${color.name}`}
@@ -196,7 +182,7 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
             {requiredColorB && (
               <div className="flex flex-wrap gap-2">
                 {combo.productB.colors.map((color) => {
-                  const available = isColorAvailable(combo.productB, color.name, selectedSizeB);
+                  const available = isColorAvailableB(color.name, selectedSizeB);
                   return (
                     <button
                       key={`b-${color.name}`}
