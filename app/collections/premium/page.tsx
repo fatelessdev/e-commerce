@@ -3,6 +3,8 @@ import { ShopClient } from "@/components/features/shop-client"
 import { JsonLd, breadcrumbJsonLd, collectionJsonLd } from "@/components/seo/structured-data"
 import { getCatalogProducts } from "@/lib/product-catalog"
 
+export const dynamic = "force-dynamic"
+
 export const metadata: Metadata = {
     title: "Premium Collection — Elevated XILAR Picks",
     description:

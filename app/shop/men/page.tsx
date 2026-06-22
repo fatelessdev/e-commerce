@@ -5,6 +5,8 @@ import { JsonLd, breadcrumbJsonLd, collectionJsonLd } from "@/components/seo/str
 import { getActiveCombosWithProducts } from "@/lib/combos"
 import { getCatalogProducts } from "@/lib/product-catalog"
 
+export const dynamic = "force-dynamic"
+
 export const metadata: Metadata = {
     title: "Men's Streetwear",
     description:

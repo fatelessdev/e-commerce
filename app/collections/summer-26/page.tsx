@@ -3,6 +3,8 @@ import { ProductGrid } from "@/components/features/product-grid"
 import { JsonLd, breadcrumbJsonLd, collectionJsonLd } from "@/components/seo/structured-data"
 import { getCatalogProducts } from "@/lib/product-catalog"
 
+export const dynamic = "force-dynamic"
+
 export const metadata: Metadata = {
     title: "Summer '26 Collection — Light Fabrics, Bold Statements",
     description:
