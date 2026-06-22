@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { requireAdmin } from "@/lib/auth-server";
 import { db } from "@/lib/db";
@@ -75,7 +74,6 @@ export async function createCombo(input: ComboInput) {
     })
     .returning();
 
-  revalidatePath("/admin/combos");
   return combo;
 }
 
@@ -110,14 +108,12 @@ export async function updateCombo(id: string, updates: { discountAmount?: number
     throw new Error("Combo not found");
   }
 
-  revalidatePath("/admin/combos");
   return combo;
 }
 
 export async function deleteCombo(id: string) {
   await requireAdmin();
   await db.delete(combos).where(eq(combos.id, id));
-  revalidatePath("/admin/combos");
   return { success: true };
 }
 
