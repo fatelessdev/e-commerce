@@ -6,7 +6,6 @@ import { requireAdmin } from "@/lib/auth-server";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { generateSecureCode } from "@/lib/utils";
-import { revalidateComboSurfaces, revalidateProductSurfaces } from "@/lib/cache-tags";
 import { ADMIN_PRODUCTS_PAGE_SIZE } from "@/lib/admin-products-pagination";
 import {
   ACCESSORY_SIZE,
@@ -23,13 +22,9 @@ export type { ProductInput } from "@/lib/admin-product-input";
 
 type ProductMutationClient = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-function revalidateAdminProductSurfaces(productId: string) {
+function revalidateAdminProductSurfaces() {
   try {
     revalidatePath("/admin/products");
-    revalidatePath(`/product/${productId}`);
-    revalidatePath("/shop");
-    revalidatePath("/");
-    revalidateProductSurfaces(productId);
   } catch (error) {
     console.error("Failed to revalidate product surfaces after mutation:", error);
   }
@@ -144,7 +139,7 @@ export async function createProduct(data: ProductInput) {
     return createdProduct;
   });
 
-  revalidateAdminProductSurfaces(product.id);
+  revalidateAdminProductSurfaces();
 
   return product;
 }
@@ -204,7 +199,7 @@ export async function updateProduct(id: string, data: Partial<ProductInput>) {
     return updatedProduct;
   });
 
-  revalidateAdminProductSurfaces(id);
+  revalidateAdminProductSurfaces();
 
   return product;
 }
@@ -214,11 +209,7 @@ export async function deleteProduct(id: string) {
 
   await db.delete(products).where(eq(products.id, id));
 
-  revalidateAdminProductSurfaces(id);
-  revalidatePath("/shop/men");
-  revalidatePath("/shop/women");
-  revalidatePath("/shop/accessories");
-  revalidateComboSurfaces();
+  revalidateAdminProductSurfaces();
 
   return { success: true };
 }

@@ -8,6 +8,8 @@ import {
     collectionJsonLd,
 } from "@/components/seo/structured-data"
 
+export const dynamic = "force-dynamic"
+
 export const metadata: Metadata = {
     title: "Shop All Streetwear",
     description:

@@ -4,6 +4,8 @@ import { JsonLd, breadcrumbJsonLd } from "@/components/seo/structured-data";
 import { getCatalogProducts } from "@/lib/product-catalog";
 import { normalizeProductImage } from "@/lib/image";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Gallery — XILAR Product Field",
   description: "Explore XILAR drops in a draggable live product gallery built from current catalog imagery.",

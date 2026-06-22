@@ -6,6 +6,8 @@ import {
   breadcrumbJsonLd,
 } from "@/components/seo/structured-data"
 
+export const dynamic = "force-dynamic"
+
 async function getCombo(id: string) {
   return getComboDetails(id)
 }

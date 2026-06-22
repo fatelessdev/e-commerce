@@ -256,27 +256,6 @@ video {
   font-weight: 500;
 }
 
-.bargain-discount-strip {
-  position: absolute;
-  top: 30px;
-  right: -72px;
-  width: 264px;
-  background-color: var(--red);
-  color: #ffffff;
-  padding: 0.4rem 0;
-  font-size: 0.58rem;
-  line-height: 1;
-  letter-spacing: 0.065em;
-  text-transform: uppercase;
-  font-weight: 600;
-  text-align: center;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14);
-  transform: rotate(45deg);
-  display: block;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;

@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/scroll-reveal"
-import { BargainDiscountStrip } from "@/components/ui/bargain-discount-strip"
 import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useMemo, useRef, useState } from "react"
@@ -229,9 +228,6 @@ export function ProductGrid({
                                 <ViewportPrefetchLink href={`/product/${product.id}`}>
                                     <Card className="bg-transparent border-0 rounded-none hover-lift">
                                         <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
-                                            {product.stock > 0 && (
-                                                <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-10" />
-                                            )}
                                             {product.stock === 0 && (
                                                 <div className="absolute top-3 left-3 z-10 badge-sold-out">Sold Out</div>
                                             )}
@@ -272,9 +268,6 @@ export function ProductGrid({
                                 <ViewportPrefetchLink href={`/product/${product.id}`}>
                                     <Card className="bg-transparent border-0 rounded-none hover-lift">
                                         <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
-                                            {product.stock > 0 && (
-                                                <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-10" />
-                                            )}
                                             {/* Sold Out Badge */}
                                             {product.stock === 0 && (
                                                 <div className="absolute top-3 left-3 z-10 badge-sold-out">
@@ -340,9 +333,6 @@ export function ProductGrid({
                                 <ViewportPrefetchLink href={`/product/${product.id}`}>
                                     <Card className="bg-transparent border-0 rounded-none hover-lift">
                                         <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
-                                            {product.stock > 0 && (
-                                                <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-10" />
-                                            )}
                                             {/* Sold Out Badge */}
                                             {product.stock === 0 && (
                                                 <div className="absolute top-3 left-3 z-10 badge-sold-out">

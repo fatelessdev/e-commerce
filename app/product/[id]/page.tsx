@@ -1,20 +1,16 @@
 import type { Metadata } from "next"
 import { ProductClient } from "@/components/features/product-client"
 import { getProductDetails } from "@/lib/product-detail"
-import { getActiveProductIds } from "@/lib/product-catalog"
 import {
     JsonLd,
     productJsonLd,
     breadcrumbJsonLd,
 } from "@/components/seo/structured-data"
 
+export const dynamic = "force-dynamic"
+
 async function getProduct(id: string) {
     return getProductDetails(id)
-}
-
-export async function generateStaticParams() {
-    const productIds = await getActiveProductIds()
-    return productIds.map((product) => ({ id: product.id }))
 }
 
 export async function generateMetadata(
