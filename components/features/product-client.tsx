@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { ProductGrid } from "@/components/features/product-grid"
-import { BargainDiscountStrip } from "@/components/ui/bargain-discount-strip"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/lib/cart-context"
 import { useWishlist } from "@/lib/wishlist-context"
@@ -341,9 +340,6 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                 {/* Gallery Section — Horizontal Slider */}
                 <div className="relative bg-white/5 overflow-hidden group">
                     <div className="aspect-[4/5] w-full relative">
-                        {product.stock > 0 && (
-                            <BargainDiscountStrip maxBargainDiscount={product.maxBargainDiscount} className="z-20" />
-                        )}
                         <AnimatePresence initial={false} mode="popLayout">
                             <motion.div
                                 key={selectedImage}
@@ -730,9 +726,6 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                             <ViewportPrefetchLink key={related.id} href={`/product/${related.id}`} className={`group flex-shrink-0 w-[200px] sm:w-[240px] snap-start ${related.stock <= 0 ? "cursor-not-allowed" : ""}`}>
                                 <div className="space-y-3">
                                     <div className="relative aspect-[3/4] overflow-hidden bg-muted/30">
-                                        {related.stock > 0 && (
-                                            <BargainDiscountStrip maxBargainDiscount={related.maxBargainDiscount} className="z-10" />
-                                        )}
                                         <Image
                                             src={normalizeProductImage(related.images?.[0])}
                                             alt={related.name}

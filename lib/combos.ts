@@ -1,8 +1,6 @@
 import { db } from "@/lib/db";
 import { combos, products, productVariants } from "@/lib/db/schema";
-import { CACHE_TAGS } from "@/lib/cache-tags";
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { cacheLife, cacheTag } from "next/cache";
 
 export type ComboLinkedItem = {
   productId: string;
@@ -17,12 +15,6 @@ export function canonicalizeComboPair(productAId: string, productBId: string) {
 }
 
 export async function getActiveCombosWithProducts(limit = 6) {
-  "use cache";
-
-  cacheLife("hours");
-  cacheTag(CACHE_TAGS.combos);
-  cacheTag(CACHE_TAGS.products);
-
   const activeCombos = await db
     .select()
     .from(combos)
@@ -87,27 +79,7 @@ export async function getActiveCombosWithProducts(limit = 6) {
     .filter((combo): combo is NonNullable<typeof combo> => combo !== null);
 }
 
-export async function getActiveComboIds() {
-  "use cache";
-
-  cacheLife("hours");
-  cacheTag(CACHE_TAGS.combos);
-
-  return db
-    .select({ id: combos.id })
-    .from(combos)
-    .where(eq(combos.isActive, true))
-    .orderBy(desc(combos.displayOrder), desc(combos.createdAt));
-}
-
 export async function getComboDetails(id: string) {
-  "use cache";
-
-  cacheLife("hours");
-  cacheTag(CACHE_TAGS.combos);
-  cacheTag(CACHE_TAGS.combo(id));
-  cacheTag(CACHE_TAGS.products);
-
   const [combo] = await db
     .select()
     .from(combos)

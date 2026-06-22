@@ -6,6 +6,8 @@ import { collectionJsonLd } from "@/components/seo/structured-data"
 import { getActiveCombosWithProducts } from "@/lib/combos"
 import { getCatalogProducts } from "@/lib/product-catalog"
 
+export const dynamic = "force-dynamic"
+
 export const metadata: Metadata = {
     title: "Women's Streetwear",
     description:

@@ -4,8 +4,6 @@ import { db } from "@/lib/db";
 import { orders, orderItems, products, productVariants, user, bargainSessions, coupons } from "@/lib/db/schema";
 import { getServerSession } from "@/lib/auth-server";
 import { eq, desc, sql, and, isNull, inArray, or, gt, lt, lte } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
-import { revalidateProductSurfaces } from "@/lib/cache-tags";
 import { getCustomerCodCancellationFailure } from "@/lib/order-cancellation";
 import { calculateCouponDiscount } from "@/lib/coupon-validation";
 import type { CheckoutQuote } from "@/lib/checkout/pricing";
@@ -427,12 +425,6 @@ export async function createOrder(input: CreateOrderInput) {
     };
   }
 
-  revalidatePath("/orders");
-  revalidatePath("/admin/orders");
-  Array.from(new Set(input.items.map((item) => item.productId))).forEach((productId) => {
-    revalidateProductSurfaces(productId);
-  });
-
   return {
     success: true,
     orderId: order.id,
@@ -582,10 +574,6 @@ export async function cancelOrder(orderId: string) {
     console.error("Cancel order failed:", error);
     return { success: false, error: "Failed to cancel order" };
   }
-
-  revalidatePath("/orders");
-  revalidatePath("/admin/orders");
-  productIds.forEach((productId) => revalidateProductSurfaces(productId));
 
   return { success: true };
 }

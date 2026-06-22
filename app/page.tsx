@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import { Hero } from "@/components/features/hero";
 import { ComboSection } from "@/components/features/combo-section";
 import { Dec2024GalleryBand } from "@/components/features/dec2024-gallery-band";
@@ -14,7 +14,9 @@ import {
   webSiteJsonLd,
 } from "@/components/seo/structured-data";
 
-const ShopTheReels = dynamic(() =>
+export const dynamic = "force-dynamic";
+
+const ShopTheReels = nextDynamic(() =>
   import("@/components/features/shop-the-reels").then((mod) => mod.ShopTheReels),
   {
     loading: () => (

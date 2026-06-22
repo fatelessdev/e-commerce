@@ -4,9 +4,7 @@ import { db } from "@/lib/db";
 import { products, productVariants, coupons, orders, orderItems } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth-server";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
 import { generateSecureCode } from "@/lib/utils";
-import { revalidateComboSurfaces, revalidateProductSurfaces } from "@/lib/cache-tags";
 import { ADMIN_PRODUCTS_PAGE_SIZE } from "@/lib/admin-products-pagination";
 import {
   ACCESSORY_SIZE,
@@ -22,18 +20,6 @@ export type { ProductInput } from "@/lib/admin-product-input";
 // ============================================
 
 type ProductMutationClient = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
-
-function revalidateAdminProductSurfaces(productId: string) {
-  try {
-    revalidatePath("/admin/products");
-    revalidatePath(`/product/${productId}`);
-    revalidatePath("/shop");
-    revalidatePath("/");
-    revalidateProductSurfaces(productId);
-  } catch (error) {
-    console.error("Failed to revalidate product surfaces after mutation:", error);
-  }
-}
 
 // Helper: recompute total stock from variants
 async function recomputeProductStock(client: ProductMutationClient, productId: string) {
@@ -144,8 +130,6 @@ export async function createProduct(data: ProductInput) {
     return createdProduct;
   });
 
-  revalidateAdminProductSurfaces(product.id);
-
   return product;
 }
 
@@ -204,8 +188,6 @@ export async function updateProduct(id: string, data: Partial<ProductInput>) {
     return updatedProduct;
   });
 
-  revalidateAdminProductSurfaces(id);
-
   return product;
 }
 
@@ -213,12 +195,6 @@ export async function deleteProduct(id: string) {
   await requireAdmin();
 
   await db.delete(products).where(eq(products.id, id));
-
-  revalidateAdminProductSurfaces(id);
-  revalidatePath("/shop/men");
-  revalidatePath("/shop/women");
-  revalidatePath("/shop/accessories");
-  revalidateComboSurfaces();
 
   return { success: true };
 }
@@ -349,8 +325,6 @@ export async function createCoupon(data: CouponInput) {
     })
     .returning();
 
-  revalidatePath("/admin/coupons");
-
   return coupon;
 }
 
@@ -363,8 +337,6 @@ export async function updateCoupon(id: string, data: Partial<CouponInput>) {
     .where(eq(coupons.id, id))
     .returning();
 
-  revalidatePath("/admin/coupons");
-
   return coupon;
 }
 
@@ -372,8 +344,6 @@ export async function deleteCoupon(id: string) {
   await requireAdmin();
 
   await db.delete(coupons).where(eq(coupons.id, id));
-
-  revalidatePath("/admin/coupons");
 
   return { success: true };
 }
@@ -457,9 +427,6 @@ export async function updateOrderStatus(
     .set({ status, updatedAt: new Date() })
     .where(eq(orders.id, id))
     .returning();
-
-  revalidatePath("/admin/orders");
-  revalidatePath(`/orders/${id}`);
 
   return order;
 }
@@ -559,9 +526,6 @@ export async function issueStoreCredit(data: IssueStoreCreditInput) {
       isActive: true,
     })
     .returning();
-
-  revalidatePath("/admin/coupons");
-  revalidatePath("/orders");
 
   return {
     success: true,
