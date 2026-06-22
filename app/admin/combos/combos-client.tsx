@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getProducts } from "@/lib/actions/admin";
 import { createCombo, deleteCombo, getAdminCombos, updateCombo } from "@/lib/actions/combos";
+import { ADMIN_QUERY_OPTIONS } from "@/lib/admin-query-options";
+import { useRouter } from "next/navigation";
 
 type AdminCombo = Awaited<ReturnType<typeof getAdminCombos>>[number];
 type AdminProduct = Awaited<ReturnType<typeof getProducts>>[number];
@@ -17,23 +19,28 @@ export function AdminCombosClient({
   initialCombos: AdminCombo[];
   initialProducts: AdminProduct[];
 }) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { data: comboRows = initialCombos } = useQuery({
     queryKey: ["admin-combos"],
     queryFn: getAdminCombos,
     initialData: initialCombos,
+    ...ADMIN_QUERY_OPTIONS,
   });
   const { data: productRows = initialProducts } = useQuery({
     queryKey: ["admin-products"],
     queryFn: () => getProducts({ isActive: true, limit: 200 }),
     initialData: initialProducts,
+    ...ADMIN_QUERY_OPTIONS,
   });
 
   const invalidateCombos = () => {
     queryClient.invalidateQueries({ queryKey: ["admin-combos"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
     queryClient.invalidateQueries({ queryKey: ["combos"] });
     queryClient.invalidateQueries({ queryKey: ["combo"] });
     queryClient.invalidateQueries({ queryKey: ["product"] });
+    router.refresh();
   };
 
   const createMutation = useMutation({

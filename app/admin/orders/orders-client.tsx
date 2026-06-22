@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getOrders } from "@/lib/actions/admin";
 import { OrderStatusSelect } from "./status-select";
+import { ADMIN_QUERY_OPTIONS } from "@/lib/admin-query-options";
 
 type AdminOrder = Awaited<ReturnType<typeof getOrders>>[number];
 
@@ -13,6 +14,7 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: AdminOrder
     queryKey: ["admin-orders"],
     queryFn: () => getOrders(),
     initialData: initialOrders,
+    ...ADMIN_QUERY_OPTIONS,
   });
 
   return (

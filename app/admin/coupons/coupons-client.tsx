@@ -2,24 +2,43 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Plus, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deleteCoupon, getCoupons } from "@/lib/actions/admin";
+import { ADMIN_QUERY_OPTIONS } from "@/lib/admin-query-options";
 
 type AdminCoupon = Awaited<ReturnType<typeof getCoupons>>[number];
 
 export function AdminCouponsClient({ initialCoupons }: { initialCoupons: AdminCoupon[] }) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { data: coupons = initialCoupons } = useQuery({
     queryKey: ["admin-coupons"],
     queryFn: () => getCoupons(),
     initialData: initialCoupons,
+    ...ADMIN_QUERY_OPTIONS,
   });
   const deleteMutation = useMutation({
     mutationFn: deleteCoupon,
+    onMutate: async (couponId) => {
+      await queryClient.cancelQueries({ queryKey: ["admin-coupons"] });
+      const previousCoupons = queryClient.getQueryData<AdminCoupon[]>(["admin-coupons"]);
+      queryClient.setQueryData<AdminCoupon[]>(["admin-coupons"], (current) =>
+        current?.filter((coupon) => coupon.id !== couponId) ?? current
+      );
+      return { previousCoupons };
+    },
+    onError: (_error, _couponId, context) => {
+      if (context?.previousCoupons) {
+        queryClient.setQueryData(["admin-coupons"], context.previousCoupons);
+      }
+      alert("Failed to delete coupon");
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-coupons"] });
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
+      router.refresh();
     },
   });
 

@@ -9,6 +9,7 @@ import { updateProduct, type ProductInput } from "@/lib/actions/admin";
 import { Loader2, Plus, X, Upload, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { ADMIN_QUERY_OPTIONS } from "@/lib/admin-query-options";
 
 const categories = [
   { value: "tshirt", label: "T-Shirt" },
@@ -117,6 +118,7 @@ export default function EditProductPage() {
       if (!res.ok) throw new Error("Product not found");
       return (await res.json()) as ProductData;
     },
+    ...ADMIN_QUERY_OPTIONS,
   });
 
   useEffect(() => {

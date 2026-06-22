@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import { Loader2 } from "lucide-react";
 
 export default function NewCouponPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -43,7 +45,12 @@ export default function NewCouponPage() {
       };
 
       await createCoupon(couponData);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin-coupons"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] }),
+      ]);
       router.push("/admin/coupons");
+      router.refresh();
     } catch (err) {
       console.error("Failed to create coupon:", err);
       setError(err instanceof Error ? err.message : "Failed to create coupon");

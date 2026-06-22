@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Package, ShoppingCart, IndianRupee, Ticket } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDashboardStats } from "@/lib/actions/admin";
+import { ADMIN_QUERY_OPTIONS } from "@/lib/admin-query-options";
 
 type DashboardStats = Awaited<ReturnType<typeof getDashboardStats>>;
 
@@ -13,6 +14,7 @@ export function AdminDashboardClient({ initialStats }: { initialStats: Dashboard
     queryKey: ["admin-dashboard"],
     queryFn: getDashboardStats,
     initialData: initialStats,
+    ...ADMIN_QUERY_OPTIONS,
   });
 
   return (

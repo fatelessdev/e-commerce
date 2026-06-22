@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +33,7 @@ const NUMBER_SIZE_CATEGORIES = ["jogger", "jeans", "cargo", "shorts"];
 
 export default function NewProductPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -163,6 +165,15 @@ export default function NewProductPage() {
       };
 
       await createProduct(productData);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin-products"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] }),
+        queryClient.invalidateQueries({ queryKey: ["products"] }),
+        queryClient.invalidateQueries({ queryKey: ["shop-products"] }),
+        queryClient.invalidateQueries({ queryKey: ["shop-catalog"] }),
+        queryClient.invalidateQueries({ queryKey: ["shop-the-reels"] }),
+        queryClient.invalidateQueries({ queryKey: ["combos"] }),
+      ]);
       setIsRedirecting(true);
       startTransition(() => {
         router.push("/admin/products");

@@ -18,6 +18,7 @@ import {
   ADMIN_PRODUCTS_ROW_HEIGHT,
   ADMIN_PRODUCTS_ROW_OVERSCAN,
 } from "@/lib/admin-products-pagination";
+import { ADMIN_QUERY_OPTIONS } from "@/lib/admin-query-options";
 import { normalizeProductImage } from "@/lib/image";
 
 type AdminProductsPage = Awaited<ReturnType<typeof getProductsPage>>;
@@ -104,6 +105,7 @@ export function AdminProductsClient({ initialPage }: { initialPage: AdminProduct
       getProductsPage({ limit: ADMIN_PRODUCTS_PAGE_SIZE, offset: pageParam }),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset ?? undefined,
+    ...ADMIN_QUERY_OPTIONS,
     initialData: {
       pages: [initialPage],
       pageParams: [0],
