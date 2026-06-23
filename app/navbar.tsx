@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useRef, useState, type CSSProperties } from "react";
-import { Menu, X, ChevronLeft, ChevronRight, Bot, ArrowRight, Search, Loader2 } from "lucide-react";
+import { Menu, X, ChevronLeft, ChevronRight, ArrowRight, Search, Loader2 } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-context";
@@ -54,6 +54,81 @@ function StaggeredTextRoll({ text, shouldReduceMotion }: { text: string; shouldR
         );
       })}
     </span>
+  );
+}
+
+function StaggeredAnnouncementText({
+  text,
+  shouldReduceMotion,
+}: {
+  text: string;
+  shouldReduceMotion: boolean | null;
+}) {
+  if (shouldReduceMotion) {
+    return <span>{text}</span>;
+  }
+
+  const words = text.split(" ");
+  const containerVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.03,
+      },
+    },
+    exit: {
+      transition: {
+        staggerChildren: 0.015,
+        staggerDirection: -1 as const,
+      },
+    },
+  };
+
+  const wordVariants = {
+    hidden: {
+      y: "100%",
+      opacity: 0,
+      filter: "blur(4px)",
+    },
+    visible: {
+      y: "0%",
+      opacity: 1,
+      filter: "blur(0px)",
+      transition: {
+        duration: 0.35,
+        ease: [0.16, 1, 0.3, 1] as const, // ease-out-expo
+      },
+    },
+    exit: {
+      y: "-100%",
+      opacity: 0,
+      filter: "blur(4px)",
+      transition: {
+        duration: 0.3,
+        ease: [0.16, 1, 0.3, 1] as const,
+      },
+    },
+  };
+
+  return (
+    <motion.span
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      className="inline-flex items-center justify-center overflow-hidden py-1 gap-x-1 md:gap-x-1.5 text-[9px] font-normal uppercase tracking-[0.22em] text-neutral-400 sm:text-[10px] md:text-xs md:tracking-[0.26em] w-full max-w-full"
+    >
+      {words.map((word, idx) => (
+        <span key={idx} className="relative inline-block overflow-hidden">
+          <motion.span
+            variants={wordVariants}
+            className="inline-block whitespace-nowrap"
+          >
+            {word}
+          </motion.span>
+        </span>
+      ))}
+    </motion.span>
   );
 }
 
@@ -265,7 +340,7 @@ function CatalogSearchOverlay({
                 whileHover={{ rotate: 90, scale: 1.1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 onClick={() => setShowSearch(false)} 
-                className="p-2 -mr-2 text-foreground/80 hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/60 rounded-md"
+                className="p-2 -mr-2 rounded-md text-foreground/80 hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/60"
                 aria-label="Close search"
               >
                 <X className="h-6 w-6 stroke-[1.5]" />
@@ -301,7 +376,7 @@ function CatalogSearchOverlay({
                 whileHover={{ x: 4 }}
                 transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 type="submit" 
-                className="absolute right-0 bottom-6 text-foreground hover:text-red-accent transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/60 rounded-md p-1 -mr-1"
+                className="absolute right-0 bottom-6 -mr-1 rounded-md p-1 text-foreground hover:text-red-accent transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/60"
                 aria-label="Submit search"
               >
                 <ArrowRight className="h-8 w-8 md:h-10 md:w-10 stroke-[1.5]" />
@@ -373,7 +448,7 @@ function CatalogSearchOverlay({
                       router.push(getSearchHref(searchQuery.trim()));
                       setShowSearch(false);
                     }}
-                    className="group inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-foreground transition-colors hover:text-red-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/60 rounded-sm"
+                    className="group inline-flex items-center gap-2 rounded-sm text-xs font-medium uppercase tracking-[0.16em] text-foreground transition-colors hover:text-red-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/60"
                   >
                     View all results
                     <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
@@ -705,36 +780,30 @@ export function Navbar() {
   return (
     <div ref={navContainerRef} className="contents">
       {/* Rotating announcement bar */}
-      <div ref={announcementRef} className="w-full bg-red-accent/8 border-b border-red-accent/10 py-1">
-        <div className="relative mx-auto flex max-w-7xl items-center justify-between px-5 md:px-8">
+      <div ref={announcementRef} className="w-full bg-[#0a0a0a] border-b border-white/[0.04] py-1 select-none">
+        <div className="relative mx-auto flex max-w-7xl items-center justify-between px-4 md:px-8">
           <button
             type="button"
-            className="z-10 flex h-8 w-8 items-center justify-center text-red-accent/70 transition-colors duration-300 hover:text-red-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-accent/70"
+            className="z-10 hidden sm:flex h-8 w-8 items-center justify-center text-neutral-500 hover:text-white transition-opacity opacity-40 hover:opacity-100 focus-visible:outline-none"
             onClick={() => rotateAnnouncement(-1)}
             aria-label="Previous announcement"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
 
-          <div className="absolute left-1/2 top-1/2 h-7 w-[calc(100%-6rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden text-center">
+          <div className="absolute left-1/2 top-1/2 h-7 w-[calc(100%-2rem)] sm:w-[calc(100%-6rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden text-center flex items-center justify-center">
             <AnimatePresence mode="wait" initial={false}>
-              <motion.p
+              <StaggeredAnnouncementText
                 key={announcementIndex}
-                initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 12, filter: "blur(4px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -12, filter: "blur(4px)" }}
-                transition={{ duration: shouldReduceMotion ? 0.01 : 0.45, ease: EASE_OUT_EXPO }}
-                className="flex h-7 w-full min-w-0 items-center justify-center gap-2 text-[9px] font-medium uppercase tracking-[0.12em] text-red-accent sm:text-[10px] md:text-xs md:tracking-[0.15em]"
-              >
-                <Bot className="h-3 w-3 flex-none" />
-                <span className="truncate">{ANNOUNCEMENT_MESSAGES[announcementIndex]}</span>
-              </motion.p>
+                text={ANNOUNCEMENT_MESSAGES[announcementIndex]}
+                shouldReduceMotion={shouldReduceMotion}
+              />
             </AnimatePresence>
           </div>
 
           <button
             type="button"
-            className="z-10 flex h-8 w-8 items-center justify-center text-red-accent/70 transition-colors duration-300 hover:text-red-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-accent/70"
+            className="z-10 hidden sm:flex h-8 w-8 items-center justify-center text-neutral-500 hover:text-white transition-opacity opacity-40 hover:opacity-100 focus-visible:outline-none"
             onClick={() => rotateAnnouncement(1)}
             aria-label="Next announcement"
           >

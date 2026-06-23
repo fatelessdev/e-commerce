@@ -5,12 +5,12 @@ export const SHIPPING_FEE = 99;
 export const COD_FEE = 50;
 
 // Bargain Bot
-export const BARGAIN_BOT_BANNER_MESSAGE = "Bargain Bot is live - negotiate for a lower price.";
+export const BARGAIN_BOT_BANNER_MESSAGE = "Bargain Bot is live — Negotiate directly on checkout.";
 export const ANNOUNCEMENT_MESSAGES = [
   BARGAIN_BOT_BANNER_MESSAGE,
-  "COD available · free shipping · easy returns",
-  "New drops are live · limited stock",
-  "Unlock free shipping above ₹999",
+  "COMPLIMENTARY SHIPPING & COMPREHENSIVE RETURNS",
+  "NEW DROP LIVE // STRICTLY FINITE RUN",
+  "FREE SHIPPING UPON COMMITTED ORDERS EXCEEDING ₹999",
 ];
 
 // COD allowed only for these pincodes
