@@ -47,13 +47,14 @@ export function ViewportPrefetchLink({
       return
     }
 
+    const observerMargin = typeof window !== "undefined" && window.innerWidth < 768 ? "100px 0px" : rootMargin;
     const observer = new IntersectionObserver(
       (entries) => {
         if (!entries.some((entry) => entry.isIntersecting)) return
         observer.disconnect()
         prefetch()
       },
-      { rootMargin }
+      { rootMargin: observerMargin }
     )
 
     observer.observe(anchor)

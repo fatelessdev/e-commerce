@@ -144,7 +144,7 @@ export function ShopClient({
                     }
                 }
             },
-            { rootMargin: "200px" }
+            { rootMargin: typeof window !== "undefined" && window.innerWidth < 768 ? "100px" : "200px" }
         )
         const el = sentinelRef.current
         if (el) observer.observe(el)

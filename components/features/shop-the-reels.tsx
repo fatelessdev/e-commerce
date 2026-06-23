@@ -139,7 +139,7 @@ export function ShopTheReels() {
             })
         }, {
             threshold: 0.1,
-            rootMargin: "150px 0px 150px 0px"
+            rootMargin: typeof window !== "undefined" && window.innerWidth < 768 ? "50px 0px 50px 0px" : "150px 0px 150px 0px"
         })
 
         videoRefs.current.forEach((video) => {

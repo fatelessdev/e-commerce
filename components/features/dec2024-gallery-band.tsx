@@ -64,11 +64,13 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
     if (!rootRef.current) return;
 
     const el = rootRef.current;
+    const isMobileView = typeof window !== "undefined" && window.innerWidth <= 900;
+    const margin = isMobileView ? "100px 0px 100px 0px" : "300px 0px 300px 0px";
     const observer = new IntersectionObserver(([entry]) => {
       setIsVisible(entry.isIntersecting);
     }, {
       threshold: 0,
-      rootMargin: "300px 0px 300px 0px"
+      rootMargin: margin
     });
 
     observer.observe(el);

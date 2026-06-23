@@ -127,13 +127,14 @@ export function AdminProductsClient({ initialPage }: { initialPage: AdminProduct
     const target = loadMoreRef.current;
     if (!target || !hasNextPage) return;
 
+    const margin = typeof window !== "undefined" && window.innerWidth < 768 ? "300px 0px" : "700px 0px";
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !isFetchingNextPage) {
           void fetchNextPage();
         }
       },
-      { rootMargin: "700px 0px" }
+      { rootMargin: margin }
     );
 
     observer.observe(target);

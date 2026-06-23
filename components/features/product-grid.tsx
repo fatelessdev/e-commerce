@@ -115,7 +115,7 @@ export function ProductGrid({
                     setVisibleCount((prev) => prev + 8)
                 }
             },
-            { rootMargin: "200px" }
+            { rootMargin: typeof window !== "undefined" && window.innerWidth < 768 ? "100px" : "200px" }
         )
         const el = sentinelRef.current
         if (el) observer.observe(el)
