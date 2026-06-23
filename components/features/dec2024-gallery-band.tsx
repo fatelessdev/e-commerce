@@ -158,7 +158,7 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
       data-cursor="explore"
       data-cursor-label="XILAR"
     >
-      <div className="pointer-events-none absolute left-1/2 top-[56%] z-0 w-[220vw] -translate-x-1/2 -translate-y-1/2 rotate-[28deg] scale-125 md:top-1/2">
+      <div className="pointer-events-none absolute left-1/2 top-[56%] z-0 w-[220vw] -translate-x-1/2 -translate-y-1/2 rotate-[14deg] md:rotate-[28deg] scale-125 md:top-1/2">
         {rows.map((row, rowIndex) => (
           <div
             key={rowIndex}

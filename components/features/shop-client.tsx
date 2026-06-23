@@ -424,7 +424,7 @@ export function ShopClient({
             {/* Product Grid */}
             <div className="py-10 px-6 md:px-12">
                 {loading ? (
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
                         {[...Array(8)].map((_, i) => (
                             <div key={i} className="space-y-3">
                                 <div className="aspect-[3/4] bg-muted animate-pulse" />
@@ -439,7 +439,7 @@ export function ShopClient({
                     <>
                         <p className="text-[10px] text-muted-foreground mb-6 uppercase tracking-[0.15em] tabular-nums">{products.length} products</p>
                         {visibleProducts.length > 0 ? (
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
                                 {visibleProducts.map((product) => (
                                     <ViewportPrefetchLink
                                         href={`/product/${product.id}`}

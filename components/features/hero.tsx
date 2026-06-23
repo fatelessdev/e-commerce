@@ -95,7 +95,7 @@ export function Hero() {
     const timer = window.setTimeout(() => {
       setSlideDirection(1);
       setActiveIndex((current) => (current + 1) % HERO_IMAGES.length);
-    }, 2500);
+    }, 4500);
 
     return () => window.clearTimeout(timer);
   }, [activeIndex, isInViewport, isMenuOpen]);

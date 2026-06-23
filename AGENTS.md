@@ -2,7 +2,7 @@
 
 > [!IMPORTANT]
 > **Design Philosophy & Visual Styling:**
-> For all design context, colors, typography, motion rules, animations, interactive mechanics, performance safeguards, and accessibility guidance, you **must** refer to [.impeccable.md](file:///c:/Users/fateless/Documents/Projects/xilar/.impeccable.md). Keep this instructions file focused on backend/frontend engineering architecture and implementation rules.
+> For all design context, colors, typography, motion rules, animations, interactive mechanics, performance safeguards, and accessibility guidance, you **must** refer to [.impeccable.md](file:///c:/Users/fateless/Documents/Projects/xilar/.impeccable.md). Keep this instructions file focused on backend/frontend engineering architecture, implementation rules, and seasoned awards-level design-engineering principles.
 
 CHECK IF YOU HAVE SKILLS FOR THE TECHNOLOGY YOU'RE TRYING TO IMPLEMENT. IF PRESENT, REFER TO THE SKILLS FIRST AND THEN PROCEED. USE THE ASK QUESTIONS TOOL AT THE SLIGHTEST BIT OF CONFUSION
 
@@ -116,7 +116,21 @@ Required: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `RAZORPAY_KEY
 - Pages use metadata exports for SEO; root layout includes Open Graph & JSON-LD
 - Dark mode default (`html.dark`), toggle via ThemeProvider
 
+## Seasoned Awards-Level Design Principles
+
+When implementing or refactoring UI components and pages, you must filter every choice through the "seasoned awards-level" design lens. This requires strict engineering discipline to balance interactive engagement with professional restraint:
+
+- **The "Too Much" Trap vs. Restraint:**
+  - **Avoid hyperactivity:** Do not stack multiple heavy motion triggers (e.g., scroll parallax, auto-playing video/sliders, text marquees, and scale transitions) in the same viewport. Let elements breathe.
+  - **Ditch lingering delays:** Transitions should feel responsive, not lazy. Keep durations under `500ms` (standard is `250ms–400ms`) and use exponential eases (like `cubic-bezier(0.16, 1, 0.3, 1)` or GSAP `power4.out`). Avoid slow linear transitions.
+  - **Restrain hover states:** Never overlap hover effects. If a card scales up, do not also blur the background, rotate the image, and animate a border. Pick one subtle response (e.g., opacity fade, crop zoom, or light Y-lift) and execute it cleanly.
+  - **Whitespace is feature space:** Never compress grid elements or crowd typography to fit content. Clean gutters, generous vertical margins (`py-16` to `py-28`), and clear grid alignments are mandatory.
+- **Micro-Interaction Mechanics:**
+  - Prevent user gestures (e.g., drags, scroll triggers, click states) from causing layout shifts or overlapping with loading animations.
+  - Check `useReducedMotion()` for all physics, inertial drags, and 3D rotations, providing clean fades and instant changes when active.
+
 ## Design Context
 
 - Refer to [.impeccable.md](.impeccable.md) for the full design context, brand personality, aesthetic direction, motion rules, and accessibility guidance.
-- Keep this file focused on repo-wide engineering and implementation rules.
+- Keep this file focused on repo-wide engineering, implementation rules, and seasoned design-engineering principles.
+

@@ -64,7 +64,7 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
     lastUpdate: 0,
     isDragging: false,
     moved: false,
-    canDrag: true,
+    canDrag: false,
     visibleTiles: new Set<string>(),
     activeKey: null as string | null,
   });
@@ -185,11 +185,11 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
 
     updateVisibleTiles();
 
+    const state = stateRef.current;
     if (!shouldReduceMotion && !introRanRef.current) {
       introRanRef.current = true;
       const allCards = gsap.utils.toArray<HTMLElement>("[data-xilar-gallery-card]");
       if (allCards.length > 0) {
-        const state = stateRef.current;
         state.canDrag = false;
 
         const width = window.innerWidth;
@@ -264,10 +264,16 @@ export function GalleryClient({ items }: { items: XilarGalleryItem[] }) {
           ease: "power4.inOut",
         }, "-=0.15");
       } else {
-        Promise.resolve().then(() => setIntroDone(true));
+        Promise.resolve().then(() => {
+          state.canDrag = true;
+          setIntroDone(true);
+        });
       }
     } else {
-      Promise.resolve().then(() => setIntroDone(true));
+      Promise.resolve().then(() => {
+        state.canDrag = true;
+        setIntroDone(true);
+      });
     }
   }, [updateVisibleTiles, shouldReduceMotion]);
 
