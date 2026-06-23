@@ -431,6 +431,7 @@ export default function NewProductPage() {
                           type="button"
                           onClick={() => setImages(images.filter((_, i) => i !== idx))}
                           className="p-1.5 bg-destructive text-destructive-foreground rounded-full"
+                          aria-label="Remove image"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -553,6 +554,7 @@ export default function NewProductPage() {
                         type="button"
                         onClick={() => setColors(colors.filter((_, i) => i !== idx))}
                         className="text-muted-foreground hover:text-foreground"
+                        aria-label="Remove color"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -600,6 +602,7 @@ export default function NewProductPage() {
                         type="button"
                         onClick={() => setTags(tags.filter((_, i) => i !== idx))}
                         className="text-muted-foreground hover:text-foreground"
+                        aria-label="Remove tag"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -647,6 +650,7 @@ export default function NewProductPage() {
                         type="button"
                         onClick={() => setFeatures(features.filter((_, i) => i !== idx))}
                         className="text-muted-foreground hover:text-foreground"
+                        aria-label="Remove feature"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -692,6 +696,7 @@ export default function NewProductPage() {
                         type="button"
                         onClick={() => setCareInstructions(careInstructions.filter((_, i) => i !== idx))}
                         className="text-muted-foreground hover:text-foreground"
+                        aria-label="Remove care instruction"
                       >
                         <X className="h-3 w-3" />
                       </button>
