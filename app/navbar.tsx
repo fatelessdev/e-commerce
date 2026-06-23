@@ -113,7 +113,7 @@ function SearchChip({
       onClick={onClick}
       whileHover={{ scale: 1.03 }}
       transition={{ type: "spring", stiffness: 400, damping: 20 }}
-      className="text-xs md:text-sm font-light tracking-wide text-foreground/75 hover:text-foreground bg-foreground/5 dark:bg-white/5 hover:bg-foreground/10 dark:hover:bg-white/10 px-4 py-2 rounded-full transition-all duration-200"
+      className="text-xs md:text-sm font-light tracking-wide text-foreground/75 hover:text-foreground bg-foreground/5 dark:bg-white/5 hover:bg-foreground/10 dark:hover:bg-white/10 px-4 py-2 rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/60"
     >
       {children}
     </motion.button>
@@ -265,7 +265,8 @@ function CatalogSearchOverlay({
                 whileHover={{ rotate: 90, scale: 1.1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 onClick={() => setShowSearch(false)} 
-                className="p-2 -mr-2 text-foreground/80 hover:text-foreground transition-colors"
+                className="p-2 -mr-2 text-foreground/80 hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/60 rounded-md"
+                aria-label="Close search"
               >
                 <X className="h-6 w-6 stroke-[1.5]" />
               </motion.button>
@@ -286,6 +287,7 @@ function CatalogSearchOverlay({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 autoFocus
+                aria-label="Search for products"
                 className="w-full bg-transparent border-b border-foreground/20 text-3xl md:text-5xl lg:text-6xl uppercase font-light pb-4 outline-none transition-colors placeholder:text-muted-foreground/30 font-display"
               />
               <motion.div 
@@ -299,7 +301,8 @@ function CatalogSearchOverlay({
                 whileHover={{ x: 4 }}
                 transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 type="submit" 
-                className="absolute right-0 bottom-6 text-foreground hover:text-red-accent transition-colors"
+                className="absolute right-0 bottom-6 text-foreground hover:text-red-accent transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/60 rounded-md p-1 -mr-1"
+                aria-label="Submit search"
               >
                 <ArrowRight className="h-8 w-8 md:h-10 md:w-10 stroke-[1.5]" />
               </motion.button>
@@ -370,7 +373,7 @@ function CatalogSearchOverlay({
                       router.push(getSearchHref(searchQuery.trim()));
                       setShowSearch(false);
                     }}
-                    className="group inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-foreground transition-colors hover:text-red-accent"
+                    className="group inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-foreground transition-colors hover:text-red-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/60 rounded-sm"
                   >
                     View all results
                     <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
