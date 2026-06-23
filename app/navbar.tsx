@@ -4,13 +4,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
-import { Menu, X, ChevronLeft, ChevronRight, Bot, ArrowRight, Search } from "lucide-react";
+import { Menu, X, ChevronLeft, ChevronRight, Bot, ArrowRight, Search, Loader2 } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
 import ThemeToggleButton from "@/components/ui/theme-toggle-button";
 import { ANNOUNCEMENT_MESSAGES } from "@/lib/constants";
+import { normalizeProductImage } from "@/lib/image";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
@@ -42,6 +44,14 @@ const searchableCatalogPaths = new Set([
   "/new",
 ]);
 
+type SearchSuggestion = {
+  id: string;
+  name: string;
+  category: string;
+  sellingPrice: string;
+  images: string[];
+};
+
 function ArrowMarker() {
   return (
     <span className="hidden h-11 w-11 translate-x-2 items-center justify-center rounded-full border border-border opacity-0 transition-all duration-500 group-hover:translate-x-0 group-hover:opacity-100 md:flex">
@@ -62,6 +72,10 @@ function CatalogSearchOverlay({
   const router = useRouter();
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
+  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
+  const [suggestionTerms, setSuggestionTerms] = useState<string[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   useEffect(() => {
     if (!showSearch) return;
@@ -80,13 +94,30 @@ function CatalogSearchOverlay({
   }, [setShowSearch, showSearch]);
 
   useEffect(() => {
-    if (showSearch) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
+    if (!showSearch) return;
+
+    const scrollY = window.scrollY;
+    const html = document.documentElement;
+    const originalHtmlOverflow = html.style.overflow;
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalBodyPosition = document.body.style.position;
+    const originalBodyTop = document.body.style.top;
+    const originalBodyWidth = document.body.style.width;
+
+    html.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+
+    return () => {
+      html.style.overflow = originalHtmlOverflow;
+      document.body.style.overflow = originalBodyOverflow;
+      document.body.style.position = originalBodyPosition;
+      document.body.style.top = originalBodyTop;
+      document.body.style.width = originalBodyWidth;
+      window.scrollTo({ top: scrollY });
+    };
   }, [showSearch]);
 
   const getSearchHref = (query: string) => {
@@ -103,6 +134,44 @@ function CatalogSearchOverlay({
     }
   };
 
+  useEffect(() => {
+    const query = debouncedSearchQuery.trim();
+    if (!showSearch) {
+      setSuggestions([]);
+      setSuggestionTerms([]);
+      setIsLoadingSuggestions(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    void (async () => {
+      setIsLoadingSuggestions(true);
+      try {
+        const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error("Failed to fetch suggestions");
+        const data = (await response.json()) as { products?: SearchSuggestion[]; terms?: string[] };
+        setSuggestions(data.products || []);
+        setSuggestionTerms(data.terms || []);
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("Failed to fetch search suggestions:", error);
+          setSuggestions([]);
+          setSuggestionTerms([]);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsLoadingSuggestions(false);
+        }
+      }
+    })();
+
+    return () => {
+      controller.abort();
+    };
+  }, [debouncedSearchQuery, showSearch]);
+
   return (
     <AnimatePresence>
       {showSearch && (
@@ -112,7 +181,7 @@ function CatalogSearchOverlay({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
           style={{ willChange: "opacity" }}
-          className="fixed inset-0 z-[110] bg-background/95 backdrop-blur-xl flex flex-col"
+          className="fixed inset-0 z-[110] flex flex-col overflow-y-auto overscroll-contain bg-background/95 backdrop-blur-xl"
         >
           <div className="flex justify-between items-center px-6 md:px-12 lg:px-16 h-20">
             <div className="flex-1" />
@@ -145,25 +214,109 @@ function CatalogSearchOverlay({
               initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15, duration: shouldReduceMotion ? 0.01 : 0.6, ease: EASE_OUT_EXPO }}
-              className="mt-16 w-full max-w-3xl flex flex-col gap-6"
+              className="mt-12 w-full max-w-3xl"
             >
-              <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Trending Searches</p>
-              <div className="flex flex-wrap gap-4 md:gap-6">
-                {['Oversized Tees', 'Cargo Pants', 'Summer Collection', 'Premium Basics'].map((term) => (
+              {searchQuery.trim().length >= 2 ? (
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Top Matches</p>
+                    {isLoadingSuggestions && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                  </div>
+                  {suggestions.length > 0 ? (
+                    <div className="grid gap-3">
+                      {suggestions.map((product) => (
+                        <Link
+                          key={product.id}
+                          href={`/product/${product.id}`}
+                          onClick={() => {
+                            setShowSearch(false);
+                            setSearchQuery("");
+                          }}
+                          className="group grid grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border/70 pb-3 text-left"
+                        >
+                          <div className="relative aspect-[3/4] overflow-hidden bg-muted">
+                            <Image
+                              src={normalizeProductImage(product.images?.[0])}
+                              alt={product.name}
+                              fill
+                              sizes="64px"
+                              className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium uppercase tracking-[0.08em]">{product.name}</p>
+                            <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{product.category}</p>
+                          </div>
+                          <p className="text-sm font-semibold tabular-nums">₹{Number(product.sellingPrice).toLocaleString("en-IN")}</p>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : !isLoadingSuggestions ? (
+                    <p className="text-sm text-muted-foreground">No exact matches yet. View all results for broader matches.</p>
+                  ) : null}
                   <button
-                    key={term}
                     type="button"
                     onClick={() => {
-                      setSearchQuery(term);
-                      router.push(getSearchHref(term));
+                      router.push(getSearchHref(searchQuery.trim()));
                       setShowSearch(false);
                     }}
-                    className="text-sm md:text-base font-light tracking-wide hover:text-red-accent transition-colors relative after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-red-accent after:transition-all after:duration-300"
+                    className="group inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-foreground transition-colors hover:text-red-accent"
                   >
-                    {term}
+                    View all results
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
                   </button>
-                ))}
-              </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-6">
+                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Trending Searches</p>
+                  {suggestions.length > 0 && (
+                    <div className="grid gap-3">
+                      {suggestions.slice(0, 3).map((product) => (
+                        <Link
+                          key={product.id}
+                          href={`/product/${product.id}`}
+                          onClick={() => {
+                            setShowSearch(false);
+                            setSearchQuery("");
+                          }}
+                          className="group grid grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border/70 pb-3 text-left"
+                        >
+                          <div className="relative aspect-[3/4] overflow-hidden bg-muted">
+                            <Image
+                              src={normalizeProductImage(product.images?.[0])}
+                              alt={product.name}
+                              fill
+                              sizes="56px"
+                              className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium uppercase tracking-[0.08em]">{product.name}</p>
+                            <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{product.category}</p>
+                          </div>
+                          <p className="text-sm font-semibold tabular-nums">₹{Number(product.sellingPrice).toLocaleString("en-IN")}</p>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-4 md:gap-6">
+                    {suggestionTerms.slice(0, 4).map((term) => (
+                      <button
+                        key={term}
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery(term);
+                          router.push(getSearchHref(term));
+                          setShowSearch(false);
+                        }}
+                        className="text-sm md:text-base font-light tracking-wide hover:text-red-accent transition-colors relative after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-red-accent after:transition-all after:duration-300"
+                      >
+                        {term}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </motion.div>
           </div>
         </motion.div>

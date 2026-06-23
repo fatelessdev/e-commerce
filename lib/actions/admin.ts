@@ -6,6 +6,11 @@ import { requireAdmin } from "@/lib/auth-server";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
 import { generateSecureCode } from "@/lib/utils";
 import { ADMIN_PRODUCTS_PAGE_SIZE } from "@/lib/admin-products-pagination";
+import { buildProductSearchText } from "@/lib/product-search";
+import {
+  deleteProductSearchIndexAfterMutation,
+  syncProductSearchIndexAfterMutation,
+} from "@/lib/product-search-index";
 import {
   ACCESSORY_SIZE,
   normalizeProductInput,
@@ -70,6 +75,11 @@ export async function createProduct(data: ProductInput) {
   const isAccessory = input.category === "accessory";
   const effectiveSizes = input.sizes || ["S", "M", "L", "XL"];
   const effectiveColors = input.colors || [];
+  const searchText = buildProductSearchText({
+    ...input,
+    sizes: effectiveSizes,
+    colors: effectiveColors,
+  });
 
   const product = await db.transaction(async (tx) => {
     const [createdProduct] = await tx
@@ -92,6 +102,7 @@ export async function createProduct(data: ProductInput) {
         features: input.features || [],
         sizes: effectiveSizes,
         colors: effectiveColors,
+        searchText,
         isNew: input.isNew ?? false,
         isFeatured: input.isFeatured ?? false,
         isPremium: input.isPremium ?? false,
@@ -130,6 +141,8 @@ export async function createProduct(data: ProductInput) {
     return createdProduct;
   });
 
+  await syncProductSearchIndexAfterMutation(product.id);
+
   return product;
 }
 
@@ -164,6 +177,10 @@ export async function updateProduct(id: string, data: Partial<ProductInput>) {
     productData.careInstructions = [];
     productData.features = [];
   }
+  productData.searchText = buildProductSearchText({
+    ...existingProduct,
+    ...productData,
+  });
 
   const product = await db.transaction(async (tx) => {
     const [updatedProduct] = await tx
@@ -188,6 +205,8 @@ export async function updateProduct(id: string, data: Partial<ProductInput>) {
     return updatedProduct;
   });
 
+  await syncProductSearchIndexAfterMutation(id);
+
   return product;
 }
 
@@ -195,6 +214,7 @@ export async function deleteProduct(id: string) {
   await requireAdmin();
 
   await db.delete(products).where(eq(products.id, id));
+  await deleteProductSearchIndexAfterMutation(id);
 
   return { success: true };
 }

@@ -10,8 +10,16 @@ import {
   pgEnum,
   uniqueIndex,
   index,
+  customType,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import { sql } from "drizzle-orm";
+
+const tsvector = customType<{ data: string; driverData: string }>({
+  dataType() {
+    return "tsvector";
+  },
+});
 
 // Enums
 export const userRoleEnum = pgEnum("user_role", ["user", "admin"]);
@@ -148,6 +156,12 @@ export const products = pgTable("products", {
   // Size & Color variants
   sizes: json("sizes").$type<string[]>().default(["S", "M", "L", "XL"]),
   colors: json("colors").$type<{ name: string; hex: string; images?: string[] }[]>().default([]),
+
+  // Search document for PostgreSQL lexical ranking. Dense vectors live in Pinecone.
+  searchText: text("search_text").notNull().default(""),
+  searchTokens: tsvector("search_tokens")
+    .notNull()
+    .generatedAlwaysAs(sql`to_tsvector('english', coalesce(search_text, ''))`),
   
   // Metadata
   isNew: boolean("is_new").notNull().default(false),
@@ -161,6 +175,21 @@ export const products = pgTable("products", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+export const productSearchIndexState = pgTable("product_search_index_state", {
+  productId: uuid("product_id")
+    .primaryKey()
+    .references(() => products.id, { onDelete: "cascade" }),
+  searchTextHash: text("search_text_hash"),
+  imageHashes: json("image_hashes").$type<Record<string, string>>().notNull().default({}),
+  status: text("status", { enum: ["pending", "synced", "failed"] }).notNull().default("pending"),
+  lastError: text("last_error"),
+  syncedAt: timestamp("synced_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("product_search_index_state_status_idx").on(table.status),
+]);
 
 // ============================================
 // PRODUCT VARIANTS TABLE (per-size-per-color stock)

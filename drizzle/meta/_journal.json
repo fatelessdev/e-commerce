@@ -71,6 +71,13 @@
       "when": 1779973476201,
       "tag": "0009_boring_martin_li",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1782205996943,
+      "tag": "0010_foamy_johnny_blaze",
+      "breakpoints": true
     }
   ]
 }

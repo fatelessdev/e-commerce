@@ -27,7 +27,13 @@ export default async function NewArrivalsPage({
 }) {
     const { search } = await searchParams
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-    const { products } = await getCatalogProducts({ isNew: true })
+    const initialCatalog = await getCatalogProducts({
+        isNew: true,
+        search,
+        limit: 24,
+        offset: 0,
+        includeTotal: true,
+    })
 
     return (
         <>
@@ -51,7 +57,7 @@ export default async function NewArrivalsPage({
                 subtitle="Fresh drops. First access."
                 initialSearch={search || ""}
                 isNew
-                initialProducts={products}
+                initialCatalog={initialCatalog}
             />
         </>
     )

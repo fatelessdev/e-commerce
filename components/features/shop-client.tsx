@@ -1,15 +1,15 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from "react"
-import { usePathname } from "next/navigation"
+import { useState, useEffect, useMemo, useRef, useCallback } from "react"
+import { usePathname, useRouter } from "next/navigation"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react"
 import { normalizeProductImage } from "@/lib/image"
-import { getDisplaySizes, useShopCatalog, type CatalogProduct } from "@/components/features/use-shop-catalog"
+import { getDisplaySizes, useShopCatalog, type CatalogProduct, type ProductPageResponse, type ShopCatalogQuery } from "@/components/features/use-shop-catalog"
 import { ViewportPrefetchLink } from "@/components/ui/viewport-prefetch-link"
-import { filterCatalogProducts } from "@/lib/catalog-filter"
+import { useDebouncedValue } from "@/lib/use-debounced-value"
 
 const CATEGORIES = ["All", "tshirt", "shirt", "cargo", "jogger", "jeans", "hoodie", "jacket", "shorts", "accessory"]
 const CATEGORY_LABELS: Record<string, string> = {
@@ -56,6 +56,7 @@ interface ShopClientProps {
     isNew?: boolean
     isPremium?: boolean
     initialProducts?: CatalogProduct[]
+    initialCatalog?: ProductPageResponse
 }
 
 export function ShopClient({
@@ -67,9 +68,12 @@ export function ShopClient({
     isNew,
     isPremium,
     initialProducts,
+    initialCatalog,
 }: ShopClientProps) {
     const pathname = usePathname()
+    const router = useRouter()
     const [searchQuery, setSearchQuery] = useState(initialSearch)
+    const debouncedSearchQuery = useDebouncedValue(searchQuery, 300)
     const [selectedCategory, setSelectedCategory] = useState(fixedCategory || "All")
     const [selectedSize, setSelectedSize] = useState<string | null>(null)
     const [selectedPriceRange, setSelectedPriceRange] = useState(PRICE_RANGES[0])
@@ -78,42 +82,66 @@ export function ShopClient({
     const pendingRestoreRef = useRef<ShopRestoreState | null>(null)
     const restoredRef = useRef(false)
 
-    const { data: products = [], isLoading: loading } = useShopCatalog(initialProducts)
+    const effectiveSelectedCategory = fixedCategory || selectedCategory
+    const catalogQuery = useMemo<ShopCatalogQuery>(() => {
+        const trimmedSearch = debouncedSearchQuery.trim()
+        const query: ShopCatalogQuery = {
+            limit: 24,
+            search: trimmedSearch || undefined,
+            category: effectiveSelectedCategory === "All" ? undefined : effectiveSelectedCategory,
+            gender: genderFilter === "all" ? undefined : genderFilter,
+            size: selectedSize || undefined,
+            isNew: isNew || undefined,
+            isPremium: isPremium || undefined,
+        }
 
-    const filteredProducts = useMemo(() => {
-        const effectiveSelectedCategory = fixedCategory || selectedCategory
-        return filterCatalogProducts(products, {
-            gender: genderFilter,
-            fixedCategory: effectiveSelectedCategory === "All" ? undefined : effectiveSelectedCategory,
-            isNew,
-            isPremium,
-            searchQuery,
-            limit: null,
-        }).filter((product) => {
-            // Size
-            if (selectedSize && !getDisplaySizes(product).includes(selectedSize)) {
-                return false
-            }
-            // Price
-            const price = parseFloat(product.sellingPrice)
-            if (price < selectedPriceRange.min || price > selectedPriceRange.max) {
-                return false
-            }
-            return true
-        })
-    }, [fixedCategory, genderFilter, isNew, isPremium, products, searchQuery, selectedCategory, selectedSize, selectedPriceRange])
+        if (selectedPriceRange.min > 0) {
+            query.minPrice = String(selectedPriceRange.min)
+        }
+        if (Number.isFinite(selectedPriceRange.max)) {
+            query.maxPrice = String(selectedPriceRange.max)
+        }
 
-    const visibleProducts = filteredProducts.slice(0, visibleCount)
-    const hasMore = visibleCount < filteredProducts.length
+        return query
+    }, [debouncedSearchQuery, effectiveSelectedCategory, genderFilter, isNew, isPremium, selectedPriceRange, selectedSize])
+
+    const canUseInitialCatalog =
+        debouncedSearchQuery.trim() === initialSearch.trim() &&
+        effectiveSelectedCategory === (fixedCategory || "All") &&
+        selectedSize === null &&
+        selectedPriceRange === PRICE_RANGES[0]
+    const initialCatalogPage: ProductPageResponse | undefined = canUseInitialCatalog
+        ? initialCatalog || (initialProducts ? {
+            products: initialProducts,
+            total: initialProducts.length,
+            limit: initialProducts.length,
+            offset: 0,
+        } : undefined)
+        : undefined
+
+    const {
+        data: products = [],
+        isLoading: loading,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useShopCatalog(catalogQuery, initialCatalogPage)
+
+    const visibleProducts = products.slice(0, visibleCount)
+    const hasMore = visibleCount < products.length || Boolean(hasNextPage)
 
     // Infinite scroll sentinel
     const sentinelRef = useRef<HTMLDivElement>(null)
     useEffect(() => {
-        if (!hasMore || loading) return
+        if (!hasMore || loading || isFetchingNextPage) return
         const observer = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting) {
-                    setVisibleCount((prev) => prev + 8)
+                    if (visibleCount < products.length) {
+                        setVisibleCount((prev) => prev + 8)
+                    } else if (hasNextPage) {
+                        fetchNextPage()
+                    }
                 }
             },
             { rootMargin: "200px" }
@@ -121,7 +149,7 @@ export function ShopClient({
         const el = sentinelRef.current
         if (el) observer.observe(el)
         return () => { if (el) observer.unobserve(el) }
-    }, [hasMore, loading, filteredProducts.length])
+    }, [fetchNextPage, hasMore, hasNextPage, isFetchingNextPage, loading, products.length, visibleCount])
 
     useEffect(() => {
         if (restoredRef.current || typeof window === "undefined") return
@@ -174,9 +202,9 @@ export function ShopClient({
 
     useEffect(() => {
         const saved = pendingRestoreRef.current
-        if (!saved || loading || filteredProducts.length === 0) return
+        if (!saved || loading || products.length === 0) return
 
-        const clickedIndex = filteredProducts.findIndex((product) => product.id === saved.clickedProductId)
+        const clickedIndex = products.findIndex((product) => product.id === saved.clickedProductId)
         const requiredVisibleCount = Math.max(saved.visibleCount, clickedIndex >= 0 ? clickedIndex + 1 : 8)
 
         if (visibleCount < requiredVisibleCount) {
@@ -197,7 +225,7 @@ export function ShopClient({
         }
 
         window.requestAnimationFrame(restore)
-    }, [filteredProducts, loading, visibleCount])
+    }, [products, loading, visibleCount])
 
     const saveScrollState = (clickedProductId: string) => {
         if (typeof window === "undefined") return
@@ -214,7 +242,7 @@ export function ShopClient({
         window.sessionStorage.setItem(`${SHOP_SCROLL_PREFIX}${pathname}`, JSON.stringify(state))
     }
 
-    const replaceUrlSearch = (value: string) => {
+    const navigateUrlSearch = useCallback((value: string, mode: "push" | "replace" = "replace") => {
         if (typeof window === "undefined") return
 
         const params = new URLSearchParams(window.location.search)
@@ -226,12 +254,30 @@ export function ShopClient({
         }
 
         const query = params.toString()
-        window.history.replaceState(window.history.state, "", `${pathname}${query ? `?${query}` : ""}`)
+        const nextUrl = `${pathname}${query ? `?${query}` : ""}`
+        const currentUrl = `${pathname}${window.location.search}`
+        if (nextUrl === currentUrl) return
+
+        if (mode === "push") {
+            router.push(nextUrl, { scroll: false })
+        } else {
+            router.replace(nextUrl, { scroll: false })
+        }
+    }, [pathname, router])
+
+    useEffect(() => {
+        navigateUrlSearch(debouncedSearchQuery, "replace")
+    }, [debouncedSearchQuery, navigateUrlSearch])
+
+    const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        navigateUrlSearch(searchQuery, "push")
+        setVisibleCount(8)
     }
 
     const clearFilters = () => {
         setSearchQuery("")
-        replaceUrlSearch("")
+        navigateUrlSearch("")
         setSelectedCategory(fixedCategory || "All")
         setSelectedSize(null)
         setSelectedPriceRange(PRICE_RANGES[0])
@@ -244,8 +290,6 @@ export function ShopClient({
         selectedSize !== null,
         selectedPriceRange !== PRICE_RANGES[0],
     ].filter(Boolean).length
-    const effectiveSelectedCategory = fixedCategory || selectedCategory
-
     const formatPrice = (price: string) => {
         const num = parseFloat(price)
         return `₹${num.toLocaleString("en-IN")}`
@@ -270,7 +314,7 @@ export function ShopClient({
             {/* Toolbar */}
             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 px-6 md:px-12 py-4 border-b border-border/60 sticky top-16 z-40 bg-background/80 backdrop-blur-xl">
                 {/* Search */}
-                <div className="relative flex-1 max-w-md">
+                <form onSubmit={submitSearch} className="relative flex-1 max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                     <input
                         type="text"
@@ -279,12 +323,11 @@ export function ShopClient({
                         onChange={(e) => {
                             const value = e.target.value
                             setSearchQuery(value)
-                            replaceUrlSearch(value)
                             setVisibleCount(8)
                         }}
                         className="w-full h-10 pl-10 pr-4 bg-secondary/30 border border-input rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all duration-300"
                     />
-                </div>
+                </form>
 
                 {/* Filter Toggle & Sort */}
                 <div className="flex items-center gap-2">
@@ -394,7 +437,7 @@ export function ShopClient({
                     </div>
                 ) : (
                     <>
-                        <p className="text-[10px] text-muted-foreground mb-6 uppercase tracking-[0.15em] tabular-nums">{filteredProducts.length} products</p>
+                        <p className="text-[10px] text-muted-foreground mb-6 uppercase tracking-[0.15em] tabular-nums">{products.length} products</p>
                         {visibleProducts.length > 0 ? (
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                                 {visibleProducts.map((product) => (
@@ -404,7 +447,7 @@ export function ShopClient({
                                         onClick={() => saveScrollState(product.id)}
                                     >
                                         <Card className="bg-transparent border-0 rounded-none hover-lift">
-<CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
+                                            <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
                                                 <Image
                                                     src={normalizeProductImage(product.images?.[0])}
                                                     alt={product.name}

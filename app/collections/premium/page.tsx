@@ -27,7 +27,13 @@ export default async function PremiumPage({
 }) {
     const { search } = await searchParams
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-    const { products } = await getCatalogProducts({ isPremium: true })
+    const initialCatalog = await getCatalogProducts({
+        isPremium: true,
+        search,
+        limit: 24,
+        offset: 0,
+        includeTotal: true,
+    })
 
     return (
         <>
@@ -52,7 +58,7 @@ export default async function PremiumPage({
                 subtitle="Elevated picks. Better fabrics. Stronger presence."
                 initialSearch={search || ""}
                 isPremium
-                initialProducts={products}
+                initialCatalog={initialCatalog}
             />
         </>
     )

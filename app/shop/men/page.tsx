@@ -29,8 +29,14 @@ export default async function ShopMenPage({
 }) {
     const { search } = await searchParams
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-    const [{ products }, combos] = await Promise.all([
-        getCatalogProducts(),
+    const [initialCatalog, combos] = await Promise.all([
+        getCatalogProducts({
+            gender: "men",
+            search,
+            limit: 24,
+            offset: 0,
+            includeTotal: true,
+        }),
         getActiveCombosWithProducts(6),
     ])
 
@@ -56,7 +62,7 @@ export default async function ShopMenPage({
                 title="Men"
                 subtitle="Streetwear essentials for him"
                 initialSearch={search || ""}
-                initialProducts={products}
+                initialCatalog={initialCatalog}
             />
             <ComboSection limit={6} interactive={false} initialCombos={combos} />
         </>

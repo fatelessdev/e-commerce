@@ -1,54 +1,82 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import type { CatalogProduct } from "@/lib/product-catalog";
 import { productMatchesGender } from "@/lib/catalog-filter";
 
 export type { CatalogProduct };
 export { productMatchesGender };
 
-type ProductPageResponse = {
+export type ProductPageResponse = {
   products: CatalogProduct[];
   total: number;
   limit: number;
   offset: number;
 };
 
+export type ShopCatalogQuery = {
+  category?: string;
+  gender?: "men" | "women" | "unisex";
+  search?: string;
+  size?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  isNew?: boolean;
+  isFeatured?: boolean;
+  isPremium?: boolean;
+  limit?: number;
+};
+
 export const SHOP_CATALOG_QUERY_KEY = ["shop-catalog"] as const;
 
-async function fetchShopCatalog() {
-  const limit = 50;
-  const firstPage = await fetchProductPage(0, limit);
-  const allProducts = [...(firstPage.products || [])];
-  const total = Number(firstPage.total || allProducts.length);
-  const remainingOffsets: number[] = [];
-
-  for (let offset = Number(firstPage.limit || limit); offset < total; offset += limit) {
-    remainingOffsets.push(offset);
-  }
-
-  const remainingPages = await Promise.all(remainingOffsets.map((offset) => fetchProductPage(offset, limit)));
-  remainingPages.forEach((page) => allProducts.push(...(page.products || [])));
-
-  return allProducts;
+function pageFromProducts(products?: CatalogProduct[]): ProductPageResponse | undefined {
+  if (!products) return undefined;
+  return {
+    products,
+    total: products.length,
+    limit: products.length,
+    offset: 0,
+  };
 }
 
-async function fetchProductPage(offset: number, limit: number) {
+async function fetchProductPage(query: ShopCatalogQuery, offset: number, limit: number) {
   const params = new URLSearchParams({
     limit: String(limit),
     offset: String(offset),
   });
+
+  Object.entries(query).forEach(([key, value]) => {
+    if (value !== undefined && value !== "" && key !== "limit") {
+      params.set(key, String(value));
+    }
+  });
+
   const response = await fetch(`/api/products?${params.toString()}`);
   if (!response.ok) throw new Error("Failed to fetch product catalog");
   return (await response.json()) as ProductPageResponse;
 }
 
-export function useShopCatalog(initialData?: CatalogProduct[]) {
-  return useQuery({
-    queryKey: SHOP_CATALOG_QUERY_KEY,
-    queryFn: fetchShopCatalog,
-    initialData,
-    enabled: initialData === undefined,
+export function useShopCatalog(
+  queryOrInitialData: ShopCatalogQuery | CatalogProduct[] = {},
+  initialPage?: ProductPageResponse,
+) {
+  const legacyInitialProducts = Array.isArray(queryOrInitialData) ? queryOrInitialData : undefined;
+  const query = Array.isArray(queryOrInitialData) ? {} : queryOrInitialData;
+  const limit = query.limit ?? 24;
+  const resolvedInitialPage = initialPage ?? pageFromProducts(legacyInitialProducts);
+
+  return useInfiniteQuery({
+    queryKey: [...SHOP_CATALOG_QUERY_KEY, query],
+    queryFn: ({ pageParam }) => fetchProductPage(query, pageParam, limit),
+    initialPageParam: 0,
+    initialData: resolvedInitialPage
+      ? { pages: [resolvedInitialPage], pageParams: [resolvedInitialPage.offset] }
+      : undefined,
+    getNextPageParam: (lastPage) => {
+      const nextOffset = Number(lastPage.offset || 0) + Number(lastPage.limit || limit);
+      return nextOffset < Number(lastPage.total || 0) ? nextOffset : undefined;
+    },
+    select: (data) => data.pages.flatMap((page) => page.products || []),
     staleTime: 1000 * 60 * 5,
   });
 }

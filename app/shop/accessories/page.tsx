@@ -27,7 +27,13 @@ export default async function AccessoriesPage({
 }) {
     const { search } = await searchParams
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-    const { products } = await getCatalogProducts({ category: "accessory" })
+    const initialCatalog = await getCatalogProducts({
+        category: "accessory",
+        search,
+        limit: 24,
+        offset: 0,
+        includeTotal: true,
+    })
 
     return (
         <>
@@ -52,7 +58,7 @@ export default async function AccessoriesPage({
                 title="Accessories"
                 subtitle="Perfume and selected essentials"
                 initialSearch={search || ""}
-                initialProducts={products}
+                initialCatalog={initialCatalog}
             />
         </>
     )
