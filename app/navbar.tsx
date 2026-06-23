@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState, type CSSProperties } from "react";
 import { Menu, X, ChevronLeft, ChevronRight, Bot, ArrowRight, Search, Loader2 } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,46 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
 const EASE_OUT_EXPO = [0.32, 0.72, 0, 1] as const;
+
+function StaggeredTextRoll({ text, shouldReduceMotion }: { text: string; shouldReduceMotion: boolean | null }) {
+  if (shouldReduceMotion) {
+    return <span>{text}</span>;
+  }
+
+  const chars = text.split("");
+
+  return (
+    <span aria-label={text} className="inline-flex overflow-hidden">
+      {chars.map((char, i) => {
+        if (char === " ") {
+          return <span key={i} aria-hidden="true">&nbsp;</span>;
+        }
+
+        const delayVars = {
+          "--nav-roll-enter-delay": `${i * 12}ms`,
+          "--nav-roll-exit-delay": `${(chars.length - 1 - i) * 10}ms`,
+        } as CSSProperties;
+
+        return (
+          <span
+            key={i}
+            aria-hidden="true"
+            className="relative inline-block h-[1.2em] overflow-hidden align-top"
+            style={delayVars}
+          >
+            <span className="inline-block will-change-transform transition-transform delay-[var(--nav-roll-exit-delay)] duration-[360ms] ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-full group-hover:delay-[var(--nav-roll-enter-delay)]">
+              {char}
+            </span>
+            <span className="absolute left-0 top-0 inline-block translate-y-full text-foreground will-change-transform transition-transform delay-[var(--nav-roll-exit-delay)] duration-[360ms] ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-y-0 group-hover:delay-[var(--nav-roll-enter-delay)]">
+              {char}
+            </span>
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
 
 const overlayLinks = [
   { href: "/shop/men", label: "Men", img: "/hero/image(7).webp" },
@@ -60,6 +100,26 @@ function ArrowMarker() {
   );
 }
 
+function SearchChip({
+  children,
+  onClick,
+}: {
+  children: string;
+  onClick: () => void;
+}) {
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      whileHover={{ scale: 1.03 }}
+      transition={{ type: "spring", stiffness: 400, damping: 20 }}
+      className="text-xs md:text-sm font-light tracking-wide text-foreground/75 hover:text-foreground bg-foreground/5 dark:bg-white/5 hover:bg-foreground/10 dark:hover:bg-white/10 px-4 py-2 rounded-full transition-all duration-200"
+    >
+      {children}
+    </motion.button>
+  );
+}
+
 function CatalogSearchOverlay({
   showSearch,
   setShowSearch,
@@ -72,6 +132,7 @@ function CatalogSearchOverlay({
   const router = useRouter();
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchSeed, setSearchSeed] = useState("");
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [suggestionTerms, setSuggestionTerms] = useState<string[]>([]);
@@ -95,6 +156,8 @@ function CatalogSearchOverlay({
 
   useEffect(() => {
     if (!showSearch) return;
+
+    setSearchSeed(`${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
     const scrollY = window.scrollY;
     const html = document.documentElement;
@@ -136,7 +199,7 @@ function CatalogSearchOverlay({
 
   useEffect(() => {
     const query = debouncedSearchQuery.trim();
-    if (!showSearch) {
+    if (!showSearch || !searchSeed) {
       setSuggestions([]);
       setSuggestionTerms([]);
       setIsLoadingSuggestions(false);
@@ -147,7 +210,11 @@ function CatalogSearchOverlay({
     void (async () => {
       setIsLoadingSuggestions(true);
       try {
-        const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}`, {
+        const params = new URLSearchParams({
+          q: query,
+          seed: searchSeed,
+        });
+        const response = await fetch(`/api/search/suggestions?${params.toString()}`, {
           signal: controller.signal,
         });
         if (!response.ok) throw new Error("Failed to fetch suggestions");
@@ -170,7 +237,7 @@ function CatalogSearchOverlay({
     return () => {
       controller.abort();
     };
-  }, [debouncedSearchQuery, showSearch]);
+  }, [debouncedSearchQuery, searchSeed, showSearch]);
 
   return (
     <AnimatePresence>
@@ -183,32 +250,60 @@ function CatalogSearchOverlay({
           style={{ willChange: "opacity" }}
           className="fixed inset-0 z-[110] flex flex-col overflow-y-auto overscroll-contain bg-background/95 backdrop-blur-xl"
         >
-          <div className="flex justify-between items-center px-6 md:px-12 lg:px-16 h-20">
+          <motion.div 
+            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: EASE_OUT_EXPO }}
+            className="flex justify-between items-center px-6 md:px-12 lg:px-16 h-20"
+          >
             <div className="flex-1" />
             <div className="flex-1 flex justify-center">
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Search</span>
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-light tracking-[0.25em]">Search</span>
             </div>
             <div className="flex-1 flex justify-end">
-              <button onClick={() => setShowSearch(false)} className="p-2 -mr-2 text-foreground/80 hover:text-foreground transition-colors">
+              <motion.button 
+                whileHover={{ rotate: 90, scale: 1.1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                onClick={() => setShowSearch(false)} 
+                className="p-2 -mr-2 text-foreground/80 hover:text-foreground transition-colors"
+              >
                 <X className="h-6 w-6 stroke-[1.5]" />
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
           <div className="flex-1 flex flex-col items-center justify-center px-6 pb-32">
-            <form onSubmit={handleSearchSubmit} className="w-full max-w-3xl relative">
+            <motion.form 
+              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05, duration: shouldReduceMotion ? 0.01 : 0.65, ease: EASE_OUT_EXPO }}
+              onSubmit={handleSearchSubmit} 
+              className="w-full max-w-3xl relative"
+            >
               <input
                 type="text"
                 placeholder="WHAT ARE YOU LOOKING FOR?"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 autoFocus
-                className="w-full bg-transparent border-b border-foreground/20 focus:border-foreground text-3xl md:text-5xl lg:text-6xl uppercase font-light pb-4 outline-none transition-colors placeholder:text-muted-foreground/30 font-display"
+                className="w-full bg-transparent border-b border-foreground/20 text-3xl md:text-5xl lg:text-6xl uppercase font-light pb-4 outline-none transition-colors placeholder:text-muted-foreground/30 font-display"
               />
-              <button type="submit" className="absolute right-0 bottom-6 text-foreground hover:text-red-accent transition-colors">
+              <motion.div 
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ delay: 0.2, duration: 0.8, ease: EASE_OUT_EXPO }}
+                className="absolute bottom-0 left-0 right-0 h-[1px] bg-foreground origin-left"
+                style={{ willChange: "transform" }}
+              />
+              <motion.button 
+                whileHover={{ x: 4 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                type="submit" 
+                className="absolute right-0 bottom-6 text-foreground hover:text-red-accent transition-colors"
+              >
                 <ArrowRight className="h-8 w-8 md:h-10 md:w-10 stroke-[1.5]" />
-              </button>
-            </form>
+              </motion.button>
+            </motion.form>
 
             <motion.div
               initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20 }}
@@ -223,34 +318,49 @@ function CatalogSearchOverlay({
                     {isLoadingSuggestions && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                   </div>
                   {suggestions.length > 0 ? (
-                    <div className="grid gap-3">
+                    <motion.div
+                      initial="hidden"
+                      animate="visible"
+                      variants={{
+                        visible: { transition: { staggerChildren: 0.05 } }
+                      }}
+                      className="grid gap-3"
+                    >
                       {suggestions.map((product) => (
-                        <Link
+                        <motion.div
                           key={product.id}
-                          href={`/product/${product.id}`}
-                          onClick={() => {
-                            setShowSearch(false);
-                            setSearchQuery("");
+                          variants={{
+                            hidden: { opacity: 0, y: 12, filter: shouldReduceMotion ? "blur(0px)" : "blur(8px)" },
+                            visible: { opacity: 1, y: 0, filter: "blur(0px)", transition: { type: "spring", stiffness: 300, damping: 25 } }
                           }}
-                          className="group grid grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border/70 pb-3 text-left"
+                          style={{ willChange: "opacity, filter, transform" }}
                         >
-                          <div className="relative aspect-[3/4] overflow-hidden bg-muted">
-                            <Image
-                              src={normalizeProductImage(product.images?.[0])}
-                              alt={product.name}
-                              fill
-                              sizes="64px"
-                              className="object-cover transition-transform duration-500 group-hover:scale-105"
-                            />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium uppercase tracking-[0.08em]">{product.name}</p>
-                            <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{product.category}</p>
-                          </div>
-                          <p className="text-sm font-semibold tabular-nums">₹{Number(product.sellingPrice).toLocaleString("en-IN")}</p>
-                        </Link>
+                          <Link
+                            href={`/product/${product.id}`}
+                            onClick={() => {
+                              setShowSearch(false);
+                              setSearchQuery("");
+                            }}
+                            className="group grid grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border/70 pb-3 text-left"
+                          >
+                            <div className="relative aspect-[3/4] overflow-hidden bg-muted">
+                              <Image
+                                src={normalizeProductImage(product.images?.[0])}
+                                alt={product.name}
+                                fill
+                                sizes="64px"
+                                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                              />
+                            </div>
+                            <div className="min-w-0 transition-transform duration-300 group-hover:translate-x-1.5">
+                              <p className="truncate text-sm font-medium uppercase tracking-[0.08em] text-foreground/70 transition-colors duration-300 group-hover:text-foreground">{product.name}</p>
+                              <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{product.category}</p>
+                            </div>
+                            <p className="text-sm font-semibold tabular-nums text-foreground/70 transition-colors duration-300 group-hover:text-foreground">₹{Number(product.sellingPrice).toLocaleString("en-IN")}</p>
+                          </Link>
+                        </motion.div>
                       ))}
-                    </div>
+                    </motion.div>
                   ) : !isLoadingSuggestions ? (
                     <p className="text-sm text-muted-foreground">No exact matches yet. View all results for broader matches.</p>
                   ) : null}
@@ -270,51 +380,82 @@ function CatalogSearchOverlay({
                 <div className="flex flex-col gap-6">
                   <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Trending Searches</p>
                   {suggestions.length > 0 && (
-                    <div className="grid gap-3">
+                    <motion.div
+                      key={`trending-products-${suggestions.length}`}
+                      initial="hidden"
+                      animate="visible"
+                      variants={{
+                        visible: { transition: { staggerChildren: 0.05 } }
+                      }}
+                      className="grid gap-3"
+                    >
                       {suggestions.slice(0, 3).map((product) => (
-                        <Link
+                        <motion.div
                           key={product.id}
-                          href={`/product/${product.id}`}
-                          onClick={() => {
-                            setShowSearch(false);
-                            setSearchQuery("");
+                          variants={{
+                            hidden: { opacity: 0, y: 12, filter: shouldReduceMotion ? "blur(0px)" : "blur(8px)" },
+                            visible: { opacity: 1, y: 0, filter: "blur(0px)", transition: { type: "spring", stiffness: 300, damping: 25 } }
                           }}
-                          className="group grid grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border/70 pb-3 text-left"
+                          style={{ willChange: "opacity, filter, transform" }}
                         >
-                          <div className="relative aspect-[3/4] overflow-hidden bg-muted">
-                            <Image
-                              src={normalizeProductImage(product.images?.[0])}
-                              alt={product.name}
-                              fill
-                              sizes="56px"
-                              className="object-cover transition-transform duration-500 group-hover:scale-105"
-                            />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium uppercase tracking-[0.08em]">{product.name}</p>
-                            <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{product.category}</p>
-                          </div>
-                          <p className="text-sm font-semibold tabular-nums">₹{Number(product.sellingPrice).toLocaleString("en-IN")}</p>
-                        </Link>
+                          <Link
+                            key={product.id}
+                            href={`/product/${product.id}`}
+                            onClick={() => {
+                              setShowSearch(false);
+                              setSearchQuery("");
+                            }}
+                            className="group grid grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border/70 pb-3 text-left"
+                          >
+                            <div className="relative aspect-[3/4] overflow-hidden bg-muted">
+                              <Image
+                                src={normalizeProductImage(product.images?.[0])}
+                                alt={product.name}
+                                fill
+                                sizes="56px"
+                                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                              />
+                            </div>
+                            <div className="min-w-0 transition-transform duration-300 group-hover:translate-x-1.5">
+                              <p className="truncate text-sm font-medium uppercase tracking-[0.08em] text-foreground/70 transition-colors duration-300 group-hover:text-foreground">{product.name}</p>
+                              <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{product.category}</p>
+                            </div>
+                            <p className="text-sm font-semibold tabular-nums text-foreground/70 transition-colors duration-300 group-hover:text-foreground">₹{Number(product.sellingPrice).toLocaleString("en-IN")}</p>
+                          </Link>
+                        </motion.div>
                       ))}
-                    </div>
+                    </motion.div>
                   )}
-                  <div className="flex flex-wrap gap-4 md:gap-6">
+                  <motion.div
+                    key={`trending-terms-${suggestionTerms.length}`}
+                    initial="hidden"
+                    animate="visible"
+                    variants={{
+                      visible: { transition: { staggerChildren: 0.04 } }
+                    }}
+                    className="flex flex-wrap gap-2 md:gap-3 items-center"
+                  >
                     {suggestionTerms.slice(0, 4).map((term) => (
-                      <button
+                      <motion.div
                         key={term}
-                        type="button"
-                        onClick={() => {
-                          setSearchQuery(term);
-                          router.push(getSearchHref(term));
-                          setShowSearch(false);
+                        variants={{
+                          hidden: { opacity: 0, scale: 0.95, filter: shouldReduceMotion ? "blur(0px)" : "blur(6px)" },
+                          visible: { opacity: 1, scale: 1, filter: "blur(0px)", transition: { type: "spring", stiffness: 350, damping: 25 } }
                         }}
-                        className="text-sm md:text-base font-light tracking-wide hover:text-red-accent transition-colors relative after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-red-accent after:transition-all after:duration-300"
+                        style={{ willChange: "opacity, filter, transform" }}
                       >
-                        {term}
-                      </button>
+                        <SearchChip
+                          onClick={() => {
+                            setSearchQuery(term);
+                            router.push(getSearchHref(term));
+                            setShowSearch(false);
+                          }}
+                        >
+                          {term}
+                        </SearchChip>
+                      </motion.div>
                     ))}
-                  </div>
+                  </motion.div>
                 </div>
               )}
             </motion.div>
@@ -651,7 +792,7 @@ export function Navbar() {
               <Search className="h-4 w-4 stroke-[1.5]" />
             </button>
 
-            <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
+            <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
               {[
                 { href: "/shop/men", label: "For Him" },
                 { href: "/shop/women", label: "For Her" },
@@ -661,9 +802,9 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="relative tracking-[0.15em] uppercase text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors duration-500 after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-foreground after:transition-all after:duration-500 after:ease-[cubic-bezier(0.32,0.72,0,1)]"
+                  className="group relative px-3 py-1.5 tracking-[0.15em] uppercase text-[11px] font-medium text-muted-foreground transition-colors duration-300 hover:text-foreground"
                 >
-                  {link.label}
+                  <StaggeredTextRoll text={link.label} shouldReduceMotion={shouldReduceMotion} />
                 </Link>
               ))}
             </nav>
@@ -675,7 +816,7 @@ export function Navbar() {
           </Link>
 
           {/* Right: Actions */}
-          <div className="flex-1 flex items-center justify-end space-x-5 lg:space-x-8">
+          <div className="flex-1 flex items-center justify-end space-x-1.5 lg:space-x-3.5">
             <ThemeToggleButton showLabel={false} variant="ghost" />
 
             <button
@@ -687,20 +828,32 @@ export function Navbar() {
               <Search className="h-4 w-4 stroke-[1.5]" />
             </button>
 
-            <Link href="/account" className="hidden sm:block relative tracking-[0.15em] uppercase text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors duration-500 after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-foreground after:transition-all after:duration-500 after:ease-[cubic-bezier(0.32,0.72,0,1)]">
-              ACCOUNT
+            <Link
+              href="/account"
+              className="group relative hidden px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.15em] text-muted-foreground transition-colors duration-300 hover:text-foreground sm:block"
+            >
+              <StaggeredTextRoll text="ACCOUNT" shouldReduceMotion={shouldReduceMotion} />
             </Link>
 
-            <Link href="/wishlist" className="hidden md:block relative tracking-[0.15em] uppercase text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors duration-500 after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-foreground after:transition-all after:duration-500 after:ease-[cubic-bezier(0.32,0.72,0,1)]">
-              WISHLIST {isWishlistHydrated && wishlistItems.length > 0 && `(${wishlistItems.length})`}
+            <Link
+              href="/wishlist"
+              className="group relative hidden px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.15em] text-muted-foreground transition-colors duration-300 hover:text-foreground md:block"
+            >
+              <StaggeredTextRoll 
+                text={`WISHLIST ${isWishlistHydrated && wishlistItems.length > 0 ? `(${wishlistItems.length})` : ""}`} 
+                shouldReduceMotion={shouldReduceMotion} 
+              />
             </Link>
 
             <button
-              className="relative tracking-[0.15em] uppercase text-[11px] font-medium text-foreground hover:text-foreground/70 transition-colors group"
+              type="button"
+              className="group relative px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.15em] text-muted-foreground transition-colors duration-300 hover:text-foreground"
               onClick={() => setIsOpen(true)}
             >
-              CART {isCartHydrated && totalItems > 0 ? `[${totalItems}]` : `[0]`}
-              <span className="absolute -bottom-1 left-0 h-px w-0 group-hover:w-full bg-foreground transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]" />
+              <StaggeredTextRoll 
+                text={`CART [${isCartHydrated ? totalItems : 0}]`} 
+                shouldReduceMotion={shouldReduceMotion} 
+              />
             </button>
           </div>
         </div>

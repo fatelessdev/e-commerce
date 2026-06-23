@@ -24,6 +24,20 @@ const FALLBACK_IMAGES: GalleryBandItem[] = [
   { src: "/clothes/clothes4.jpeg", alt: "XILAR outfit" },
   { src: "/clothes/jackets-men1.jpeg", alt: "XILAR jacket" },
 ];
+const ROW_SPEEDS = [0.92, 1.08, 0.87, 1.14] as const;
+
+function stableHash(value: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index++) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function stableShuffle(items: GalleryBandItem[]) {
+  return [...items].sort((a, b) => stableHash(`${a.src}-${a.alt}`) - stableHash(`${b.src}-${b.alt}`));
+}
 
 export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
   const rootRef = useRef<HTMLElement>(null);
@@ -41,6 +55,8 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
     return repeated.slice(0, 32);
   }, [items]);
 
+  const displayItems = useMemo(() => stableShuffle(resolvedItems), [resolvedItems]);
+
   const [isVisible, setIsVisible] = useState(true);
   const scrollTriggersRef = useRef<ScrollTrigger[]>([]);
 
@@ -51,7 +67,8 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
     const observer = new IntersectionObserver(([entry]) => {
       setIsVisible(entry.isIntersecting);
     }, {
-      threshold: 0
+      threshold: 0,
+      rootMargin: "300px 0px 300px 0px"
     });
 
     observer.observe(el);
@@ -71,6 +88,7 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
 
       rows.forEach((row, index) => {
         const startX = getStartX(index);
+        const speedMultiplier = ROW_SPEEDS[index] || 1;
         gsap.set(row, { x: startX });
 
         const anim = gsap.to(row, {
@@ -80,7 +98,7 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
             end: "bottom top",
             scrub: isMobileView ? 0.5 : 1,
             onUpdate: (self) => {
-              const moveAmount = startX * (1 - self.progress);
+              const moveAmount = startX * (1 - self.progress * speedMultiplier);
               gsap.set(row, {
                 x: moveAmount,
               });
@@ -129,7 +147,7 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
     });
   }, [isVisible, isMenuOpen]);
 
-  const rows = [0, 1, 2, 3].map((row) => resolvedItems.slice(row * 8, row * 8 + 8));
+  const rows = [0, 1, 2, 3].map((row) => displayItems.slice(row * 8, row * 8 + 8));
 
   return (
     <section
