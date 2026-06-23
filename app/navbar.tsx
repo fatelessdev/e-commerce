@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useRef, useState, type CSSProperties } from "react";
-import { Menu, X, ChevronLeft, ChevronRight, ArrowRight, Search, Loader2 } from "lucide-react";
+import { Menu, X, ArrowRight, Search, Loader2 } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-context";
@@ -116,7 +116,7 @@ function StaggeredAnnouncementText({
       initial="hidden"
       animate="visible"
       exit="exit"
-      className="inline-flex items-center justify-center overflow-hidden py-1 gap-x-1 md:gap-x-1.5 text-[9px] font-normal uppercase tracking-[0.22em] text-neutral-400 sm:text-[10px] md:text-xs md:tracking-[0.26em] w-full max-w-full"
+      className="inline-flex items-center justify-center overflow-hidden py-1 gap-x-1 md:gap-x-1.5 text-[9px] font-normal uppercase tracking-[0.22em] text-neutral-400 dark:text-neutral-600 sm:text-[10px] md:text-xs md:tracking-[0.26em] w-full max-w-full"
     >
       {words.map((word, idx) => (
         <span key={idx} className="relative inline-block overflow-hidden">
@@ -361,7 +361,6 @@ function CatalogSearchOverlay({
                 placeholder="WHAT ARE YOU LOOKING FOR?"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                autoFocus
                 aria-label="Search for products"
                 className="w-full bg-transparent border-b border-foreground/20 text-3xl md:text-5xl lg:text-6xl uppercase font-light pb-4 outline-none transition-colors placeholder:text-muted-foreground/30 font-display"
               />
@@ -780,18 +779,9 @@ export function Navbar() {
   return (
     <div ref={navContainerRef} className="contents">
       {/* Rotating announcement bar */}
-      <div ref={announcementRef} className="w-full bg-[#0a0a0a] border-b border-white/[0.04] py-1 select-none">
-        <div className="relative mx-auto flex max-w-7xl items-center justify-between px-4 md:px-8">
-          <button
-            type="button"
-            className="z-10 hidden sm:flex h-8 w-8 items-center justify-center text-neutral-500 hover:text-white transition-opacity opacity-40 hover:opacity-100 focus-visible:outline-none"
-            onClick={() => rotateAnnouncement(-1)}
-            aria-label="Previous announcement"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-
-          <div className="absolute left-1/2 top-1/2 h-7 w-[calc(100%-2rem)] sm:w-[calc(100%-6rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden text-center flex items-center justify-center">
+      <div ref={announcementRef} className="w-full bg-[#0a0a0a] dark:bg-neutral-100 border-b border-white/[0.04] dark:border-neutral-200 py-1 select-none">
+        <div className="mx-auto flex max-w-7xl items-center justify-center px-4 md:px-8 h-7">
+          <div className="h-7 w-full overflow-hidden text-center flex items-center justify-center">
             <AnimatePresence mode="wait" initial={false}>
               <StaggeredAnnouncementText
                 key={announcementIndex}
@@ -800,15 +790,6 @@ export function Navbar() {
               />
             </AnimatePresence>
           </div>
-
-          <button
-            type="button"
-            className="z-10 hidden sm:flex h-8 w-8 items-center justify-center text-neutral-500 hover:text-white transition-opacity opacity-40 hover:opacity-100 focus-visible:outline-none"
-            onClick={() => rotateAnnouncement(1)}
-            aria-label="Next announcement"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
         </div>
       </div>
 
