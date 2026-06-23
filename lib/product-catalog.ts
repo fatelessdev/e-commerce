@@ -373,13 +373,17 @@ async function getHybridCatalogProducts(query: CatalogQuery & { search: string }
         SELECT
           ${products.id} AS id,
           row_number() OVER (
-            ORDER BY similarity(${products.searchText}, ${query.search}) DESC,
+            ORDER BY word_similarity(${query.search}, ${products.name}) DESC,
+                     similarity(${products.name}, ${query.search}) DESC,
                      ${products.displayOrder} DESC,
                      ${products.createdAt} DESC
           ) AS typo_rank
         FROM ${products}
         WHERE ${where}
-          AND similarity(${products.searchText}, ${query.search}) > 0.18
+          AND (
+            similarity(${products.name}, ${query.search}) > 0.18
+            OR word_similarity(${query.search}, ${products.name}) > 0.25
+          )
         LIMIT 80
       ) typo_matches
 
