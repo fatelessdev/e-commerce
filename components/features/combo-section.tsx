@@ -186,6 +186,11 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
                       } ${available ? "" : "opacity-30 cursor-not-allowed"}`}
                       style={{ backgroundColor: color.hex }}
                       title={color.name}
+                      aria-label={
+                        available
+                          ? `${selectedColorA === color.name ? "Selected" : "Select"} ${color.name} color for ${combo.productA.name}`
+                          : `${color.name} color unavailable for ${combo.productA.name}`
+                      }
                     />
                   );
                 })}
@@ -226,6 +231,11 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
                       } ${available ? "" : "opacity-30 cursor-not-allowed"}`}
                       style={{ backgroundColor: color.hex }}
                       title={color.name}
+                      aria-label={
+                        available
+                          ? `${selectedColorB === color.name ? "Selected" : "Select"} ${color.name} color for ${combo.productB.name}`
+                          : `${color.name} color unavailable for ${combo.productB.name}`
+                      }
                     />
                   );
                 })}

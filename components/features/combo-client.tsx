@@ -471,6 +471,11 @@ export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: C
                           } ${available ? "cursor-pointer border-border" : "opacity-30 cursor-not-allowed border-border/40"}`}
                           style={{ backgroundColor: color.hex }}
                           title={color.name}
+                          aria-label={
+                            available
+                              ? `${selectedColorA === color.name ? "Selected" : "Select"} ${color.name} color for ${combo.productA.name}`
+                              : `${color.name} color unavailable for ${combo.productA.name}`
+                          }
                         />
                       )
                     })}
@@ -533,6 +538,11 @@ export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: C
                           } ${available ? "cursor-pointer border-border" : "opacity-30 cursor-not-allowed border-border/40"}`}
                           style={{ backgroundColor: color.hex }}
                           title={color.name}
+                          aria-label={
+                            available
+                              ? `${selectedColorB === color.name ? "Selected" : "Select"} ${color.name} color for ${combo.productB.name}`
+                              : `${color.name} color unavailable for ${combo.productB.name}`
+                          }
                         />
                       )
                     })}

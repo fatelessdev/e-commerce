@@ -741,12 +741,6 @@ export function Navbar() {
     return () => window.clearInterval(timer);
   }, [isAnnouncementInViewport, showMobileMenu]);
 
-  const rotateAnnouncement = (direction: 1 | -1) => {
-    setAnnouncementIndex((current) => (
-      current + direction + ANNOUNCEMENT_MESSAGES.length
-    ) % ANNOUNCEMENT_MESSAGES.length);
-  };
-
   useEffect(() => {
     if (!showMobileMenu) return;
 

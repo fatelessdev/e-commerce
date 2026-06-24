@@ -26,6 +26,9 @@ export type { ProductInput } from "@/lib/admin-product-input";
 // ============================================
 
 type ProductMutationClient = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
+type OrderShippingAddress = {
+  name?: string;
+};
 
 // Helper: recompute total stock from variants
 async function recomputeProductStock(client: ProductMutationClient, productId: string) {
@@ -528,7 +531,7 @@ export async function getDashboardStats(timeframe: "7d" | "30d" | "all" = "30d")
       status: o.status,
       createdAt: o.createdAt,
       customerName: o.shippingAddress
-        ? (o.shippingAddress as any).name
+        ? (o.shippingAddress as OrderShippingAddress).name
         : "Guest Customer",
     })),
   };

@@ -8,6 +8,14 @@ import {
 } from "./product-recommendations.ts";
 import { getProductTextVectorId } from "./product-search.ts";
 
+type RecommendationQueryMatch = {
+  metadata: {
+    productId: string;
+    isActive: boolean;
+  };
+  score: number;
+};
+
 test("product recommendation candidates exclude source, inactive, weak, and duplicate matches", () => {
   const candidates = selectProductRecommendationCandidates({
     sourceProductId: "source-product",
@@ -89,7 +97,7 @@ test("recommendation candidate query calls Pinecone once without generating embe
   const calls: unknown[] = [];
   const candidates = await queryProductRecommendationCandidates({
     sourceProductId: "source-product",
-    query: async (options): Promise<{ matches: any[] }> => {
+    query: async (options): Promise<{ matches: RecommendationQueryMatch[] }> => {
       calls.push(options);
       return {
         matches: [

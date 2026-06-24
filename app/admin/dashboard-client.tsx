@@ -140,7 +140,7 @@ export function AdminDashboardClient({ initialStats }: { initialStats: Dashboard
             >
               <div className="flex items-center justify-between">
                 <span className="text-[9px] uppercase font-mono tracking-[0.25em] text-muted-foreground">
-                  {item.code} // {item.label}
+                  {item.code} {"//"} {item.label}
                 </span>
                 <Icon className="h-3.5 w-3.5 text-muted-foreground/60" />
               </div>
