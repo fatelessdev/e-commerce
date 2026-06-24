@@ -601,6 +601,7 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                                                 }}
                                                 disabled={!available}
                                                 title={available ? color.name : `${color.name} — Out of stock`}
+                                                aria-label={available ? `Select color ${color.name}` : `Color ${color.name} - Out of stock`}
                                             >
                                                 {!available && (
                                                     <span className="absolute inset-0 flex items-center justify-center">

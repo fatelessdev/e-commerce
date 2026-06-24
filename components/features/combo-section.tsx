@@ -186,6 +186,7 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
                       } ${available ? "" : "opacity-30 cursor-not-allowed"}`}
                       style={{ backgroundColor: color.hex }}
                       title={color.name}
+                      aria-label={available ? `Select color ${color.name}` : `Color ${color.name} - Out of stock`}
                     />
                   );
                 })}
@@ -226,6 +227,7 @@ export function ComboCard({ combo, interactive }: { combo: Combo; interactive: b
                       } ${available ? "" : "opacity-30 cursor-not-allowed"}`}
                       style={{ backgroundColor: color.hex }}
                       title={color.name}
+                      aria-label={available ? `Select color ${color.name}` : `Color ${color.name} - Out of stock`}
                     />
                   );
                 })}

@@ -471,6 +471,7 @@ export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: C
                           } ${available ? "cursor-pointer border-border" : "opacity-30 cursor-not-allowed border-border/40"}`}
                           style={{ backgroundColor: color.hex }}
                           title={color.name}
+                          aria-label={available ? `Select color ${color.name}` : `Color ${color.name} - Out of stock`}
                         />
                       )
                     })}
@@ -533,6 +534,7 @@ export function ComboClient({ id, initialCombo }: { id: string; initialCombo?: C
                           } ${available ? "cursor-pointer border-border" : "opacity-30 cursor-not-allowed border-border/40"}`}
                           style={{ backgroundColor: color.hex }}
                           title={color.name}
+                          aria-label={available ? `Select color ${color.name}` : `Color ${color.name} - Out of stock`}
                         />
                       )
                     })}
