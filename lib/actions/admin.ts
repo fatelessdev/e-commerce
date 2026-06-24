@@ -462,18 +462,31 @@ export async function updateOrderStatus(
 // ANALYTICS ACTIONS
 // ============================================
 
-export async function getDashboardStats() {
+export async function getDashboardStats(timeframe: "7d" | "30d" | "all" = "30d") {
   await requireAdmin();
 
-  const now = new Date();
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  let dateLimit: Date | null = null;
+  if (timeframe === "7d") {
+    dateLimit = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  } else if (timeframe === "30d") {
+    dateLimit = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  }
+
+  const orderConditions = [];
+  const revenueConditions = [eq(orders.status, "delivered")];
+
+  if (dateLimit) {
+    orderConditions.push(gte(orders.createdAt, dateLimit));
+    revenueConditions.push(gte(orders.createdAt, dateLimit));
+  }
 
   // Run independent sequential queries concurrently to avoid waterfall requests
   const [
     [{ count: totalProducts }],
     [{ count: totalOrders }],
     [{ sum: totalRevenue }],
-    [{ count: activeCoupons }]
+    [{ count: activeCoupons }],
+    recentOrders
   ] = await Promise.all([
     db
       .select({ count: sql<number>`count(*)` })
@@ -482,20 +495,26 @@ export async function getDashboardStats() {
     db
       .select({ count: sql<number>`count(*)` })
       .from(orders)
-      .where(gte(orders.createdAt, thirtyDaysAgo)),
+      .where(orderConditions.length > 0 ? and(...orderConditions) : undefined),
     db
       .select({ sum: sql<string>`COALESCE(sum(total), 0)` })
       .from(orders)
-      .where(
-        and(
-          gte(orders.createdAt, thirtyDaysAgo),
-          eq(orders.status, "delivered")
-        )
-      ),
+      .where(and(...revenueConditions)),
     db
       .select({ count: sql<number>`count(*)` })
       .from(coupons)
-      .where(eq(coupons.isActive, true))
+      .where(eq(coupons.isActive, true)),
+    db
+      .select({
+        id: orders.id,
+        total: orders.total,
+        status: orders.status,
+        createdAt: orders.createdAt,
+        shippingAddress: orders.shippingAddress,
+      })
+      .from(orders)
+      .orderBy(desc(orders.createdAt))
+      .limit(5)
   ]);
 
   return {
@@ -503,6 +522,15 @@ export async function getDashboardStats() {
     totalOrders: Number(totalOrders),
     totalRevenue: parseFloat(totalRevenue || "0"),
     activeCoupons: Number(activeCoupons),
+    recentOrders: recentOrders.map((o) => ({
+      id: o.id,
+      total: parseFloat(o.total || "0"),
+      status: o.status,
+      createdAt: o.createdAt,
+      customerName: o.shippingAddress
+        ? (o.shippingAddress as any).name
+        : "Guest Customer",
+    })),
   };
 }
 

@@ -2,13 +2,6 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getServerSession, isAdmin } from "@/lib/auth-server";
 import Link from "next/link";
-import {
-  LayoutDashboard,
-  Package,
-  Layers,
-  ShoppingCart,
-  Ticket,
-} from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -31,57 +24,52 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen bg-background">
       {/* Admin Header */}
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
-        <div className="flex h-16 items-center px-4 gap-4">
-          <Link href="/admin" className="font-bold text-xl tracking-tighter">
-            XILAR <span className="text-primary text-sm font-normal">Admin</span>
+      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-md">
+        <div className="flex h-16 items-center px-4 md:px-8 gap-4">
+          <Link href="/admin" className="text-2xl font-display tracking-tight flex items-baseline gap-1 select-none">
+            XILAR <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-muted-foreground font-semibold">ADMIN</span>
           </Link>
           
-          <nav className="hidden md:flex items-center gap-6 ml-8">
+          <nav className="hidden md:flex items-center gap-8 ml-10">
             <Link 
               href="/admin" 
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+              className="text-[10px] uppercase font-mono tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors font-medium"
             >
-              <LayoutDashboard className="h-4 w-4" />
               Dashboard
             </Link>
             <Link 
               href="/admin/products" 
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+              className="text-[10px] uppercase font-mono tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors font-medium"
             >
-              <Package className="h-4 w-4" />
               Products
             </Link>
             <Link
               href="/admin/combos"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+              className="text-[10px] uppercase font-mono tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors font-medium"
             >
-              <Layers className="h-4 w-4" />
               Combos
             </Link>
             <Link 
               href="/admin/orders" 
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+              className="text-[10px] uppercase font-mono tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors font-medium"
             >
-              <ShoppingCart className="h-4 w-4" />
               Orders
             </Link>
             <Link 
               href="/admin/coupons" 
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+              className="text-[10px] uppercase font-mono tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors font-medium"
             >
-              <Ticket className="h-4 w-4" />
               Coupons
             </Link>
           </nav>
 
-          <div className="ml-auto flex items-center gap-4">
-            <span className="text-sm text-muted-foreground hidden sm:inline">
+          <div className="ml-auto flex items-center gap-6">
+            <span className="text-[9px] uppercase font-mono tracking-[0.15em] text-muted-foreground hidden sm:inline select-none">
               {session.user.email}
             </span>
             <Link 
               href="/" 
-              className="text-sm text-muted-foreground hover:text-foreground"
+              className="text-[10px] uppercase font-mono tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors"
             >
               View Store →
             </Link>
@@ -90,7 +78,7 @@ export default async function AdminLayout({
       </header>
 
       {/* Mobile navigation subheader */}
-      <div className="flex md:hidden border-b bg-background overflow-x-auto scrollbar-hide py-3 px-4 gap-5 sticky top-16 z-40">
+      <div className="flex md:hidden border-b border-border/40 bg-background overflow-x-auto scrollbar-hide py-3 px-4 gap-5 sticky top-16 z-40">
         <Link href="/admin" className="text-[10px] uppercase font-semibold tracking-[0.2em] text-muted-foreground hover:text-foreground shrink-0 transition-colors">Dashboard</Link>
         <Link href="/admin/products" className="text-[10px] uppercase font-semibold tracking-[0.2em] text-muted-foreground hover:text-foreground shrink-0 transition-colors">Products</Link>
         <Link href="/admin/combos" className="text-[10px] uppercase font-semibold tracking-[0.2em] text-muted-foreground hover:text-foreground shrink-0 transition-colors">Combos</Link>
