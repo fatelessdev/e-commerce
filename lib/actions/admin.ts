@@ -11,6 +11,7 @@ import {
   deleteProductSearchIndexAfterMutation,
   syncProductSearchIndexAfterMutation,
 } from "@/lib/product-search-index";
+import { refreshProductRecommendationsAfterMutation } from "@/lib/product-recommendations";
 import {
   ACCESSORY_SIZE,
   normalizeProductInput,
@@ -141,7 +142,10 @@ export async function createProduct(data: ProductInput) {
     return createdProduct;
   });
 
-  await syncProductSearchIndexAfterMutation(product.id);
+  const searchResult = await syncProductSearchIndexAfterMutation(product.id);
+  if (searchResult.status !== "failed") {
+    await refreshProductRecommendationsAfterMutation(product.id);
+  }
 
   return product;
 }
@@ -205,7 +209,10 @@ export async function updateProduct(id: string, data: Partial<ProductInput>) {
     return updatedProduct;
   });
 
-  await syncProductSearchIndexAfterMutation(id);
+  const searchResult = await syncProductSearchIndexAfterMutation(id);
+  if (searchResult.status !== "failed") {
+    await refreshProductRecommendationsAfterMutation(id);
+  }
 
   return product;
 }

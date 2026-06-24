@@ -78,6 +78,13 @@
       "when": 1782205996943,
       "tag": "0010_foamy_johnny_blaze",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1782292663709,
+      "tag": "0011_broken_wild_pack",
+      "breakpoints": true
     }
   ]
 }

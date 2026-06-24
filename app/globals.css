@@ -290,12 +290,5 @@ video {
   body.xilar-custom-cursor * {
     cursor: none !important;
   }
-
-  /* Preserve native cursor in form inputs for usability */
-  body.xilar-custom-cursor input,
-  body.xilar-custom-cursor textarea,
-  body.xilar-custom-cursor select {
-    cursor: auto !important;
-  }
 }
 

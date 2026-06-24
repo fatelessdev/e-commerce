@@ -2,12 +2,14 @@ import "dotenv/config";
 
 import { db } from "../lib/db/index.ts";
 import { productSearchIndexState, products } from "../lib/db/schema.ts";
+import { refreshProductRecommendationsAfterMutation } from "../lib/product-recommendations.ts";
 import { syncProductSearchIndexAfterMutation } from "../lib/product-search-index.ts";
 import { desc, eq, inArray, isNull, ne, or } from "drizzle-orm";
 
 type BackfillArgs = {
   force: boolean;
   failedOnly: boolean;
+  recommendationsOnly: boolean;
   targets: string[];
   limit?: number;
 };
@@ -28,6 +30,7 @@ Usage:
   npm run search:backfill -- --product <product-id-or-slug>
   npm run search:backfill -- --product <id-or-slug> --product <id-or-slug> --force
   npm run search:backfill -- --products <id-or-slug,id-or-slug> --limit 10
+  npm run search:backfill -- --recommendations-only --limit 10
 
 Options:
   --all             Backfill every product. This is the default.
@@ -35,6 +38,8 @@ Options:
   --product VALUE   Backfill one product by exact id or slug. Can be repeated.
   --products LIST   Backfill comma-separated exact ids or slugs.
   --force           Regenerate vectors and replace existing Pinecone records.
+  --recommendations-only
+                    Recompute stored recommendations from existing Pinecone text vectors.
   --limit N         Limit selected products, useful for smoke tests.
 `);
 }
@@ -43,6 +48,7 @@ function parseArgs(argv: string[]): BackfillArgs {
   const args: BackfillArgs = {
     force: false,
     failedOnly: false,
+    recommendationsOnly: false,
     targets: [],
   };
 
@@ -56,6 +62,11 @@ function parseArgs(argv: string[]): BackfillArgs {
 
     if (arg === "--force") {
       args.force = true;
+      continue;
+    }
+
+    if (arg === "--recommendations-only") {
+      args.recommendationsOnly = true;
       continue;
     }
 
@@ -147,30 +158,44 @@ async function main() {
   console.log(
     `Starting product search backfill for ${rows.length} product(s). ` +
       `Mode: ${args.targets.length > 0 ? "targeted" : args.failedOnly ? "failed" : "all"}. ` +
-      `Force replace: ${args.force ? "yes" : "no"}.`,
+      `Force replace: ${args.force ? "yes" : "no"}. ` +
+      `Recommendations only: ${args.recommendationsOnly ? "yes" : "no"}.`,
   );
 
   let synced = 0;
+  let recommendationsSynced = 0;
   let failed = 0;
 
   for (const [index, product] of rows.entries()) {
-    const result = await syncProductSearchIndexAfterMutation(product.id, {
-      force: args.force,
-    });
+    const result = args.recommendationsOnly
+      ? { productId: product.id, status: "synced" as const, upserted: 0, removed: 0 }
+      : await syncProductSearchIndexAfterMutation(product.id, {
+          force: args.force,
+        });
+    const recommendationResult = result.status === "failed"
+      ? null
+      : await refreshProductRecommendationsAfterMutation(product.id);
 
-    if (result.status === "failed") {
+    if (result.status === "failed" || recommendationResult?.status === "failed") {
       failed += 1;
     } else {
       synced += 1;
+      recommendationsSynced += recommendationResult?.recommendations ?? 0;
     }
 
     console.log(
       `[${index + 1}/${rows.length}] ${product.name} (${product.slug}): ${result.status}` +
-        ("upserted" in result ? `, upserted ${result.upserted}, removed ${result.removed}` : ""),
+        ("upserted" in result ? `, upserted ${result.upserted}, removed ${result.removed}` : "") +
+        (recommendationResult && "recommendations" in recommendationResult
+          ? `, recommendations ${recommendationResult.recommendations}`
+          : ""),
     );
   }
 
-  console.log(`Product search backfill complete. Synced: ${synced}. Failed: ${failed}.`);
+  console.log(
+    `Product search backfill complete. Synced: ${synced}. ` +
+      `Recommendations stored: ${recommendationsSynced}. Failed: ${failed}.`,
+  );
 
   if (failed > 0) {
     process.exitCode = 1;

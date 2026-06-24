@@ -191,6 +191,27 @@ export const productSearchIndexState = pgTable("product_search_index_state", {
   index("product_search_index_state_status_idx").on(table.status),
 ]);
 
+export const productRecommendations = pgTable("product_recommendations", {
+  sourceProductId: uuid("source_product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  recommendedProductId: uuid("recommended_product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  rank: integer("rank").notNull(),
+  score: decimal("score", { precision: 8, scale: 6 }).notNull(),
+  model: text("model").notNull(),
+  sourceHash: text("source_hash"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("product_recommendations_source_product_id_idx").on(table.sourceProductId),
+  uniqueIndex("product_recommendations_source_recommended_unique").on(
+    table.sourceProductId,
+    table.recommendedProductId,
+  ),
+]);
+
 // ============================================
 // PRODUCT VARIANTS TABLE (per-size-per-color stock)
 // ============================================

@@ -1,20 +1,59 @@
 import { db } from "@/lib/db";
-import { combos, products, productVariants } from "@/lib/db/schema";
-import { and, desc, eq, gt, inArray, or } from "drizzle-orm";
+import { combos, productRecommendations, products, productVariants } from "@/lib/db/schema";
+import { mergeRelatedProductIds, PRODUCT_RECOMMENDATION_LIMIT } from "@/lib/product-recommendations";
+import { and, asc, desc, eq, gt, inArray, or } from "drizzle-orm";
+import { cache } from "react";
 
 type ProductRow = typeof products.$inferSelect;
 type ProductVariantRow = typeof productVariants.$inferSelect;
 type ComboRow = typeof combos.$inferSelect;
+type RelatedProductRow = Pick<
+  ProductRow,
+  | "id"
+  | "name"
+  | "slug"
+  | "mrp"
+  | "sellingPrice"
+  | "images"
+  | "sizes"
+  | "stock"
+  | "category"
+  | "gender"
+  | "displayOrder"
+  | "createdAt"
+>;
 
 type RelatedCombo = ComboRow & {
   productA: ProductRow & { variants: ProductVariantRow[] };
   productB: ProductRow & { variants: ProductVariantRow[] };
 };
 
+type RelatedProduct = Pick<
+  RelatedProductRow,
+  "id" | "name" | "slug" | "mrp" | "sellingPrice" | "images" | "sizes" | "stock"
+> & {
+  availableSizes: string[];
+};
+
 export type ProductDetails = ProductRow & {
   variants: ProductVariantRow[];
   relatedCombos: RelatedCombo[];
-  relatedProducts: (ProductRow & { availableSizes: string[] })[];
+  relatedProducts: RelatedProduct[];
+};
+
+const relatedProductColumns = {
+  id: products.id,
+  name: products.name,
+  slug: products.slug,
+  mrp: products.mrp,
+  sellingPrice: products.sellingPrice,
+  images: products.images,
+  sizes: products.sizes,
+  stock: products.stock,
+  category: products.category,
+  gender: products.gender,
+  displayOrder: products.displayOrder,
+  createdAt: products.createdAt,
 };
 
 function getRelatedScore(
@@ -36,12 +75,12 @@ function getRelatedScore(
   return score;
 }
 
-export async function getProductDetails(
+export const getProductDetails = cache(async function getProductDetails(
   id: string,
   options: { includeInactive?: boolean } = {}
 ): Promise<ProductDetails | null> {
   return getProductDetailsUncached(id, options);
-}
+});
 
 async function getProductDetailsUncached(
   id: string,
@@ -136,21 +175,64 @@ async function getProductDetailsUncached(
     ...comboRows.map((combo) => (combo.productAId === id ? combo.productBId : combo.productAId)),
   ]);
 
-  const [variants, candidateProducts] = await Promise.all([
+  const [variants, storedRecommendationRows] = await Promise.all([
     variantsPromise,
     db
-      .select()
+      .select({ id: products.id })
+      .from(productRecommendations)
+      .innerJoin(products, eq(productRecommendations.recommendedProductId, products.id))
+      .where(and(
+        eq(productRecommendations.sourceProductId, id),
+        eq(products.isActive, true)
+      ))
+      .orderBy(asc(productRecommendations.rank))
+      .limit(PRODUCT_RECOMMENDATION_LIMIT + excludedIds.size),
+  ]);
+
+  const storedRecommendationIds = storedRecommendationRows.map((row) => row.id);
+  const hasStoredRecommendations = storedRecommendationRows.length > 0;
+  let heuristicIds: string[] = [];
+  let newestIds: string[] = [];
+
+  if (!hasStoredRecommendations) {
+    const fallbackProducts = await db
+      .select(relatedProductColumns)
       .from(products)
       .where(eq(products.isActive, true))
       .orderBy(desc(products.displayOrder), desc(products.createdAt))
-      .limit(80),
-  ]);
+      .limit(80);
 
-  const relatedProducts = candidateProducts
-    .filter((candidate) => !excludedIds.has(candidate.id))
-    .sort((a, b) => getRelatedScore(product, b) - getRelatedScore(product, a))
-    .slice(0, 8);
-  const relatedProductIds = relatedProducts.map((row) => row.id);
+    heuristicIds = fallbackProducts
+      .filter((candidate) => !excludedIds.has(candidate.id) && getRelatedScore(product, candidate) > 0)
+      .sort((a, b) => {
+        const scoreDelta = getRelatedScore(product, b) - getRelatedScore(product, a);
+        if (scoreDelta !== 0) return scoreDelta;
+        if (b.displayOrder !== a.displayOrder) return b.displayOrder - a.displayOrder;
+        return b.createdAt.getTime() - a.createdAt.getTime();
+      })
+      .map((candidate) => candidate.id);
+
+    newestIds = fallbackProducts.map((candidate) => candidate.id);
+  }
+
+  const relatedProductIds = mergeRelatedProductIds({
+    storedIds: storedRecommendationIds,
+    heuristicIds,
+    newestIds,
+    excludedIds,
+    limit: PRODUCT_RECOMMENDATION_LIMIT,
+  });
+
+  const relatedProductRows = relatedProductIds.length > 0
+    ? await db
+        .select(relatedProductColumns)
+        .from(products)
+        .where(and(inArray(products.id, relatedProductIds), eq(products.isActive, true)))
+    : [];
+  const relatedProductRowMap = new Map(relatedProductRows.map((row) => [row.id, row]));
+  const relatedProducts = relatedProductIds
+    .map((relatedId) => relatedProductRowMap.get(relatedId))
+    .filter((row): row is RelatedProductRow => row !== undefined);
   const relatedAvailableVariantRows = relatedProductIds.length > 0
     ? await db
         .select({
@@ -172,7 +254,14 @@ async function getProductDetailsUncached(
   const relatedProductsWithAvailableSizes = relatedProducts.map((row) => {
     const availableSizes = Array.from(relatedSizesByProductId.get(row.id) || []);
     return {
-      ...row,
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      mrp: row.mrp,
+      sellingPrice: row.sellingPrice,
+      images: row.images || [],
+      sizes: row.sizes || [],
+      stock: row.stock,
       availableSizes: availableSizes.length > 0
         ? availableSizes
         : row.stock > 0

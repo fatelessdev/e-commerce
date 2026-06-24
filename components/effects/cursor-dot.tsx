@@ -13,18 +13,17 @@ import { useReducedMotion } from "framer-motion";
     default   — small dot (10px)
     pointer   — expanded ring (40px) for links / buttons / interactive elements
     explore   — large circle (80px) with contextual label, for gallery / special sections
-    text      — thin vertical bar for text inputs
     hidden    — invisible (for elements that manage their own cursor)
   
   Opt-in via data attributes on any ancestor:
-    data-cursor="pointer"  |  data-cursor="explore"  |  data-cursor="text"  |  data-cursor="none"
+    data-cursor="pointer"  |  data-cursor="explore"  |  data-cursor="none"
     data-cursor-label="..."  — custom text inside the explore circle
     data-cursor-magnetic     — subtle magnetic pull toward element center
 
   Desktop only (hidden on touch / small screens). Respects prefers-reduced-motion.
 ──────────────────────────────────────────────────────────────────────────────*/
 
-type CursorState = "default" | "pointer" | "explore" | "text" | "hidden";
+type CursorState = "default" | "pointer" | "explore" | "hidden";
 
 // Elements that naturally trigger the "pointer" cursor state
 const POINTER_SELECTOR = 'a, button, [role="button"], label[for], summary, [data-cursor="pointer"]';
@@ -42,7 +41,6 @@ function resolveCursorState(target: HTMLElement): { state: CursorState; label: s
       label = el.getAttribute("data-cursor-label") || null;
       return { state: "explore", label, magnetic: null };
     }
-    if (cursor === "text") return { state: "text", label: null, magnetic: null };
     if (cursor === "pointer") {
       magnetic = el.hasAttribute("data-cursor-magnetic") ? el : null;
       return { state: "pointer", label: null, magnetic };
@@ -52,14 +50,6 @@ function resolveCursorState(target: HTMLElement): { state: CursorState; label: s
     if (el.matches(POINTER_SELECTOR)) {
       magnetic = el.hasAttribute("data-cursor-magnetic") ? el : null;
       return { state: "pointer", label: null, magnetic };
-    }
-
-    // Input / textarea → text state
-    if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
-      const type = el.getAttribute("type");
-      if (!type || type === "text" || type === "email" || type === "password" || type === "search" || type === "url" || type === "tel" || type === "number") {
-        return { state: "text", label: null, magnetic: null };
-      }
     }
 
     el = el.parentElement;
@@ -144,19 +134,19 @@ export function CursorDot() {
 
       switch (state) {
         case "default":
-          gsap.to(dot, { width: 10, height: 10, opacity: 0.85, duration: 0.35, ease: "power3.out" });
+          gsap.to(dot, { width: 10, height: 10, borderRadius: "50%", opacity: 0.85, duration: 0.35, ease: "power3.out" });
           gsap.to(ring, { scale: 0, opacity: 0, duration: 0.3, ease: "power3.out" });
           if (label) label.textContent = "";
           break;
 
         case "pointer":
-          gsap.to(dot, { width: 6, height: 6, opacity: 1, duration: 0.35, ease: "power3.out" });
+          gsap.to(dot, { width: 6, height: 6, borderRadius: "50%", opacity: 1, duration: 0.35, ease: "power3.out" });
           gsap.to(ring, { scale: 1, opacity: 1, width: 44, height: 44, duration: 0.4, ease: "back.out(1.4)" });
           if (label) label.textContent = "";
           break;
 
         case "explore":
-          gsap.to(dot, { width: 6, height: 6, opacity: 0, duration: 0.25, ease: "power2.out" });
+          gsap.to(dot, { width: 6, height: 6, borderRadius: "50%", opacity: 0, duration: 0.25, ease: "power2.out" });
           gsap.to(ring, { scale: 1, opacity: 1, width: 88, height: 88, duration: 0.5, ease: "back.out(1.2)" });
           if (label) {
             label.textContent = labelText || "EXPLORE";
@@ -164,14 +154,8 @@ export function CursorDot() {
           }
           break;
 
-        case "text":
-          gsap.to(dot, { width: 3, height: 22, opacity: 0.8, borderRadius: 1, duration: 0.3, ease: "power3.out" });
-          gsap.to(ring, { scale: 0, opacity: 0, duration: 0.25, ease: "power3.out" });
-          if (label) label.textContent = "";
-          break;
-
         case "hidden":
-          gsap.to(dot, { opacity: 0, duration: 0.2, ease: "power2.out" });
+          gsap.to(dot, { borderRadius: "50%", opacity: 0, duration: 0.2, ease: "power2.out" });
           gsap.to(ring, { scale: 0, opacity: 0, duration: 0.2, ease: "power2.out" });
           if (label) label.textContent = "";
           break;

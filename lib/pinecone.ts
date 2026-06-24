@@ -1,5 +1,5 @@
 import { Pinecone } from "@pinecone-database/pinecone";
-import type { ProductSearchVectorMetadata } from "@/lib/product-search";
+import type { ProductSearchVectorMetadata } from "./product-search.ts";
 
 let pineconeClient: Pinecone | null = null;
 

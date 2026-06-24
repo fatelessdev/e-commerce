@@ -19,6 +19,10 @@ const CartDrawer = dynamic(() =>
 import { CursorDotLoader } from "@/components/effects/cursor-dot-loader";
 
 
+function RouteShellFallback() {
+  return <div className="min-h-[calc(100svh-7rem)] bg-background" aria-hidden="true" />;
+}
+
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
@@ -162,7 +166,7 @@ export default function RootLayout({
                   <Navbar />
                   <div id="main-content-container" className="flex-1 flex flex-col">
                     <main className="flex-1 overflow-x-hidden relative">
-                      <Suspense fallback={null}>{children}</Suspense>
+                      <Suspense fallback={<RouteShellFallback />}>{children}</Suspense>
                     </main>
                     <Suspense fallback={null}>
                       <FooterGate />
