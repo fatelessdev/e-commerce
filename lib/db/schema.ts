@@ -378,6 +378,74 @@ export const coupons = pgTable("coupons", {
 ]);
 
 // ============================================
+// MARKETING CAMPAIGN TABLES
+// ============================================
+
+export const marketingCampaigns = pgTable("marketing_campaigns", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  subject: text("subject").notNull(),
+  previewText: text("preview_text").notNull().default(""),
+  headline: text("headline").notNull(),
+  body: text("body").notNull(),
+  ctaLabel: text("cta_label").notNull(),
+  ctaUrl: text("cta_url").notNull(),
+  productIds: json("product_ids").$type<string[]>().notNull().default([]),
+  audience: json("audience").$type<{
+    type: "selected" | "all" | "buyers" | "nonBuyers" | "recentBuyers" | "highSpenders";
+    userIds?: string[];
+    days?: number;
+    minimumSpend?: number;
+  }>().notNull(),
+  status: text("status").notNull().default("draft"),
+  recipientCount: integer("recipient_count").notNull().default(0),
+  sentCount: integer("sent_count").notNull().default(0),
+  failedCount: integer("failed_count").notNull().default(0),
+  skippedCount: integer("skipped_count").notNull().default(0),
+  error: text("error"),
+  createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+  sentAt: timestamp("sent_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("marketing_campaigns_status_idx").on(table.status),
+  index("marketing_campaigns_created_at_idx").on(table.createdAt),
+]);
+
+export const marketingCampaignRecipients = pgTable("marketing_campaign_recipients", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  campaignId: uuid("campaign_id")
+    .notNull()
+    .references(() => marketingCampaigns.id, { onDelete: "cascade" }),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  email: text("email").notNull(),
+  name: text("name").notNull(),
+  status: text("status").notNull().default("pending"),
+  resendEmailId: text("resend_email_id"),
+  error: text("error"),
+  skippedReason: text("skipped_reason"),
+  sentAt: timestamp("sent_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("marketing_campaign_recipients_campaign_email_unique").on(table.campaignId, table.email),
+  index("marketing_campaign_recipients_campaign_id_idx").on(table.campaignId),
+  index("marketing_campaign_recipients_email_idx").on(table.email),
+  index("marketing_campaign_recipients_status_idx").on(table.status),
+]);
+
+export const marketingEmailSuppressions = pgTable("marketing_email_suppressions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  email: text("email").notNull(),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  reason: text("reason").notNull().default("unsubscribe"),
+  sourceCampaignId: uuid("source_campaign_id").references(() => marketingCampaigns.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("marketing_email_suppressions_email_unique").on(table.email),
+  index("marketing_email_suppressions_user_id_idx").on(table.userId),
+]);
+
+// ============================================
 // BARGAIN SESSIONS TABLE
 // ============================================
 
@@ -423,6 +491,9 @@ export const userRelations = relations(user, ({ many }) => ({
   orders: many(orders),
   wishlist: many(wishlist),
   coupons: many(coupons),
+  marketingCampaigns: many(marketingCampaigns),
+  marketingRecipients: many(marketingCampaignRecipients),
+  marketingSuppressions: many(marketingEmailSuppressions),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -501,6 +572,37 @@ export const couponsRelations = relations(coupons, ({ one }) => ({
   user: one(user, {
     fields: [coupons.userId],
     references: [user.id],
+  }),
+}));
+
+export const marketingCampaignsRelations = relations(marketingCampaigns, ({ one, many }) => ({
+  creator: one(user, {
+    fields: [marketingCampaigns.createdBy],
+    references: [user.id],
+  }),
+  recipients: many(marketingCampaignRecipients),
+  suppressions: many(marketingEmailSuppressions),
+}));
+
+export const marketingCampaignRecipientsRelations = relations(marketingCampaignRecipients, ({ one }) => ({
+  campaign: one(marketingCampaigns, {
+    fields: [marketingCampaignRecipients.campaignId],
+    references: [marketingCampaigns.id],
+  }),
+  user: one(user, {
+    fields: [marketingCampaignRecipients.userId],
+    references: [user.id],
+  }),
+}));
+
+export const marketingEmailSuppressionsRelations = relations(marketingEmailSuppressions, ({ one }) => ({
+  user: one(user, {
+    fields: [marketingEmailSuppressions.userId],
+    references: [user.id],
+  }),
+  sourceCampaign: one(marketingCampaigns, {
+    fields: [marketingEmailSuppressions.sourceCampaignId],
+    references: [marketingCampaigns.id],
   }),
 }));
 

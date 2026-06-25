@@ -61,6 +61,12 @@ export default async function AdminLayout({
             >
               Coupons
             </Link>
+            <Link
+              href="/admin/campaigns"
+              className="text-[10px] uppercase font-mono tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors font-medium"
+            >
+              Campaigns
+            </Link>
           </nav>
 
           <div className="ml-auto flex items-center gap-6">
@@ -84,6 +90,7 @@ export default async function AdminLayout({
         <Link href="/admin/combos" className="text-[10px] uppercase font-semibold tracking-[0.2em] text-muted-foreground hover:text-foreground shrink-0 transition-colors">Combos</Link>
         <Link href="/admin/orders" className="text-[10px] uppercase font-semibold tracking-[0.2em] text-muted-foreground hover:text-foreground shrink-0 transition-colors">Orders</Link>
         <Link href="/admin/coupons" className="text-[10px] uppercase font-semibold tracking-[0.2em] text-muted-foreground hover:text-foreground shrink-0 transition-colors">Coupons</Link>
+        <Link href="/admin/campaigns" className="text-[10px] uppercase font-semibold tracking-[0.2em] text-muted-foreground hover:text-foreground shrink-0 transition-colors">Campaigns</Link>
       </div>
 
       {/* Main Content */}
