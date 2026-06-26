@@ -6,7 +6,6 @@ import "./globals.css";
 import { Navbar } from "@/app/navbar";
 import { FooterGate } from "@/components/layout/footer-gate";
 import { CartProvider } from "@/lib/cart-context";
-import { WishlistProvider } from "@/lib/wishlist-context";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { QueryProvider } from "@/components/ui/query-provider";
 import { Analytics } from "@vercel/analytics/next"
@@ -133,22 +132,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script
+          id="xilar-theme-init"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
+                  var root = document.documentElement;
                   var stored = localStorage.getItem('xilar-theme');
-                  var theme = stored || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+                  var theme = stored === 'light' || stored === 'dark' ? stored : 'dark';
                   if (theme === 'dark') {
-                    document.documentElement.classList.add('dark');
-                    document.documentElement.classList.remove('light');
+                    root.classList.add('dark');
+                    root.classList.remove('light');
                   } else {
-                    document.documentElement.classList.add('light');
-                    document.documentElement.classList.remove('dark');
+                    root.classList.add('light');
+                    root.classList.remove('dark');
                   }
+                  root.style.colorScheme = theme;
                 } catch (e) {}
               })();
             `,
@@ -162,26 +164,24 @@ export default function RootLayout({
         <ThemeProvider>
           <QueryProvider>
             <CartProvider>
-              <WishlistProvider>
-                  <Navbar />
-                  <div id="main-content-container" className="flex-1 flex flex-col">
-                    <main className="flex-1 overflow-x-hidden relative">
-                      <Suspense fallback={<RouteShellFallback />}>{children}</Suspense>
-                    </main>
-                    <Suspense fallback={null}>
-                      <FooterGate />
-                    </Suspense>
-                  </div>
-                  <CartDrawer />
-                <CursorDotLoader />
-                {/* Grain overlay for premium texture */}
-                <div
-                  className="pointer-events-none fixed inset-0 z-[60] opacity-[0.025] dark:opacity-[0.03]"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                  }}
-                />
-              </WishlistProvider>
+              <Navbar />
+              <div id="main-content-container" className="flex-1 flex flex-col">
+                <main className="flex-1 overflow-x-hidden relative">
+                  <Suspense fallback={<RouteShellFallback />}>{children}</Suspense>
+                </main>
+                <Suspense fallback={null}>
+                  <FooterGate />
+                </Suspense>
+              </div>
+              <CartDrawer />
+              <CursorDotLoader />
+              {/* Grain overlay for premium texture */}
+              <div
+                className="pointer-events-none fixed inset-0 z-[60] opacity-[0.025] dark:opacity-[0.03]"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+                }}
+              />
             </CartProvider>
           </QueryProvider>
         </ThemeProvider>

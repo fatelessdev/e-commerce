@@ -8,27 +8,22 @@ interface ThemeContextType {
     theme: Theme
     toggleTheme: () => void
     setTheme: (theme: Theme) => void
-    mounted: boolean
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
+function resolveInitialTheme(): Theme {
+    if (typeof document === "undefined") {
+        return "dark"
+    }
+
+    return document.documentElement.classList.contains("light") ? "light" : "dark"
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-    const [theme, setThemeState] = useState<Theme>("dark")
-    const [mounted, setMounted] = useState(false)
+    const [theme, setThemeState] = useState<Theme>(resolveInitialTheme)
 
     useEffect(() => {
-        queueMicrotask(() => {
-            const stored = localStorage.getItem("xilar-theme") as Theme | null
-            const preferredTheme = stored || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark")
-            setThemeState(preferredTheme)
-            setMounted(true)
-        })
-    }, [])
-
-    useEffect(() => {
-        if (!mounted) return
-
         const root = document.documentElement
         if (theme === "dark") {
             root.classList.add("dark")
@@ -37,8 +32,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
             root.classList.add("light")
             root.classList.remove("dark")
         }
+        root.style.colorScheme = theme
         localStorage.setItem("xilar-theme", theme)
-    }, [theme, mounted])
+    }, [theme])
 
     const toggleTheme = () => {
         setThemeState((prev) => (prev === "dark" ? "light" : "dark"))
@@ -49,7 +45,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme, setTheme, mounted }}>
+        <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
             {children}
         </ThemeContext.Provider>
     )

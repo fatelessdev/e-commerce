@@ -4,11 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Menu, X, ArrowRight, Search, Loader2 } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-context";
-import { useWishlist } from "@/lib/wishlist-context";
+import { getWishlistNavState } from "@/lib/actions/wishlist";
 import ThemeToggleButton from "@/components/ui/theme-toggle-button";
 import { ANNOUNCEMENT_MESSAGES } from "@/lib/constants";
 import { normalizeProductImage } from "@/lib/image";
@@ -545,7 +546,11 @@ function CatalogSearchOverlay({
 
 export function Navbar() {
   const { totalItems, setIsOpen, isHydrated: isCartHydrated } = useCart();
-  const { items: wishlistItems, isHydrated: isWishlistHydrated } = useWishlist();
+  const { data: wishlistNavState } = useQuery({
+    queryKey: ["wishlist-nav"],
+    queryFn: getWishlistNavState,
+    staleTime: 1000 * 30,
+  });
   
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -887,7 +892,7 @@ export function Navbar() {
               className="group relative hidden px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.15em] text-muted-foreground transition-colors duration-300 hover:text-foreground md:block"
             >
               <StaggeredTextRoll 
-                text={`WISHLIST ${isWishlistHydrated && wishlistItems.length > 0 ? `(${wishlistItems.length})` : ""}`} 
+                text={`WISHLIST ${wishlistNavState?.count ? `(${wishlistNavState.count})` : ""}`}
                 shouldReduceMotion={shouldReduceMotion} 
               />
             </Link>

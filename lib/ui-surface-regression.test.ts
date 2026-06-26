@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 
 function read(path: string) {
@@ -69,4 +69,18 @@ test("shared buttons use circular pill geometry by default", () => {
 
   assert.match(button, /rounded-full/);
   assert.doesNotMatch(button, /rounded-md text-sm font-medium/);
+});
+
+test("wishlist is account-backed and has no localStorage fallback", () => {
+  const layout = read("app/layout.tsx");
+  const navbar = read("app/navbar.tsx");
+  const wishlistPage = read("app/wishlist/page.tsx");
+  const productClient = read("components/features/product-client.tsx");
+
+  assert.equal(existsSync("lib/wishlist-context.tsx"), false);
+  assert.match(navbar, /getWishlistNavState/);
+  assert.match(wishlistPage, /getServerSession/);
+  assert.match(wishlistPage, /getWishlistProducts/);
+  assert.match(productClient, /getProductWishlist/);
+  assert.doesNotMatch(`${layout}\n${navbar}\n${wishlistPage}\n${productClient}`, /xilar-wishlist|useWishlist|WishlistProvider/);
 });

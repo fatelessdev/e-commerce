@@ -1,12 +1,17 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useRouter } from "next/navigation"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { ProductGrid } from "@/components/features/product-grid"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/lib/cart-context"
-import { useWishlist } from "@/lib/wishlist-context"
+import {
+    addWishlistItem,
+    getProductWishlist,
+    removeWishlistItem,
+} from "@/lib/actions/wishlist"
 import { Heart, Check, X, ChevronLeft, ChevronRight, Eye, Star, Timer } from "lucide-react"
 import Image from "next/image"
 import { normalizeProductImage } from "@/lib/image"
@@ -85,13 +90,16 @@ function ProductDetailSkeleton() {
 }
 
 export function ProductClient({ id, initialProduct }: { id: string; initialProduct?: Product }) {
+    const router = useRouter()
+    const queryClient = useQueryClient()
     const [selectedSize, setSelectedSize] = useState<string | null>(null)
     const [selectedColor, setSelectedColor] = useState<string | null>(null)
     const [selectedImage, setSelectedImage] = useState(0)
     const [added, setAdded] = useState(false)
+    const [wishlistPending, setWishlistPending] = useState(false)
+    const [wishlistError, setWishlistError] = useState<string | null>(null)
     const [viewerCount, setViewerCount] = useState<number | null>(null)
     const { addItem } = useCart()
-    const { isInWishlist, toggleItem } = useWishlist()
     const shouldReduceMotion = useReducedMotion()
     const {
         data: product,
@@ -107,6 +115,11 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
         initialData: initialProduct,
         enabled: initialProduct === undefined,
         staleTime: 1000 * 60 * 5,
+    })
+    const { data: wishlistState } = useQuery({
+        queryKey: ["wishlist-product", id],
+        queryFn: () => getProductWishlist(id),
+        staleTime: 1000 * 30,
     })
 
     // Scroll to top on navigation
@@ -272,7 +285,7 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
     const productColors = product.colors || []
     const productFeatures = product.features || []
 
-    const inWishlist = isInWishlist(product.id)
+    const inWishlist = Boolean(wishlistState?.saved)
     const hasRelatedContent = (product.relatedCombos?.length || 0) > 0 || (product.relatedProducts?.length || 0) > 0
     const shouldUseComboRelated = hasRelatedContent
     const mockStats = getMockProductStats(product.slug || product.id)
@@ -323,14 +336,31 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
         setTimeout(() => setAdded(false), 2000)
     }
 
-    const handleWishlist = () => {
-        toggleItem({
-            id: product.id,
-            name: product.name,
-            price: price,
-            displayPrice: displayPrice,
-            image: images[0],
-        })
+    const handleWishlist = async () => {
+        if (wishlistPending) return
+
+        if (wishlistState && !wishlistState.authenticated) {
+            router.push(`/account?redirect=/product/${product.id}`)
+            return
+        }
+
+        setWishlistPending(true)
+        setWishlistError(null)
+        const result = inWishlist
+            ? await removeWishlistItem(product.id)
+            : await addWishlistItem(product.id)
+
+        if (!result.success) {
+            setWishlistError(result.error)
+            setWishlistPending(false)
+            return
+        }
+
+        await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ["wishlist-product", product.id] }),
+            queryClient.invalidateQueries({ queryKey: ["wishlist-nav"] }),
+        ])
+        setWishlistPending(false)
     }
 
     return (
@@ -659,11 +689,15 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                                     size="lg"
                                     className="h-13 w-13 rounded-none"
                                     onClick={handleWishlist}
+                                    disabled={wishlistPending}
                                     aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
                                 >
                                     <Heart className={`h-4 w-4 ${inWishlist ? "fill-current" : ""}`} />
                                 </Button>
                             </div>
+                            {wishlistError && (
+                                <p className="text-[11px] leading-relaxed text-destructive">{wishlistError}</p>
+                            )}
                             <p className="text-[10px] text-center text-muted-foreground uppercase tracking-[0.15em]">Free shipping on orders above ₹999</p>
                         </div>
 
