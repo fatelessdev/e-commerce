@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { Instrument_Serif, Outfit } from "next/font/google";
+import { cookies } from "next/headers";
 import { Suspense } from "react";
 import "./globals.css";
 import { Navbar } from "@/app/navbar";
@@ -126,13 +127,22 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+type Theme = "light" | "dark";
+
+function resolveServerTheme(value?: string): Theme {
+  return value === "light" || value === "dark" ? value : "dark";
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const serverTheme = resolveServerTheme(cookieStore.get("xilar-theme")?.value);
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={serverTheme} suppressHydrationWarning>
       <head>
         <script
           id="xilar-theme-init"
@@ -142,7 +152,13 @@ export default function RootLayout({
                 try {
                   var root = document.documentElement;
                   var stored = localStorage.getItem('xilar-theme');
-                  var theme = stored === 'light' || stored === 'dark' ? stored : 'dark';
+                  var cookieMatch = document.cookie.match(/(?:^|; )xilar-theme=(light|dark)(?:;|$)/);
+                  var cookieTheme = cookieMatch ? cookieMatch[1] : null;
+                  var theme = stored === 'light' || stored === 'dark'
+                    ? stored
+                    : cookieTheme === 'light' || cookieTheme === 'dark'
+                      ? cookieTheme
+                      : 'dark';
                   if (theme === 'dark') {
                     root.classList.add('dark');
                     root.classList.remove('light');
@@ -151,6 +167,8 @@ export default function RootLayout({
                     root.classList.remove('dark');
                   }
                   root.style.colorScheme = theme;
+                  localStorage.setItem('xilar-theme', theme);
+                  document.cookie = 'xilar-theme=' + theme + '; path=/; max-age=31536000; samesite=lax';
                 } catch (e) {}
               })();
             `,

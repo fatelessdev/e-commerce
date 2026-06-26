@@ -34,6 +34,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         }
         root.style.colorScheme = theme
         localStorage.setItem("xilar-theme", theme)
+        document.cookie = `xilar-theme=${theme}; path=/; max-age=31536000; samesite=lax`
     }, [theme])
 
     const toggleTheme = () => {

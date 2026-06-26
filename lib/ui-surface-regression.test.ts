@@ -84,3 +84,16 @@ test("wishlist is account-backed and has no localStorage fallback", () => {
   assert.match(productClient, /getProductWishlist/);
   assert.doesNotMatch(`${layout}\n${navbar}\n${wishlistPage}\n${productClient}`, /xilar-wishlist|useWishlist|WishlistProvider/);
 });
+
+test("theme first paint is backed by cookie and repaired before hydration", () => {
+  const layout = read("app/layout.tsx");
+  const themeContext = read("lib/theme-context.tsx");
+
+  assert.match(layout, /cookies/);
+  assert.match(layout, /xilar-theme/);
+  assert.match(layout, /className={serverTheme}/);
+  assert.match(layout, /localStorage\.getItem\('xilar-theme'\)/);
+  assert.match(layout, /document\.cookie/);
+  assert.match(themeContext, /document\.cookie = `xilar-theme=\$\{theme\}/);
+  assert.doesNotMatch(layout, /<html lang="en" suppressHydrationWarning>/);
+});
