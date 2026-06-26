@@ -165,3 +165,14 @@ test("theme first paint stays static and is repaired before hydration", () => {
   assert.match(themeContext, /document\.cookie = `xilar-theme=\$\{theme\}/);
   assert.match(layout, /<html lang="en" className="dark" suppressHydrationWarning>/);
 });
+
+test("google analytics tag is installed once at the root layout", () => {
+  const layout = read("app/layout.tsx");
+  const tagIdMatches = layout.match(/G-6GDBLBWZW9/g) ?? [];
+
+  assert.match(layout, /import Script from "next\/script"/);
+  assert.match(layout, /const GOOGLE_TAG_ID = "G-6GDBLBWZW9"/);
+  assert.match(layout, /https:\/\/www\.googletagmanager\.com\/gtag\/js\?id=\$\{GOOGLE_TAG_ID\}/);
+  assert.match(layout, /gtag\('config', '\$\{GOOGLE_TAG_ID\}'\)/);
+  assert.equal(tagIdMatches.length, 1);
+});

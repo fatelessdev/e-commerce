@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { Instrument_Serif, Outfit } from "next/font/google";
+import Script from "next/script";
 import { Suspense } from "react";
 import "./globals.css";
 import { Navbar } from "@/app/navbar";
@@ -17,6 +18,7 @@ const CartDrawer = dynamic(() =>
 
 import { CursorDotLoader } from "@/components/effects/cursor-dot-loader";
 
+const GOOGLE_TAG_ID = "G-6GDBLBWZW9";
 
 function RouteShellFallback() {
   return <div className="min-h-[calc(100svh-7rem)] bg-background" aria-hidden="true" />;
@@ -168,6 +170,23 @@ export default function RootLayout({
       <body
         className={`${outfit.variable} ${instrumentSerif.variable} font-sans antialiased bg-background text-foreground tracking-tight min-h-screen flex flex-col`}
       >
+        <Script
+          id="xilar-google-tag-loader"
+          src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_TAG_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script
+          id="xilar-google-tag-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${GOOGLE_TAG_ID}');
+            `,
+          }}
+        />
         <Analytics />
         <ThemeProvider>
           <QueryProvider>
