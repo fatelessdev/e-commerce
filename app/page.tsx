@@ -16,8 +16,6 @@ import {
 } from "@/components/seo/structured-data";
 import { normalizeSiteUrl } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
-
 const ShopTheReels = nextDynamic(() =>
   import("@/components/features/shop-the-reels").then((mod) => mod.ShopTheReels),
   {

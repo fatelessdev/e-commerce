@@ -206,7 +206,15 @@ export function ShopTheReels() {
                                     loop
                                     playsInline
                                     preload="none"
-                                />
+                                >
+                                    <track
+                                        kind="captions"
+                                        src="/hero/reels/no-dialogue.vtt"
+                                        srcLang="en"
+                                        label="No dialogue"
+                                        default
+                                    />
+                                </video>
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-black/10" />
                                 <button
                                     type="button"

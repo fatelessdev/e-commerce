@@ -72,6 +72,18 @@ test("old product UUID URLs are intercepted before page streaming", () => {
   assert.match(proxy, /,\s*308\)/);
 });
 
+test("public product and combo detail pages expose static params", () => {
+  const productPage = read("app/product/[slug]/page.tsx");
+  const comboPage = read("app/combo/[id]/page.tsx");
+
+  assert.doesNotMatch(productPage, /dynamic = "force-dynamic"/);
+  assert.match(productPage, /generateStaticParams/);
+  assert.match(productPage, /getActiveProductStaticParams/);
+  assert.doesNotMatch(comboPage, /dynamic = "force-dynamic"/);
+  assert.match(comboPage, /generateStaticParams/);
+  assert.match(comboPage, /getActiveComboStaticParams/);
+});
+
 test("footer and menu shells use theme tokens instead of fixed black and white", () => {
   const footer = read("components/layout/footer.tsx");
   const navbar = read("app/navbar.tsx");
@@ -80,6 +92,35 @@ test("footer and menu shells use theme tokens instead of fixed black and white",
   assert.doesNotMatch(footer, /bg-neutral-950 text-white/);
   assert.match(navbar, /bg-background text-foreground/);
   assert.doesNotMatch(navbar, /bg-neutral-950 text-white/);
+});
+
+test("non-critical root effects are deferred out of the initial client path", () => {
+  const footerGate = read("components/layout/footer-gate.tsx");
+  const cursorLoader = read("components/effects/cursor-dot-loader.tsx");
+
+  assert.match(footerGate, /dynamic\(/);
+  assert.match(footerGate, /FooterShell/);
+  assert.match(cursorLoader, /requestIdleCallback/);
+  assert.match(cursorLoader, /pointer: fine/);
+  assert.match(cursorLoader, /prefers-reduced-motion: reduce/);
+});
+
+test("hero panels avoid layout-shift-prone layout animation", () => {
+  const hero = read("components/features/hero.tsx");
+
+  assert.match(hero, /duration: 0\.46/);
+  assert.doesNotMatch(hero, /<motion\.div\s+key={slide\.src}[\s\S]*\slayout[\s\S]*role={isActive/);
+  assert.doesNotMatch(hero, /className="absolute inset-0"\s+layout/);
+});
+
+test("animated nav text and reels expose accessible fallbacks", () => {
+  const navbar = read("app/navbar.tsx");
+  const reels = read("components/features/shop-the-reels.tsx");
+
+  assert.match(navbar, /<span className="sr-only">{text}<\/span>/);
+  assert.doesNotMatch(navbar, /<span aria-label={text}/);
+  assert.match(reels, /<track/);
+  assert.match(reels, /kind="captions"/);
 });
 
 test("mobile reviews are capped to four cards", () => {
@@ -111,15 +152,16 @@ test("wishlist is account-backed and has no localStorage fallback", () => {
   assert.doesNotMatch(`${layout}\n${navbar}\n${wishlistPage}\n${productClient}`, /xilar-wishlist|useWishlist|WishlistProvider/);
 });
 
-test("theme first paint is backed by cookie and repaired before hydration", () => {
+test("theme first paint stays static and is repaired before hydration", () => {
   const layout = read("app/layout.tsx");
   const themeContext = read("lib/theme-context.tsx");
 
-  assert.match(layout, /cookies/);
   assert.match(layout, /xilar-theme/);
-  assert.match(layout, /className={serverTheme}/);
+  assert.doesNotMatch(layout, /cookies\(/);
+  assert.doesNotMatch(layout, /next\/headers/);
+  assert.match(layout, /className="dark"/);
   assert.match(layout, /localStorage\.getItem\('xilar-theme'\)/);
   assert.match(layout, /document\.cookie/);
   assert.match(themeContext, /document\.cookie = `xilar-theme=\$\{theme\}/);
-  assert.doesNotMatch(layout, /<html lang="en" suppressHydrationWarning>/);
+  assert.match(layout, /<html lang="en" className="dark" suppressHydrationWarning>/);
 });

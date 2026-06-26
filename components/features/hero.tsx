@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 
 const EASE_OUT_EXPO = [0.32, 0.72, 0, 1] as const;
 const PANEL_TRANSITION = {
-  duration: 1.05,
+  duration: 0.46,
   ease: EASE_OUT_EXPO,
 } as const;
 const HERO_IMAGES = [
@@ -127,7 +127,6 @@ export function Hero() {
               return (
                 <motion.div
                   key={slide.src}
-                  layout
                   initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.82, x: slideDirection > 0 ? 120 : -120 }}
                   animate={{ opacity: 1, scale: 1, x: 0 }}
                   exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.82, x: slideDirection > 0 ? -120 : 120 }}
@@ -146,7 +145,7 @@ export function Hero() {
                   }}
                   aria-label={isActive ? undefined : `Show ${slide.title}`}
                 >
-                  <motion.div style={{ willChange: "transform" }} className="absolute inset-0" layout transition={shouldReduceMotion ? { duration: 0.01 } : PANEL_TRANSITION}>
+                  <motion.div style={{ willChange: "transform" }} className="absolute inset-0">
                     <Image
                       src={slide.src}
                       alt={slide.title}

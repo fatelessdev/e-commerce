@@ -1,10 +1,12 @@
 "use server";
 
 import { and, desc, eq, inArray } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-server";
 import { db } from "@/lib/db";
 import { combos, products } from "@/lib/db/schema";
 import { canonicalizeComboPair } from "@/lib/combos";
+import { getPublicComboMutationPaths } from "@/lib/public-cache";
 
 export type ComboInput = {
   productAId: string;
@@ -13,6 +15,12 @@ export type ComboInput = {
   displayOrder?: number;
   isActive?: boolean;
 };
+
+function revalidatePublicComboMutationPaths(comboId?: string | null) {
+  for (const path of getPublicComboMutationPaths(comboId)) {
+    revalidatePath(path);
+  }
+}
 
 async function validateComboProducts(productAId: string, productBId: string) {
   if (productAId === productBId) {
@@ -74,6 +82,8 @@ export async function createCombo(input: ComboInput) {
     })
     .returning();
 
+  revalidatePublicComboMutationPaths(combo.id);
+
   return combo;
 }
 
@@ -108,12 +118,15 @@ export async function updateCombo(id: string, updates: { discountAmount?: number
     throw new Error("Combo not found");
   }
 
+  revalidatePublicComboMutationPaths(combo.id);
+
   return combo;
 }
 
 export async function deleteCombo(id: string) {
   await requireAdmin();
   await db.delete(combos).where(eq(combos.id, id));
+  revalidatePublicComboMutationPaths(id);
   return { success: true };
 }
 

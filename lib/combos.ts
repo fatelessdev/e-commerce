@@ -14,6 +14,16 @@ export function canonicalizeComboPair(productAId: string, productBId: string) {
   return [productAId, productBId].sort() as [string, string];
 }
 
+export async function getActiveComboStaticParams() {
+  const rows = await db
+    .select({ id: combos.id })
+    .from(combos)
+    .where(eq(combos.isActive, true))
+    .orderBy(desc(combos.displayOrder), desc(combos.createdAt));
+
+  return rows.map((combo) => ({ id: combo.id }));
+}
+
 export async function getActiveCombosWithProducts(limit = 6) {
   const activeCombos = await db
     .select()

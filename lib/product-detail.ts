@@ -42,6 +42,16 @@ export type ProductDetails = ProductRow & {
   relatedProducts: RelatedProduct[];
 };
 
+export async function getActiveProductStaticParams() {
+  const rows = await db
+    .select({ slug: products.slug })
+    .from(products)
+    .where(eq(products.isActive, true))
+    .orderBy(desc(products.displayOrder), desc(products.createdAt));
+
+  return rows.map((product) => ({ slug: product.slug }));
+}
+
 const relatedProductColumns = {
   id: products.id,
   name: products.name,

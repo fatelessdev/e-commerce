@@ -28,33 +28,35 @@ function StaggeredTextRoll({ text, shouldReduceMotion }: { text: string; shouldR
   const chars = text.split("");
 
   return (
-    <span aria-label={text} className="inline-flex overflow-hidden">
-      {chars.map((char, i) => {
-        if (char === " ") {
-          return <span key={i} aria-hidden="true">&nbsp;</span>;
-        }
+    <span className="inline-flex overflow-hidden">
+      <span className="sr-only">{text}</span>
+      <span aria-hidden="true" className="inline-flex">
+        {chars.map((char, i) => {
+          if (char === " ") {
+            return <span key={i}>&nbsp;</span>;
+          }
 
-        const delayVars = {
-          "--nav-roll-enter-delay": `${i * 12}ms`,
-          "--nav-roll-exit-delay": `${(chars.length - 1 - i) * 10}ms`,
-        } as CSSProperties;
+          const delayVars = {
+            "--nav-roll-enter-delay": `${i * 12}ms`,
+            "--nav-roll-exit-delay": `${(chars.length - 1 - i) * 10}ms`,
+          } as CSSProperties;
 
-        return (
-          <span
-            key={i}
-            aria-hidden="true"
-            className="relative inline-block h-[1.2em] overflow-hidden align-top"
-            style={delayVars}
-          >
-            <span className="inline-block will-change-transform transition-transform delay-[var(--nav-roll-exit-delay)] duration-[360ms] ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-full group-hover:delay-[var(--nav-roll-enter-delay)]">
-              {char}
+          return (
+            <span
+              key={i}
+              className="relative inline-block h-[1.2em] overflow-hidden align-top"
+              style={delayVars}
+            >
+              <span className="inline-block will-change-transform transition-transform delay-[var(--nav-roll-exit-delay)] duration-[360ms] ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-full group-hover:delay-[var(--nav-roll-enter-delay)]">
+                {char}
+              </span>
+              <span className="absolute left-0 top-0 inline-block translate-y-full text-foreground will-change-transform transition-transform delay-[var(--nav-roll-exit-delay)] duration-[360ms] ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-y-0 group-hover:delay-[var(--nav-roll-enter-delay)]">
+                {char}
+              </span>
             </span>
-            <span className="absolute left-0 top-0 inline-block translate-y-full text-foreground will-change-transform transition-transform delay-[var(--nav-roll-exit-delay)] duration-[360ms] ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-y-0 group-hover:delay-[var(--nav-roll-enter-delay)]">
-              {char}
-            </span>
-          </span>
-        );
-      })}
+          );
+        })}
+      </span>
     </span>
   );
 }

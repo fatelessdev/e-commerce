@@ -3,10 +3,12 @@
 import { db } from "@/lib/db";
 import { products, productVariants, coupons, orders, orderItems } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth-server";
+import { revalidatePath } from "next/cache";
 import { eq, desc, sql, and, gte, like } from "drizzle-orm";
 import { generateSecureCode } from "@/lib/utils";
 import { ADMIN_PRODUCTS_PAGE_SIZE } from "@/lib/admin-products-pagination";
 import { buildProductSearchText } from "@/lib/product-search";
+import { getPublicProductMutationPaths } from "@/lib/public-cache";
 import {
   deleteProductSearchIndexAfterMutation,
   syncProductSearchIndexAfterMutation,
@@ -29,6 +31,12 @@ type ProductMutationClient = typeof db | Parameters<Parameters<typeof db.transac
 type OrderShippingAddress = {
   name?: string;
 };
+
+function revalidatePublicProductMutationPaths(slugs: { nextSlug?: string | null; previousSlug?: string | null }) {
+  for (const path of getPublicProductMutationPaths(slugs)) {
+    revalidatePath(path);
+  }
+}
 
 // Helper: recompute total stock from variants
 async function recomputeProductStock(client: ProductMutationClient, productId: string) {
@@ -149,6 +157,7 @@ export async function createProduct(data: ProductInput) {
   if (searchResult.status !== "failed") {
     await refreshProductRecommendationsAfterMutation(product.id);
   }
+  revalidatePublicProductMutationPaths({ nextSlug: product.slug });
 
   return product;
 }
@@ -216,15 +225,24 @@ export async function updateProduct(id: string, data: Partial<ProductInput>) {
   if (searchResult.status !== "failed") {
     await refreshProductRecommendationsAfterMutation(id);
   }
+  revalidatePublicProductMutationPaths({
+    nextSlug: product.slug,
+    previousSlug: existingProduct.slug,
+  });
 
   return product;
 }
 
 export async function deleteProduct(id: string) {
   await requireAdmin();
+  const [existingProduct] = await db
+    .select({ slug: products.slug })
+    .from(products)
+    .where(eq(products.id, id));
 
   await db.delete(products).where(eq(products.id, id));
   await deleteProductSearchIndexAfterMutation(id);
+  revalidatePublicProductMutationPaths({ previousSlug: existingProduct?.slug });
 
   return { success: true };
 }

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { Instrument_Serif, Outfit } from "next/font/google";
-import { cookies } from "next/headers";
 import { Suspense } from "react";
 import "./globals.css";
 import { Navbar } from "@/app/navbar";
@@ -127,22 +126,13 @@ export const metadata: Metadata = {
   },
 };
 
-type Theme = "light" | "dark";
-
-function resolveServerTheme(value?: string): Theme {
-  return value === "light" || value === "dark" ? value : "dark";
-}
-
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const serverTheme = resolveServerTheme(cookieStore.get("xilar-theme")?.value);
-
   return (
-    <html lang="en" className={serverTheme} suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <script
           id="xilar-theme-init"

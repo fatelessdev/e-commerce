@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { ProductClient } from "@/components/features/product-client"
 import { permanentRedirect } from "next/navigation"
-import { getProductDetailsBySlugOrId } from "@/lib/product-detail"
+import { getActiveProductStaticParams, getProductDetailsBySlugOrId } from "@/lib/product-detail"
 import { buildProductPath, isProductUuid, normalizeSiteUrl } from "@/lib/seo"
 import {
     JsonLd,
@@ -9,10 +9,12 @@ import {
     breadcrumbJsonLd,
 } from "@/components/seo/structured-data"
 
-export const dynamic = "force-dynamic"
-
 async function getProduct(slugOrId: string) {
     return getProductDetailsBySlugOrId(slugOrId)
+}
+
+export async function generateStaticParams() {
+    return getActiveProductStaticParams()
 }
 
 export async function generateMetadata(

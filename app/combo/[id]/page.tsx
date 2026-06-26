@@ -1,16 +1,18 @@
 import type { Metadata } from "next"
 import { ComboClient } from "@/components/features/combo-client"
-import { getComboDetails } from "@/lib/combos"
+import { getActiveComboStaticParams, getComboDetails } from "@/lib/combos"
 import {
   JsonLd,
   breadcrumbJsonLd,
 } from "@/components/seo/structured-data"
 import { normalizeSiteUrl } from "@/lib/seo"
 
-export const dynamic = "force-dynamic"
-
 async function getCombo(id: string) {
   return getComboDetails(id)
+}
+
+export async function generateStaticParams() {
+  return getActiveComboStaticParams()
 }
 
 export async function generateMetadata({
