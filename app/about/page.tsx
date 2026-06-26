@@ -3,20 +3,20 @@ import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { JsonLd, breadcrumbJsonLd } from "@/components/seo/structured-data"
+import { JsonLd, breadcrumbJsonLd, organizationJsonLd, webSiteJsonLd } from "@/components/seo/structured-data"
 import { CONTACT_EMAIL, CONTACT_PHONE } from "@/lib/constants"
 
 export const metadata: Metadata = {
     title: "About XILAR — Our Story",
     description:
-        "Learn about XILAR — Gen-Z streetwear built on streetwise minimalism, bold design, and affordable luxury. Founded in Lucknow by Aman Singh.",
+        "Learn about XILAR — Gen-Z streetwear built on streetwise minimalism, bold design, and affordable luxury. Led by Founder Aman Somvanshi and CTO Aditya Singh in Lucknow.",
     alternates: {
         canonical: "/about",
     },
     openGraph: {
         title: "About XILAR — Our Story",
         description:
-            "Gen-Z streetwear built on streetwise minimalism, bold design, and affordable luxury. Founded in Lucknow.",
+            "Gen-Z streetwear built on streetwise minimalism, bold design, and affordable luxury. Led by Founder Aman Somvanshi and CTO Aditya Singh in Lucknow.",
         url: "/about",
     },
 }
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 const teamMembers = [
     {
         index: "01",
-        role: "Lead Developer",
+        role: "CTO",
         name: "Aditya Singh",
         shortName: (
             <>
@@ -79,6 +79,12 @@ export default function AboutPage() {
                     { name: "About", url: "/about" },
                 ])}
             />
+            <JsonLd
+                data={{
+                    "@context": "https://schema.org",
+                    "@graph": [organizationJsonLd(baseUrl), webSiteJsonLd(baseUrl)],
+                }}
+            />
 
             <section className="px-6 pb-16 pt-24 md:px-12 md:pb-24 md:pt-[22svh] lg:px-16">
                 <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-[0.8fr_1.2fr] md:gap-14">
@@ -97,7 +103,7 @@ export default function AboutPage() {
                         </h1>
                         <div className="relative h-[48svh] min-h-[24rem] overflow-hidden bg-muted md:h-[56svh]">
                             <Image
-                                src="/about/logo.jpeg"
+                                src="/logo.jpeg"
                                 alt="XILAR streetwear editorial"
                                 fill
                                 sizes="(max-width: 768px) 100vw, 68vw"

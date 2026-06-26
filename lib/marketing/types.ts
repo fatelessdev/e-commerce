@@ -43,6 +43,7 @@ export type CampaignRecipient = {
 
 export type CampaignProduct = {
   id: string;
+  slug: string;
   name: string;
   image: string | null;
   sellingPrice: string;

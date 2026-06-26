@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { ArrowLeft, RefreshCw, Clock, Tag, AlertCircle } from "lucide-react"
 import { JsonLd, breadcrumbJsonLd } from "@/components/seo/structured-data"
+import { normalizeSiteUrl } from "@/lib/seo"
 
 export const metadata: Metadata = {
     title: "Exchange Policy — Size & Color Exchanges Within 48 Hours",
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
 }
 
 export default function ExchangePolicyPage() {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+    const baseUrl = normalizeSiteUrl()
 
     return (
         <div className="min-h-screen">

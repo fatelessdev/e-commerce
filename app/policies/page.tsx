@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { FileText, RefreshCw, Truck, CreditCard } from "lucide-react"
 import { JsonLd, breadcrumbJsonLd, faqJsonLd } from "@/components/seo/structured-data"
+import { normalizeSiteUrl } from "@/lib/seo"
 
 export const metadata: Metadata = {
     title: "Store Policies — Exchange, Returns, Refunds & Shipping",
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
 }
 
 export default function PoliciesPage() {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+    const baseUrl = normalizeSiteUrl()
 
     const policies = [
         {

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
@@ -15,6 +16,7 @@ import {
 import { Heart, Check, X, ChevronLeft, ChevronRight, Eye, Star, Timer } from "lucide-react"
 import Image from "next/image"
 import { normalizeProductImage } from "@/lib/image"
+import { buildProductPath } from "@/lib/seo"
 import type { ProductDetails } from "@/lib/product-detail"
 import { ViewportPrefetchLink } from "@/components/ui/viewport-prefetch-link"
 import { ProductAssistant } from "@/components/features/bargain-ai"
@@ -255,7 +257,7 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                     <h1 className="text-2xl font-bold">Product Not Found</h1>
                     <p className="text-muted-foreground">{error instanceof Error ? error.message : "This product doesn't exist."}</p>
                     <Button asChild variant="outline" className="rounded-none">
-                        <a href="/shop">Back to Shop</a>
+                        <Link href="/shop">Back to Shop</Link>
                     </Button>
                 </div>
             </div>
@@ -340,7 +342,7 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
         if (wishlistPending) return
 
         if (wishlistState && !wishlistState.authenticated) {
-            router.push(`/account?redirect=/product/${product.id}`)
+            router.push(`/account?redirect=${encodeURIComponent(buildProductPath(product.slug))}`)
             return
         }
 
@@ -763,7 +765,7 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                         ))}
                         {/* Then render related products */}
                         {(product.relatedProducts || []).map((related) => (
-                            <ViewportPrefetchLink key={related.id} href={`/product/${related.id}`} className={`group flex-shrink-0 w-[200px] sm:w-[240px] snap-start ${related.stock <= 0 ? "cursor-not-allowed" : ""}`}>
+                            <ViewportPrefetchLink key={related.id} href={buildProductPath(related.slug)} className={`group flex-shrink-0 w-[200px] sm:w-[240px] snap-start ${related.stock <= 0 ? "cursor-not-allowed" : ""}`}>
                                 <div className="space-y-3">
                                     <div className="relative aspect-[3/4] overflow-hidden bg-muted/30">
                                         <Image

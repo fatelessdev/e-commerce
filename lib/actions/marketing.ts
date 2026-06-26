@@ -111,6 +111,7 @@ async function getCampaignProducts(productIds: string[]) {
   const rows = await db
     .select({
       id: products.id,
+      slug: products.slug,
       name: products.name,
       images: products.images,
       sellingPrice: products.sellingPrice,
@@ -128,6 +129,7 @@ async function getCampaignProducts(productIds: string[]) {
       const image = normalizeProductImage(product!.images?.[0]);
       return {
         id: product!.id,
+        slug: product!.slug,
         name: product!.name,
         image: absoluteImageUrl(image, appUrl),
         sellingPrice: product!.sellingPrice,
@@ -202,6 +204,7 @@ export async function getMarketingProductOptions(input: MarketingProductOptionsI
   const rows = await db
     .select({
       id: products.id,
+      slug: products.slug,
       name: products.name,
       images: products.images,
       sellingPrice: products.sellingPrice,
@@ -217,6 +220,7 @@ export async function getMarketingProductOptions(input: MarketingProductOptionsI
 
   const items = rows.slice(0, limit).map((product) => ({
     id: product.id,
+    slug: product.slug,
     name: product.name,
     image: normalizeProductImage(product.images?.[0]),
     sellingPrice: product.sellingPrice,

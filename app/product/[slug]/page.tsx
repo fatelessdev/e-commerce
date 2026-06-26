@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import { ProductClient } from "@/components/features/product-client"
-import { getProductDetails } from "@/lib/product-detail"
+import { permanentRedirect } from "next/navigation"
+import { getProductDetailsBySlugOrId } from "@/lib/product-detail"
+import { buildProductPath, isProductUuid, normalizeSiteUrl } from "@/lib/seo"
 import {
     JsonLd,
     productJsonLd,
@@ -9,15 +11,19 @@ import {
 
 export const dynamic = "force-dynamic"
 
-async function getProduct(id: string) {
-    return getProductDetails(id)
+async function getProduct(slugOrId: string) {
+    return getProductDetailsBySlugOrId(slugOrId)
 }
 
 export async function generateMetadata(
-    { params }: { params: Promise<{ id: string }> }
+    { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
-    const { id } = await params
-    const product = await getProduct(id)
+    const { slug } = await params
+    const product = await getProduct(slug)
+
+    if (product && isProductUuid(slug)) {
+        permanentRedirect(buildProductPath(product.slug))
+    }
 
     if (!product) {
         return {
@@ -38,12 +44,12 @@ export async function generateMetadata(
         title: product.name,
         description,
         alternates: {
-            canonical: `/product/${product.id}`,
+            canonical: buildProductPath(product.slug),
         },
         openGraph: {
             title: `${product.name} — ₹${price.toLocaleString("en-IN")} | XILAR`,
             description,
-            url: `/product/${product.id}`,
+            url: buildProductPath(product.slug),
             type: "website",
             images: product.images?.length
                 ? product.images.map((img) => ({
@@ -52,13 +58,13 @@ export async function generateMetadata(
                     height: 800,
                     alt: product.name,
                 }))
-                : [{ url: "/logo.png", width: 1200, height: 630, alt: "XILAR" }],
+                : [{ url: "/logo.jpeg", width: 1200, height: 630, alt: "XILAR" }],
         },
         twitter: {
             card: "summary_large_image",
             title: `${product.name} | XILAR`,
             description,
-            images: product.images?.length ? product.images : ["/logo.png"],
+            images: product.images?.length ? product.images : ["/logo.jpeg"],
         },
         other: {
             "product:price:amount": price.toString(),
@@ -75,11 +81,15 @@ export async function generateMetadata(
 export default async function ProductPage({
     params,
 }: {
-    params: Promise<{ id: string }>
+    params: Promise<{ slug: string }>
 }) {
-    const { id } = await params
-    const product = await getProduct(id)
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+    const { slug } = await params
+    const product = await getProduct(slug)
+    const baseUrl = normalizeSiteUrl()
+
+    if (product && isProductUuid(slug)) {
+        permanentRedirect(buildProductPath(product.slug))
+    }
 
     return (
         <>
@@ -94,21 +104,23 @@ export default async function ProductPage({
                             mrp: product.mrp,
                             stock: product.stock,
                             id: product.id,
+                            slug: product.slug,
                             category: product.category,
                             sizes: product.sizes,
                             colors: product.colors,
+                            updatedAt: product.updatedAt,
                         })}
                     />
                     <JsonLd
                         data={breadcrumbJsonLd(baseUrl, [
                             { name: "Home", url: "/" },
                             { name: "Shop", url: "/shop" },
-                            { name: product.name, url: `/product/${product.id}` },
+                            { name: product.name, url: buildProductPath(product.slug) },
                         ])}
                     />
                 </>
             )}
-            <ProductClient id={id} initialProduct={product ?? undefined} />
+            <ProductClient id={product?.id ?? slug} initialProduct={product ?? undefined} />
         </>
     )
 }

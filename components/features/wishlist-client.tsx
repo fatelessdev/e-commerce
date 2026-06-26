@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { removeWishlistItem } from "@/lib/actions/wishlist";
 import { normalizeProductImage } from "@/lib/image";
+import { buildProductPath } from "@/lib/seo";
 import type { WishlistProductItem } from "@/lib/wishlist";
 
 function formatPrice(value: number) {
@@ -101,7 +102,7 @@ export function WishlistClient({
             {items.map((item) => (
               <Card key={item.id} className="rounded-none border-0 bg-transparent">
                 <CardContent className="relative aspect-[3/4] overflow-hidden bg-muted/30 p-0">
-                  <Link href={`/product/${item.id}`}>
+                  <Link href={buildProductPath(item.slug)}>
                     <Image
                       src={normalizeProductImage(item.images[0])}
                       alt={item.name}
@@ -132,7 +133,7 @@ export function WishlistClient({
                     </div>
                   </div>
                   <Button asChild variant="outline" className="h-10 w-full rounded-none text-[10px] uppercase tracking-[0.15em]">
-                    <Link href={`/product/${item.id}`}>Choose variant</Link>
+                    <Link href={buildProductPath(item.slug)}>Choose variant</Link>
                   </Button>
                 </CardFooter>
               </Card>

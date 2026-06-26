@@ -1,5 +1,6 @@
 import { MARKETING_PRODUCT_SELECTION_LIMIT, type CampaignDraftInput, type CampaignProduct, type CampaignRecipient } from "./types.ts";
 import { createUnsubscribeToken } from "./unsubscribe-token.ts";
+import { buildProductUrl } from "../seo.ts";
 
 type CampaignEmailInput = {
   draft: CampaignDraftInput;
@@ -43,7 +44,7 @@ function paragraphize(body: string) {
 }
 
 function renderProduct(product: CampaignProduct, appUrl: string) {
-  const productUrl = `${appUrl.replace(/\/$/, "")}/product/${product.id}`;
+  const productUrl = buildProductUrl(product.slug, appUrl);
   const image = product.image
     ? `<img src="${escapeHtml(normalizeEmailProductImage(product.image))}" width="240" height="300" alt="${escapeHtml(product.name)}" style="width:240px;height:300px;max-width:100%;object-fit:cover;display:block;border:1px solid #2b2725;background:#171311;" />`
     : `<div style="width:100%;max-width:240px;height:300px;border:1px solid #2b2725;background:#171311;"></div>`;
@@ -93,7 +94,7 @@ function renderProductRows(products: CampaignProduct[], appUrl: string) {
 
 export function buildCampaignEmailHtml({ draft, recipient, products, appUrl }: CampaignEmailInput) {
   const ctaUrl = resolveUrl(draft.ctaUrl, appUrl);
-  const logoUrl = new URL("/about/logo.jpeg", appUrl).toString();
+  const logoUrl = new URL("/logo.jpeg", appUrl).toString();
   const unsubscribeToken = createUnsubscribeToken(recipient.email);
   const unsubscribeUrl = new URL("/unsubscribe/marketing", appUrl);
   unsubscribeUrl.searchParams.set("token", unsubscribeToken);

@@ -1,125 +1,127 @@
 import type { MetadataRoute } from "next";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
+import { buildAbsoluteUrl, buildProductPath, CATEGORY_SEO, normalizeSiteUrl } from "@/lib/seo";
 import { eq } from "drizzle-orm";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  const now = new Date();
+  const baseUrl = normalizeSiteUrl();
+  const staticModified = new Date("2026-06-01T00:00:00.000Z");
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {
-      url: `${baseUrl}/`,
-      lastModified: now,
+      url: buildAbsoluteUrl("/", baseUrl),
+      lastModified: staticModified,
       changeFrequency: "daily",
       priority: 1.0,
     },
     {
-      url: `${baseUrl}/shop`,
-      lastModified: now,
+      url: buildAbsoluteUrl("/shop", baseUrl),
+      lastModified: staticModified,
       changeFrequency: "daily",
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/shop/men`,
-      lastModified: now,
+      url: buildAbsoluteUrl("/shop/men", baseUrl),
+      lastModified: staticModified,
       changeFrequency: "daily",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/shop/women`,
-      lastModified: now,
+      url: buildAbsoluteUrl("/shop/women", baseUrl),
+      lastModified: staticModified,
       changeFrequency: "weekly",
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/shop/accessories`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.4,
-    },
-    {
-      url: `${baseUrl}/new`,
-      lastModified: now,
+      url: buildAbsoluteUrl("/new", baseUrl),
+      lastModified: staticModified,
       changeFrequency: "daily",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/collections/premium`,
-      lastModified: now,
+      url: buildAbsoluteUrl("/collections/premium", baseUrl),
+      lastModified: staticModified,
       changeFrequency: "weekly",
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/gallery`,
-      lastModified: now,
+      url: buildAbsoluteUrl("/gallery", baseUrl),
+      lastModified: staticModified,
       changeFrequency: "weekly",
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/collections/summer-26`,
-      lastModified: now,
+      url: buildAbsoluteUrl("/collections/summer-26", baseUrl),
+      lastModified: staticModified,
       changeFrequency: "weekly",
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/about`,
-      lastModified: now,
+      url: buildAbsoluteUrl("/about", baseUrl),
+      lastModified: staticModified,
       changeFrequency: "yearly",
       priority: 0.4,
     },
     {
-      url: `${baseUrl}/policies`,
-      lastModified: now,
+      url: buildAbsoluteUrl("/policies", baseUrl),
+      lastModified: staticModified,
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
-      url: `${baseUrl}/policies/exchange`,
-      lastModified: now,
+      url: buildAbsoluteUrl("/policies/exchange", baseUrl),
+      lastModified: staticModified,
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
-      url: `${baseUrl}/policies/returns`,
-      lastModified: now,
+      url: buildAbsoluteUrl("/policies/returns", baseUrl),
+      lastModified: staticModified,
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
-      url: `${baseUrl}/policies/refunds`,
-      lastModified: now,
+      url: buildAbsoluteUrl("/policies/refunds", baseUrl),
+      lastModified: staticModified,
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
-      url: `${baseUrl}/policies/shipping`,
-      lastModified: now,
+      url: buildAbsoluteUrl("/policies/shipping", baseUrl),
+      lastModified: staticModified,
       changeFrequency: "yearly",
       priority: 0.3,
     },
   ];
 
-  let productRows: Array<{ id: string; updatedAt: Date | null }> = [];
+  const categoryRoutes: MetadataRoute.Sitemap = CATEGORY_SEO.map((category) => ({
+    url: buildAbsoluteUrl(`/shop/${category.slug}`, baseUrl),
+    lastModified: staticModified,
+    changeFrequency: "weekly",
+    priority: category.category === "accessory" ? 0.6 : 0.75,
+  }));
+
+  let productRows: Array<{ slug: string; updatedAt: Date | null }> = [];
 
   try {
     productRows = await db
       .select({
-        id: products.id,
+        slug: products.slug,
         updatedAt: products.updatedAt,
       })
       .from(products)
       .where(eq(products.isActive, true));
   } catch {
-    return staticRoutes;
+    return [...staticRoutes, ...categoryRoutes];
   }
 
   const productRoutes: MetadataRoute.Sitemap = productRows.map((product) => ({
-    url: `${baseUrl}/product/${product.id}`,
-    lastModified: product.updatedAt ?? now,
+    url: buildAbsoluteUrl(buildProductPath(product.slug), baseUrl),
+    lastModified: product.updatedAt ?? staticModified,
     changeFrequency: "weekly",
     priority: 0.8,
   }));
 
-  return [...staticRoutes, ...productRoutes];
+  return [...staticRoutes, ...categoryRoutes, ...productRoutes];
 }

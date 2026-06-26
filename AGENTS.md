@@ -116,6 +116,32 @@ Required: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `RAZORPAY_KEY
 - Pages use metadata exports for SEO; root layout includes Open Graph & JSON-LD
 - Dark mode default (`html.dark`), toggle via ThemeProvider
 
+## Search Engine Optimization (SEO) Rules
+
+All new features, pages, routing changes, and modifications must strictly follow these rules to maintain and improve search engine crawlability, ranking authority, and indexing health:
+
+### 1. Routing & Link Paths
+- **Slugs Over IDs:** All public-facing product paths must use the product's unique `slug` (e.g., `/product/seoul-black-tee`) instead of its database UUID. Database actions (such as cart additions or wishlist triggers) must continue to use `product.id`.
+- **Absolute URLs:** When constructing URLs for links, sitemaps, structured schemas, or meta tags, always use helper functions `buildProductPath(slug)` or `buildProductUrl(slug, baseUrl)` from `@/lib/seo` to guarantee uniform canonicalization.
+- **Client Navigation:** Use Next.js client-side `<Link>` tags for internal routing to enable proper page prefetching; avoid standard anchor `<a>` tags except for external locations.
+
+### 2. Metadata API & Robots Configuration
+- **Meta Exports:** Every public-facing page route must export a descriptive `Metadata` object or implement a dynamic `generateMetadata` function that provides a clean title, description, and canonical URL.
+- **Indexing Exclusions (Noindex):** All private, user-specific, or system-oriented pages (including `/admin/*`, `/account`, `/checkout`, `/orders`, `/wishlist`, `/unsubscribe`, and `/api/*`) must specify `robots: { index: false, follow: false }` inside their layouts/pages.
+- **Dynamic Sitemap Integration:** Any new public content routes (such as new collections, policy directories, or blogs) must be registered in [sitemap.ts](file:///c:/Users/fateless/Documents/Projects/xilar/app/sitemap.ts).
+
+### 3. Structured Data (JSON-LD)
+- **JSON-LD Injections:** Public pages must inject Schema.org JSON-LD scripts using the `<JsonLd data={...} />` component from `@/lib/structured-data` to enable Google rich snippets:
+  - **Homepage / About:** `organizationJsonLd()` and `webSiteJsonLd()`.
+  - **Product Pages:** `productJsonLd()` and `breadcrumbJsonLd()`.
+  - **Category / Listing Page:** `collectionJsonLd()` (populated with initial products) and `breadcrumbJsonLd()`.
+  - **FAQ Sections:** `faqJsonLd()`.
+- **XSS Prevention:** Always serialize JSON-LD markup with the `safeJsonLdStringify` helper to prevent HTML parsing exploits.
+
+### 4. Next.js Static Hydration & Crawl Budget
+- **Avoid Global dynamic = 'force-dynamic':** Keep catalog and landing pages statically pre-rendered (SSG/ISR) by avoiding page-level query-driven dynamic rendering. Delegate parameters like search term queries and filters to client components (`ShopClient`), or render them as static shells.
+- **Index Bloat Prevention (X-Robots-Tag):** When adding new query-driven filter parameters or search paths to the catalog, update `next.config.ts` headers to inject `X-Robots-Tag: noindex, follow` for those paths, protecting domain authority.
+
 ## Seasoned Awards-Level Design Principles
 
 When implementing or refactoring UI components and pages, you must filter every choice through the "seasoned awards-level" design lens. This requires strict engineering discipline to balance interactive engagement with professional restraint:

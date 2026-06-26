@@ -13,6 +13,7 @@ import { getWishlistNavState } from "@/lib/actions/wishlist";
 import ThemeToggleButton from "@/components/ui/theme-toggle-button";
 import { ANNOUNCEMENT_MESSAGES } from "@/lib/constants";
 import { normalizeProductImage } from "@/lib/image";
+import { buildProductPath } from "@/lib/seo";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -162,6 +163,7 @@ const searchableCatalogPaths = new Set([
 
 type SearchSuggestion = {
   id: string;
+  slug: string;
   name: string;
   category: string;
   sellingPrice: string;
@@ -414,7 +416,7 @@ function CatalogSearchOverlay({
                           style={{ willChange: "opacity, filter, transform" }}
                         >
                           <Link
-                            href={`/product/${product.id}`}
+                            href={buildProductPath(product.slug)}
                             onClick={() => {
                               setShowSearch(false);
                               setSearchQuery("");
@@ -478,7 +480,7 @@ function CatalogSearchOverlay({
                         >
                           <Link
                             key={product.id}
-                            href={`/product/${product.id}`}
+                            href={buildProductPath(product.slug)}
                             onClick={() => {
                               setShowSearch(false);
                               setSearchQuery("");

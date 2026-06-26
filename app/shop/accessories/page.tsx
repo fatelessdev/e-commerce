@@ -1,9 +1,8 @@
 import type { Metadata } from "next"
 import { ShopClient } from "@/components/features/shop-client"
-import { JsonLd, breadcrumbJsonLd, collectionJsonLd } from "@/components/seo/structured-data"
+import { JsonLd, breadcrumbJsonLd } from "@/components/seo/structured-data"
 import { getCatalogProducts } from "@/lib/product-catalog"
-
-export const dynamic = "force-dynamic"
+import { normalizeSiteUrl } from "@/lib/seo"
 
 export const metadata: Metadata = {
     title: "Accessories",
@@ -20,16 +19,10 @@ export const metadata: Metadata = {
     },
 }
 
-export default async function AccessoriesPage({
-    searchParams,
-}: {
-    searchParams: Promise<{ search?: string }>
-}) {
-    const { search } = await searchParams
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-    const initialCatalog = await getCatalogProducts({
+export default function AccessoriesPage() {
+    const baseUrl = normalizeSiteUrl()
+    const catalogPromise = getCatalogProducts({
         category: "accessory",
-        search,
         limit: 24,
         offset: 0,
         includeTotal: true,
@@ -44,22 +37,21 @@ export default async function AccessoriesPage({
                     { name: "Accessories", url: "/shop/accessories" },
                 ])}
             />
-            <JsonLd
-                data={collectionJsonLd(baseUrl, {
-                    name: "Accessories — XILAR",
-                    description: "Shop XILAR accessories, including perfume and limited essentials.",
-                    url: "/shop/accessories",
-                })}
-            />
             <ShopClient
-                key={search || ""}
                 genderFilter="all"
                 fixedCategory="accessory"
                 title="Accessories"
-                subtitle="Perfume and selected essentials"
-                initialSearch={search || ""}
-                initialCatalog={initialCatalog}
+                subtitle="Perfume and selected essentials for the XILAR wardrobe."
+                initialCatalogPromise={catalogPromise}
             />
+            <section className="border-t border-border/60 px-6 py-12 md:px-12 md:py-16">
+                <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-[0.8fr_1.2fr]">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-muted-foreground">Accessories</p>
+                    <p className="text-base leading-8 text-muted-foreground">
+                        XILAR accessories are selected as finishing pieces rather than filler: perfume and compact essentials that support the outfit while keeping the brand&apos;s streetwear system focused.
+                    </p>
+                </div>
+            </section>
         </>
     )
 }

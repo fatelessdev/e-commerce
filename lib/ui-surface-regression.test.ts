@@ -34,7 +34,7 @@ test("root route suspense reserves the first viewport instead of exposing the fo
 });
 
 test("product route loading shell matches the loaded desktop product layout", () => {
-  const loading = read("app/product/[id]/loading.tsx");
+  const loading = read("app/product/[slug]/loading.tsx");
 
   assert.match(loading, /bg-background pb-24 lg:pt-6/);
   assert.match(loading, /grid grid-cols-1 lg:grid-cols-2 gap-0/);
@@ -44,6 +44,32 @@ test("product route loading shell matches the loaded desktop product layout", ()
   assert.match(loading, /"w-\[92%\]"/);
   assert.match(loading, /border-t border-border\/60 mt-24 px-6 md:px-12 lg:px-16/);
   assert.match(loading, /You may also like/);
+});
+
+test("public product links use slugs while product actions keep ids", () => {
+  const shopClient = read("components/features/shop-client.tsx");
+  const productGrid = read("components/features/product-grid.tsx");
+  const productClient = read("components/features/product-client.tsx");
+  const wishlistClient = read("components/features/wishlist-client.tsx");
+  const marketingEmail = read("lib/marketing/email-template.ts");
+
+  assert.match(shopClient, /buildProductPath\(product\.slug\)/);
+  assert.match(productGrid, /buildProductPath\(product\.slug\)/);
+  assert.match(productClient, /buildProductPath\(related\.slug\)/);
+  assert.match(wishlistClient, /buildProductPath\(item\.slug\)/);
+  assert.match(marketingEmail, /buildProductUrl\(product\.slug/);
+  assert.match(productClient, /addWishlistItem\(product\.id\)/);
+  assert.match(productClient, /removeWishlistItem\(product\.id\)/);
+  assert.doesNotMatch(`${shopClient}\n${productGrid}\n${wishlistClient}`, /\/product\/\$\{(?:product|item)\.id\}/);
+});
+
+test("old product UUID URLs are intercepted before page streaming", () => {
+  const proxy = read("proxy.ts");
+
+  assert.match(proxy, /matcher:\s*"\/product\/:slug"/);
+  assert.match(proxy, /PRODUCT_UUID_PATTERN/);
+  assert.match(proxy, /NextResponse\.redirect\(new URL\(`\/product\/\$\{product\.slug\}`/);
+  assert.match(proxy, /,\s*308\)/);
 });
 
 test("footer and menu shells use theme tokens instead of fixed black and white", () => {

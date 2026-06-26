@@ -5,6 +5,7 @@ import Image from "next/image"
 import { ChevronLeft, ChevronRight, Volume2, VolumeX, ShoppingBag } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { normalizeProductImage } from "@/lib/image"
+import { buildProductPath } from "@/lib/seo"
 import { ViewportPrefetchLink } from "@/components/ui/viewport-prefetch-link"
 
 function formatPrice(price: string) {
@@ -16,6 +17,7 @@ interface ReelProduct {
     name: string;
     sellingPrice: string;
     mrp: string;
+    slug: string;
     images: string | string[];
 }
 
@@ -37,6 +39,7 @@ export function ShopTheReels() {
             products: [
                 {
                     id: "2439572f-d1b6-4aaa-aef3-547649dfa07f",
+                    slug: "xilar-rebel-print-tee",
                     name: "Xilar Rebel Print Tee",
                     sellingPrice: "749.00",
                     mrp: "999.00",
@@ -44,6 +47,7 @@ export function ShopTheReels() {
                 },
                 {
                     id: "b72305dc-5fc9-453b-b4dc-830d628c4fd8",
+                    slug: "xilar-dualform",
                     name: "Xilar DualForm",
                     sellingPrice: "799.00",
                     mrp: "1499.00",
@@ -57,6 +61,7 @@ export function ShopTheReels() {
             products: [
                 {
                     id: "249fb306-8f60-4f67-8e48-3c6085c2b1fc",
+                    slug: "xilar-inkdistort",
                     name: "Xilar InkDistort",
                     sellingPrice: "799",
                     mrp: "1,498.97",
@@ -70,6 +75,7 @@ export function ShopTheReels() {
             products: [
                 {
                     id: "f8964c87-0a46-4fb9-98c4-cc7cac816c4b",
+                    slug: "xilar-hyperiot",
                     name: "Xilar HypeRiot",
                     sellingPrice: "799",
                     mrp: "1199",
@@ -215,7 +221,7 @@ export function ShopTheReels() {
                                     {reel.products.map((product) => (
                                         <ViewportPrefetchLink
                                             key={product.id}
-                                            href={`/product/${product.id}`}
+                                            href={buildProductPath(product.slug)}
                                             className="flex items-center gap-2 rounded-md bg-black/45 p-2 text-white shadow-2xl backdrop-blur-md transition-all duration-300 hover:bg-black/60 hover:scale-[1.01] active:scale-[0.99]"
                                         >
                                             <div className="relative h-12 w-12 flex-none overflow-hidden rounded bg-white/10">
@@ -245,7 +251,7 @@ export function ShopTheReels() {
 
                                 {reel.products.length === 1 ? (
                                     <ViewportPrefetchLink 
-                                        href={`/product/${reel.products[0].id}`} 
+                                        href={buildProductPath(reel.products[0].slug)} 
                                         className="absolute inset-0 z-0" 
                                         aria-label={`Shop ${reel.products[0].name}`} 
                                     />

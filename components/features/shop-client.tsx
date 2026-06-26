@@ -1,22 +1,24 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef, useCallback } from "react"
+import { useState, useEffect, useMemo, useRef, useCallback, Suspense, use } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react"
 import { normalizeProductImage } from "@/lib/image"
+import { buildProductPath, normalizeSiteUrl } from "@/lib/seo"
 import { getDisplaySizes, useShopCatalog, type CatalogProduct, type ProductPageResponse, type ShopCatalogQuery } from "@/components/features/use-shop-catalog"
 import { ViewportPrefetchLink } from "@/components/ui/viewport-prefetch-link"
 import { useDebouncedValue } from "@/lib/use-debounced-value"
+import { JsonLd, collectionJsonLd } from "@/components/seo/structured-data"
 
 const CATEGORIES = ["All", "tshirt", "shirt", "cargo", "jogger", "jeans", "hoodie", "jacket", "shorts", "accessory"]
 const CATEGORY_LABELS: Record<string, string> = {
     "All": "All",
     "tshirt": "T-Shirts",
     "shirt": "Shirts",
-    "cargo": "Cargo",
+    "cargo": "Cargos",
     "jogger": "Joggers",
     "jeans": "Jeans",
     "hoodie": "Hoodies",
@@ -57,6 +59,23 @@ interface ShopClientProps {
     isPremium?: boolean
     initialProducts?: CatalogProduct[]
     initialCatalog?: ProductPageResponse
+    initialCatalogPromise?: Promise<ProductPageResponse>
+}
+
+export function ShopProductGridSkeleton() {
+    return (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+            {[...Array(8)].map((_, i) => (
+                <div key={i} className={`space-y-3 ${i >= 6 ? "hidden md:block" : ""}`}>
+                    <div className="aspect-[3/4] bg-muted animate-pulse" />
+                    <div className="space-y-2 px-1">
+                        <div className="h-3 bg-muted animate-pulse w-3/4" />
+                        <div className="h-3 bg-muted animate-pulse w-1/2" />
+                    </div>
+                </div>
+            ))}
+        </div>
+    )
 }
 
 export function ShopClient({
@@ -69,6 +88,7 @@ export function ShopClient({
     isPremium,
     initialProducts,
     initialCatalog,
+    initialCatalogPromise,
 }: ShopClientProps) {
     const pathname = usePathname()
     const router = useRouter()
@@ -81,6 +101,20 @@ export function ShopClient({
     const [visibleCount, setVisibleCount] = useState(8)
     const pendingRestoreRef = useRef<ShopRestoreState | null>(null)
     const restoredRef = useRef(false)
+
+    const catalogPromise = useMemo(() => {
+        if (initialCatalogPromise) return initialCatalogPromise
+        if (initialCatalog) return Promise.resolve(initialCatalog)
+        if (initialProducts) {
+            return Promise.resolve({
+                products: initialProducts,
+                total: initialProducts.length,
+                limit: initialProducts.length,
+                offset: 0,
+            })
+        }
+        return Promise.resolve({ products: [], total: 0, limit: 24, offset: 0 })
+    }, [initialCatalogPromise, initialCatalog, initialProducts])
 
     const effectiveSelectedCategory = fixedCategory || selectedCategory
     const catalogQuery = useMemo<ShopCatalogQuery>(() => {
@@ -104,52 +138,6 @@ export function ShopClient({
 
         return query
     }, [debouncedSearchQuery, effectiveSelectedCategory, genderFilter, isNew, isPremium, selectedPriceRange, selectedSize])
-
-    const canUseInitialCatalog =
-        debouncedSearchQuery.trim() === initialSearch.trim() &&
-        effectiveSelectedCategory === (fixedCategory || "All") &&
-        selectedSize === null &&
-        selectedPriceRange === PRICE_RANGES[0]
-    const initialCatalogPage: ProductPageResponse | undefined = canUseInitialCatalog
-        ? initialCatalog || (initialProducts ? {
-            products: initialProducts,
-            total: initialProducts.length,
-            limit: initialProducts.length,
-            offset: 0,
-        } : undefined)
-        : undefined
-
-    const {
-        data: products = [],
-        isLoading: loading,
-        fetchNextPage,
-        hasNextPage,
-        isFetchingNextPage,
-    } = useShopCatalog(catalogQuery, initialCatalogPage)
-
-    const visibleProducts = products.slice(0, visibleCount)
-    const hasMore = visibleCount < products.length || Boolean(hasNextPage)
-
-    // Infinite scroll sentinel
-    const sentinelRef = useRef<HTMLDivElement>(null)
-    useEffect(() => {
-        if (!hasMore || loading || isFetchingNextPage) return
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting) {
-                    if (visibleCount < products.length) {
-                        setVisibleCount((prev) => prev + 8)
-                    } else if (hasNextPage) {
-                        fetchNextPage()
-                    }
-                }
-            },
-            { rootMargin: typeof window !== "undefined" && window.innerWidth < 768 ? "100px" : "200px" }
-        )
-        const el = sentinelRef.current
-        if (el) observer.observe(el)
-        return () => { if (el) observer.unobserve(el) }
-    }, [fetchNextPage, hasMore, hasNextPage, isFetchingNextPage, loading, products.length, visibleCount])
 
     useEffect(() => {
         if (restoredRef.current || typeof window === "undefined") return
@@ -199,33 +187,6 @@ export function ShopClient({
             window.sessionStorage.removeItem(`${SHOP_SCROLL_PREFIX}${pathname}`)
         }
     }, [fixedCategory, pathname])
-
-    useEffect(() => {
-        const saved = pendingRestoreRef.current
-        if (!saved || loading || products.length === 0) return
-
-        const clickedIndex = products.findIndex((product) => product.id === saved.clickedProductId)
-        const requiredVisibleCount = Math.max(saved.visibleCount, clickedIndex >= 0 ? clickedIndex + 1 : 8)
-
-        if (visibleCount < requiredVisibleCount) {
-            setVisibleCount(requiredVisibleCount)
-            return
-        }
-
-        let attempts = 0
-        const restore = () => {
-            attempts += 1
-            const maxReachableScroll = document.documentElement.scrollHeight - window.innerHeight
-            if (maxReachableScroll >= saved.scrollY || attempts > 24) {
-                window.scrollTo({ top: saved.scrollY, behavior: "smooth" })
-                pendingRestoreRef.current = null
-                return
-            }
-            window.requestAnimationFrame(restore)
-        }
-
-        window.requestAnimationFrame(restore)
-    }, [products, loading, visibleCount])
 
     const saveScrollState = (clickedProductId: string) => {
         if (typeof window === "undefined") return
@@ -290,17 +251,6 @@ export function ShopClient({
         selectedSize !== null,
         selectedPriceRange !== PRICE_RANGES[0],
     ].filter(Boolean).length
-    const formatPrice = (price: string) => {
-        const num = parseFloat(price)
-        return `₹${num.toLocaleString("en-IN")}`
-    }
-
-    const discountPercent = (product: CatalogProduct) => {
-        const mrp = parseFloat(product.mrp)
-        const price = parseFloat(product.sellingPrice)
-        if (!Number.isFinite(mrp) || !Number.isFinite(price) || mrp <= price) return null
-        return Math.round(((mrp - price) / mrp) * 100)
-    }
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -423,97 +373,222 @@ export function ShopClient({
 
             {/* Product Grid */}
             <div className="py-10 px-6 md:px-12">
-                {loading ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-                        {[...Array(8)].map((_, i) => (
-                            <div key={i} className="space-y-3">
-                                <div className="aspect-[3/4] bg-muted animate-pulse" />
-                                <div className="space-y-2 px-1">
-                                    <div className="h-3 bg-muted animate-pulse w-3/4" />
-                                    <div className="h-3 bg-muted animate-pulse w-1/2" />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <>
-                        <p className="text-[10px] text-muted-foreground mb-6 uppercase tracking-[0.15em] tabular-nums">{products.length} products</p>
-                        {visibleProducts.length > 0 ? (
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-                                {visibleProducts.map((product) => (
-                                    <ViewportPrefetchLink
-                                        href={`/product/${product.id}`}
-                                        key={product.id}
-                                        onClick={() => saveScrollState(product.id)}
-                                    >
-                                        <Card className="bg-transparent border-0 rounded-none hover-lift">
-                                            <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
-                                                <Image
-                                                    src={normalizeProductImage(product.images?.[0])}
-                                                    alt={product.name}
-                                                    fill
-                                                    sizes="(max-width: 640px) 50vw, 25vw"
-                                                    className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
-                                                />
-                                                {product.isNew && (
-                                                    <span className="absolute top-3 left-3 bg-foreground text-background text-[10px] px-2.5 py-1 uppercase tracking-[0.1em] font-medium">
-                                                        New
-                                                    </span>
-                                                )}
-                                                {product.stock === 0 && (
-                                                    <span className="absolute top-3 right-3 badge-sold-out">
-                                                        Sold out
-                                                    </span>
-                                                )}
-                                            </CardContent>
-                                            <CardFooter className="flex flex-col items-start px-1 sm:px-2 pt-4 pb-2 space-y-1">
-                                                <p className="text-[10px] text-muted-foreground uppercase tracking-[0.15em]">
-                                                    {CATEGORY_LABELS[product.category] || product.category}
-                                                </p>
-                                                <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
-                                                    <h3 className="min-w-0 truncate font-medium tracking-tight text-sm">{product.name}</h3>
-                                                    <div className="flex flex-none flex-nowrap items-center justify-end gap-1.5 whitespace-nowrap text-right">
-                                                        <span className="font-semibold text-sm tabular-nums">{formatPrice(product.sellingPrice)}</span>
-                                                        {parseFloat(product.mrp) > parseFloat(product.sellingPrice) && (
-                                                            <span className="text-[10px] text-muted-foreground line-through tabular-nums">
-                                                                {formatPrice(product.mrp)}
-                                                            </span>
-                                                        )}
-                                                        {discountPercent(product) !== null && (
-                                                            <span className="flex-none bg-foreground px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-background">
-                                                                {discountPercent(product)}% off
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                {getDisplaySizes(product).length > 0 && (
-                                                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                                                        {getDisplaySizes(product).slice(0, 5).map((size) => (
-                                                            <span
-                                                                key={size}
-                                                                className="border border-border/70 px-2 py-1 text-[10px] uppercase leading-none text-muted-foreground"
-                                                            >
-                                                                {size}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </CardFooter>
-                                        </Card>
-                                    </ViewportPrefetchLink>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-24">
-                                <p className="text-sm text-muted-foreground">No products found matching your filters</p>
-                                <Button variant="link" onClick={clearFilters} className="mt-2 text-xs">
-                                    Clear all filters
-                                </Button>
-                            </div>
-                        )}
-                    </>
-                )}
+                <Suspense fallback={<ShopProductGridSkeleton />}>
+                    <ShopProductGrid
+                        catalogPromise={catalogPromise}
+                        query={catalogQuery}
+                        clearFilters={clearFilters}
+                        visibleCount={visibleCount}
+                        setVisibleCount={setVisibleCount}
+                        pathname={pathname}
+                        saveScrollState={saveScrollState}
+                        pendingRestoreRef={pendingRestoreRef}
+                    />
+                </Suspense>
             </div>
+        </div>
+    )
+}
+
+interface ShopProductGridProps {
+    catalogPromise: Promise<ProductPageResponse>
+    query: ShopCatalogQuery
+    clearFilters: () => void
+    visibleCount: number
+    setVisibleCount: (value: number | ((prev: number) => number)) => void
+    pathname: string
+    saveScrollState: (clickedProductId: string) => void
+    pendingRestoreRef: React.MutableRefObject<ShopRestoreState | null>
+}
+
+function ShopProductGrid({
+    catalogPromise,
+    query,
+    clearFilters,
+    visibleCount,
+    setVisibleCount,
+    pathname,
+    saveScrollState,
+    pendingRestoreRef,
+}: ShopProductGridProps) {
+    const initialCatalog = use(catalogPromise)
+    const baseUrl = normalizeSiteUrl()
+
+    const canUseInitialCatalog =
+        (query.search || "").trim() === "" &&
+        (query.category || "All") === "All" &&
+        query.size === undefined &&
+        query.minPrice === undefined
+
+    const initialCatalogPage = canUseInitialCatalog ? initialCatalog : undefined
+
+    const {
+        data: products = [],
+        isLoading: loading,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useShopCatalog(query, initialCatalogPage)
+
+    const visibleProducts = products.slice(0, visibleCount)
+    const hasMore = visibleCount < products.length || Boolean(hasNextPage)
+
+    // Infinite scroll sentinel
+    const sentinelRef = useRef<HTMLDivElement>(null)
+    useEffect(() => {
+        if (!hasMore || loading || isFetchingNextPage) return
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    if (visibleCount < products.length) {
+                        setVisibleCount((prev) => prev + 8)
+                    } else if (hasNextPage) {
+                        fetchNextPage()
+                    }
+                }
+            },
+            { rootMargin: typeof window !== "undefined" && window.innerWidth < 768 ? "100px" : "200px" }
+        )
+        const el = sentinelRef.current
+        if (el) observer.observe(el)
+        return () => { if (el) observer.unobserve(el) }
+    }, [fetchNextPage, hasMore, hasNextPage, isFetchingNextPage, loading, products.length, visibleCount, setVisibleCount])
+
+    useEffect(() => {
+        const saved = pendingRestoreRef.current
+        if (!saved || loading || products.length === 0) return
+
+        const clickedIndex = products.findIndex((product) => product.id === saved.clickedProductId)
+        const requiredVisibleCount = Math.max(saved.visibleCount, clickedIndex >= 0 ? clickedIndex + 1 : 8)
+
+        if (visibleCount < requiredVisibleCount) {
+            setVisibleCount(requiredVisibleCount)
+            return
+        }
+
+        let attempts = 0
+        const restore = () => {
+            attempts += 1
+            const maxReachableScroll = document.documentElement.scrollHeight - window.innerHeight
+            if (maxReachableScroll >= saved.scrollY || attempts > 24) {
+                window.scrollTo({ top: saved.scrollY, behavior: "smooth" })
+                pendingRestoreRef.current = null
+                return
+            }
+            window.requestAnimationFrame(restore)
+        }
+
+        window.requestAnimationFrame(restore)
+    }, [products, loading, visibleCount, pendingRestoreRef, setVisibleCount])
+
+    const formatPrice = (price: string) => {
+        const num = parseFloat(price)
+        return `₹${num.toLocaleString("en-IN")}`
+    }
+
+    const discountPercent = (product: CatalogProduct) => {
+        const mrp = parseFloat(product.mrp)
+        const price = parseFloat(product.sellingPrice)
+        if (!Number.isFinite(mrp) || !Number.isFinite(price) || mrp <= price) return null
+        return Math.round(((mrp - price) / mrp) * 100)
+    }
+
+    return (
+        <>
+            <JsonLd
+                data={collectionJsonLd(baseUrl, {
+                    name: `${query.gender === "women" ? "Women's" : query.gender === "men" ? "Men's" : "All"} Streetwear - XILAR`,
+                    description: "Explore the premium streetwear collection from XILAR.",
+                    url: pathname,
+                    products: initialCatalog.products.map((product) => ({
+                        name: product.name,
+                        slug: product.slug,
+                        image: product.images[0],
+                        sellingPrice: product.sellingPrice,
+                    })),
+                })}
+            />
+
+            {loading ? (
+                <ShopProductGridSkeleton />
+            ) : (
+                <>
+                    <p className="text-[10px] text-muted-foreground mb-6 uppercase tracking-[0.15em] tabular-nums">{products.length} products</p>
+                    {visibleProducts.length > 0 ? (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+                            {visibleProducts.map((product) => (
+                                <ViewportPrefetchLink
+                                    href={buildProductPath(product.slug)}
+                                    key={product.id}
+                                    onClick={() => saveScrollState(product.id)}
+                                >
+                                    <Card className="bg-transparent border-0 rounded-none hover-lift">
+                                        <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
+                                            <Image
+                                                src={normalizeProductImage(product.images?.[0])}
+                                                alt={product.name}
+                                                fill
+                                                sizes="(max-width: 640px) 50vw, 25vw"
+                                                className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
+                                            />
+                                            {product.isNew && (
+                                                <span className="absolute top-3 left-3 bg-foreground text-background text-[10px] px-2.5 py-1 uppercase tracking-[0.1em] font-medium">
+                                                    New
+                                                </span>
+                                            )}
+                                            {product.stock === 0 && (
+                                                <span className="absolute top-3 right-3 badge-sold-out">
+                                                    Sold out
+                                                </span>
+                                            )}
+                                        </CardContent>
+                                        <CardFooter className="flex flex-col items-start px-1 sm:px-2 pt-4 pb-2 space-y-1">
+                                            <p className="text-[10px] text-muted-foreground uppercase tracking-[0.15em]">
+                                                {CATEGORY_LABELS[product.category] || product.category}
+                                            </p>
+                                            <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+                                                <h3 className="min-w-0 truncate font-medium tracking-tight text-sm">{product.name}</h3>
+                                                <div className="flex flex-none flex-nowrap items-center justify-end gap-1.5 whitespace-nowrap text-right">
+                                                    <span className="font-semibold text-sm tabular-nums">{formatPrice(product.sellingPrice)}</span>
+                                                    {parseFloat(product.mrp) > parseFloat(product.sellingPrice) && (
+                                                        <span className="text-[10px] text-muted-foreground line-through tabular-nums">
+                                                            {formatPrice(product.mrp)}
+                                                        </span>
+                                                    )}
+                                                    {discountPercent(product) !== null && (
+                                                        <span className="flex-none bg-foreground px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-background">
+                                                            {discountPercent(product)}% off
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {getDisplaySizes(product).length > 0 && (
+                                                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                                                    {getDisplaySizes(product).slice(0, 5).map((size) => (
+                                                        <span
+                                                            key={size}
+                                                            className="border border-border/70 px-2 py-1 text-[10px] uppercase leading-none text-muted-foreground"
+                                                        >
+                                                            {size}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </CardFooter>
+                                    </Card>
+                                </ViewportPrefetchLink>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-24">
+                            <p className="text-sm text-muted-foreground">No products found matching your filters</p>
+                            <Button variant="link" onClick={clearFilters} className="mt-2 text-xs">
+                                Clear all filters
+                            </Button>
+                        </div>
+                    )}
+                </>
+            )}
 
             {/* Infinite scroll sentinel */}
             {hasMore && !loading && (
@@ -521,6 +596,6 @@ export function ShopClient({
                     <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
             )}
-        </div>
+        </>
     )
 }

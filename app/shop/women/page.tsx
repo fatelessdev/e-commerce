@@ -1,12 +1,11 @@
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import { JsonLd, breadcrumbJsonLd } from "@/components/seo/structured-data"
 import { ShopClient } from "@/components/features/shop-client"
 import { ComboSection } from "@/components/features/combo-section"
-import { collectionJsonLd } from "@/components/seo/structured-data"
 import { getActiveCombosWithProducts } from "@/lib/combos"
 import { getCatalogProducts } from "@/lib/product-catalog"
-
-export const dynamic = "force-dynamic"
+import { normalizeSiteUrl } from "@/lib/seo"
 
 export const metadata: Metadata = {
     title: "Women's Streetwear",
@@ -23,23 +22,40 @@ export const metadata: Metadata = {
     },
 }
 
-export default async function ShopWomenPage({
-    searchParams,
-}: {
-    searchParams: Promise<{ search?: string }>
-}) {
-    const { search } = await searchParams
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-    const [initialCatalog, combos] = await Promise.all([
-        getCatalogProducts({
-            gender: "women",
-            search,
-            limit: 24,
-            offset: 0,
-            includeTotal: true,
-        }),
-        getActiveCombosWithProducts(6),
-    ])
+function ComboSectionSkeleton() {
+    return (
+        <section className="py-16 md:py-24 px-6 md:px-12 bg-background">
+            <div className="flex flex-col items-center mb-8 md:mb-12">
+                <p className="text-[10px] md:text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground mb-3">Bundle deals</p>
+                <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight">Combos</h2>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {[...Array(2)].map((_, index) => (
+                    <div key={index} className="rounded-none border border-border/60 p-4">
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="aspect-[3/4] animate-pulse bg-muted" />
+                            <div className="aspect-[3/4] animate-pulse bg-muted" />
+                        </div>
+                        <div className="mt-4 space-y-2">
+                            <div className="h-3 w-2/3 animate-pulse bg-muted" />
+                            <div className="h-3 w-1/2 animate-pulse bg-muted" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
+    )
+}
+
+export default function ShopWomenPage() {
+    const baseUrl = normalizeSiteUrl()
+    const catalogPromise = getCatalogProducts({
+        gender: "women",
+        limit: 24,
+        offset: 0,
+        includeTotal: true,
+    })
+    const combosPromise = getActiveCombosWithProducts(6)
 
     return (
         <>
@@ -50,22 +66,23 @@ export default async function ShopWomenPage({
                     { name: "Women", url: "/shop/women" },
                 ])}
             />
-            <JsonLd
-                data={collectionJsonLd(baseUrl, {
-                    name: "Women's Streetwear - XILAR",
-                    description: "Streetwear essentials for her. Clean lines and bold fits.",
-                    url: "/shop/women",
-                })}
-            />
             <ShopClient
-                key={search || ""}
                 genderFilter="women"
                 title="Women"
-                subtitle="Streetwear essentials for her"
-                initialSearch={search || ""}
-                initialCatalog={initialCatalog}
+                subtitle="Clean lines, premium basics, and bold proportions for everyday streetwear."
+                initialCatalogPromise={catalogPromise}
             />
-            <ComboSection limit={6} interactive={false} initialCombos={combos} />
+            <section className="border-t border-border/60 px-6 py-12 md:px-12 md:py-16">
+                <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-[0.8fr_1.2fr]">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-muted-foreground">Women&apos;s streetwear</p>
+                    <p className="text-base leading-8 text-muted-foreground">
+                        XILAR women&apos;s streetwear keeps the silhouette clean and confident: premium basics, relaxed fits, and pieces that pair easily with cargos, jeans, shorts, and layered shirts.
+                    </p>
+                </div>
+            </section>
+            <Suspense fallback={<ComboSectionSkeleton />}>
+                <ComboSection limit={6} interactive={false} initialCombos={combosPromise} />
+            </Suspense>
         </>
     )
 }

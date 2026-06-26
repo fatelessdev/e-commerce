@@ -14,6 +14,7 @@ import {
   organizationJsonLd,
   webSiteJsonLd,
 } from "@/components/seo/structured-data";
+import { normalizeSiteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -132,7 +133,7 @@ async function HomeMerchandisingSections() {
 }
 
 export default function Home() {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const baseUrl = normalizeSiteUrl();
 
   return (
     <div className="flex flex-col min-h-screen">

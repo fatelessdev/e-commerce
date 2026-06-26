@@ -1,13 +1,14 @@
 import type { MetadataRoute } from "next";
+import { normalizeSiteUrl } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const baseUrl = normalizeSiteUrl();
 
   return {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/api/products", "/api/products/*", "/api/auth/get-session"],
+        allow: ["/"],
         disallow: [
           "/admin",
           "/admin/*",
@@ -15,22 +16,11 @@ export default function robots(): MetadataRoute.Robots {
           "/checkout",
           "/orders",
           "/wishlist",
+          "/unsubscribe",
+          "/unsubscribe/*",
           "/api/",
-          "/api/auth/*",
-          "/api/coupons/*",
-          "/api/orders/*",
-          "/api/razorpay/*",
-          "/api/upload/*",
-          "/api/bargain/*",
+          "/api/*",
         ],
-      },
-      {
-        userAgent: "GPTBot",
-        disallow: ["/"],
-      },
-      {
-        userAgent: "CCBot",
-        disallow: ["/"],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

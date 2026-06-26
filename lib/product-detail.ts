@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { combos, productRecommendations, products, productVariants } from "@/lib/db/schema";
 import { mergeRelatedProductIds, PRODUCT_RECOMMENDATION_LIMIT } from "@/lib/product-recommendations";
+import { isProductUuid } from "@/lib/seo";
 import { and, asc, desc, eq, gt, inArray, or } from "drizzle-orm";
 import { cache } from "react";
 
@@ -79,10 +80,17 @@ export const getProductDetails = cache(async function getProductDetails(
   id: string,
   options: { includeInactive?: boolean } = {}
 ): Promise<ProductDetails | null> {
-  return getProductDetailsUncached(id, options);
+  return getProductDetailsByIdUncached(id, options);
 });
 
-async function getProductDetailsUncached(
+export const getProductDetailsBySlugOrId = cache(async function getProductDetailsBySlugOrId(
+  slugOrId: string,
+  options: { includeInactive?: boolean } = {}
+): Promise<ProductDetails | null> {
+  return getProductDetailsBySlugOrIdUncached(slugOrId, options);
+});
+
+async function getProductDetailsByIdUncached(
   id: string,
   options: { includeInactive?: boolean } = {}
 ): Promise<ProductDetails | null> {
@@ -271,4 +279,25 @@ async function getProductDetailsUncached(
   });
 
   return { ...product, variants, relatedCombos, relatedProducts: relatedProductsWithAvailableSizes };
+}
+
+async function getProductDetailsBySlugOrIdUncached(
+  slugOrId: string,
+  options: { includeInactive?: boolean } = {}
+) {
+  const identityCondition = isProductUuid(slugOrId)
+    ? or(eq(products.slug, slugOrId), eq(products.id, slugOrId))
+    : eq(products.slug, slugOrId);
+
+  const [product] = await db
+    .select({ id: products.id })
+    .from(products)
+    .where(
+      options.includeInactive
+        ? identityCondition
+        : and(eq(products.isActive, true), identityCondition)
+    );
+
+  if (!product) return null;
+  return getProductDetailsByIdUncached(product.id, options);
 }

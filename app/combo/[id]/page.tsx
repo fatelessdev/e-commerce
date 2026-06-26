@@ -5,6 +5,7 @@ import {
   JsonLd,
   breadcrumbJsonLd,
 } from "@/components/seo/structured-data"
+import { normalizeSiteUrl } from "@/lib/seo"
 
 export const dynamic = "force-dynamic"
 
@@ -64,7 +65,7 @@ export default async function ComboPage({
 }) {
   const { id } = await params
   const combo = await getCombo(id)
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+  const baseUrl = normalizeSiteUrl()
 
   return (
     <>

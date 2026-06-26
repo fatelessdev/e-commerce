@@ -1,9 +1,8 @@
 import type { Metadata } from "next"
 import { ShopClient } from "@/components/features/shop-client"
-import { JsonLd, breadcrumbJsonLd, collectionJsonLd } from "@/components/seo/structured-data"
+import { JsonLd, breadcrumbJsonLd } from "@/components/seo/structured-data"
 import { getCatalogProducts } from "@/lib/product-catalog"
-
-export const dynamic = "force-dynamic"
+import { normalizeSiteUrl } from "@/lib/seo"
 
 export const metadata: Metadata = {
     title: "New Arrivals — Latest Drops",
@@ -20,16 +19,10 @@ export const metadata: Metadata = {
     },
 }
 
-export default async function NewArrivalsPage({
-    searchParams,
-}: {
-    searchParams: Promise<{ search?: string }>
-}) {
-    const { search } = await searchParams
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-    const initialCatalog = await getCatalogProducts({
+export default function NewArrivalsPage() {
+    const baseUrl = normalizeSiteUrl()
+    const catalogPromise = getCatalogProducts({
         isNew: true,
-        search,
         limit: 24,
         offset: 0,
         includeTotal: true,
@@ -43,22 +36,21 @@ export default async function NewArrivalsPage({
                     { name: "New Arrivals", url: "/new" },
                 ])}
             />
-            <JsonLd
-                data={collectionJsonLd(baseUrl, {
-                    name: "New Arrivals — XILAR",
-                    description: "Fresh drops and first access. Discover the latest XILAR arrivals.",
-                    url: "/new",
-                })}
-            />
             <ShopClient
-                key={search || ""}
                 genderFilter="all"
                 title="New arrivals"
-                subtitle="Fresh drops. First access."
-                initialSearch={search || ""}
+                subtitle="Fresh drops, first access, and the newest XILAR streetwear pieces."
                 isNew
-                initialCatalog={initialCatalog}
+                initialCatalogPromise={catalogPromise}
             />
+            <section className="border-t border-border/60 px-6 py-12 md:px-12 md:py-16">
+                <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-[0.8fr_1.2fr]">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-muted-foreground">Latest drops</p>
+                    <p className="text-base leading-8 text-muted-foreground">
+                        New arrivals collect the freshest XILAR products in one place, from oversized t-shirts and cargos to seasonal accessories and premium basics. Availability changes with live catalog stock.
+                    </p>
+                </div>
+            </section>
         </>
     )
 }

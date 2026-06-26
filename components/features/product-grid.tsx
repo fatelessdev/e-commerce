@@ -4,9 +4,10 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/scroll-reveal"
 import Link from "next/link"
 import Image from "next/image"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState, use } from "react"
 import { ArrowRight, Loader2 } from "lucide-react"
 import { normalizeProductImage } from "@/lib/image"
+import { buildProductPath } from "@/lib/seo"
 import { getDisplaySizes, useShopCatalog, type CatalogProduct } from "@/components/features/use-shop-catalog"
 import { filterCatalogProducts } from "@/lib/catalog-filter"
 import { ViewportPrefetchLink } from "@/components/ui/viewport-prefetch-link"
@@ -47,6 +48,24 @@ function SizeChips({ sizes }: { sizes?: string[] }) {
     )
 }
 
+export function ProductGridSkeleton() {
+    return (
+        <section className="bg-background px-6 md:px-12 py-16 md:py-24">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                {[...Array(8)].map((_, i) => (
+                    <div key={i} className={`space-y-3 ${i >= 6 ? "hidden md:block" : ""}`}>
+                        <div className="aspect-[3/4] bg-muted animate-pulse" />
+                        <div className="space-y-2 px-1">
+                            <div className="h-3 bg-muted animate-pulse w-3/4" />
+                            <div className="h-3 bg-muted animate-pulse w-1/2" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
+    )
+}
+
 export function ProductGrid({
     title = "Featured Drops",
     gender,
@@ -74,14 +93,18 @@ export function ProductGrid({
     mobileLimit?: number
     viewAllHref?: string
     viewAllLabel?: string
-    initialProducts?: CatalogProduct[]
+    initialProducts?: CatalogProduct[] | Promise<CatalogProduct[]>
     hideWhenEmpty?: boolean
     maxProducts?: number | null
     showGenderTabs?: boolean
     enableInfiniteScroll?: boolean
 }) {
+    const resolvedInitialProducts = initialProducts && typeof (initialProducts as any).then === "function"
+        ? use(initialProducts as Promise<CatalogProduct[]>)
+        : initialProducts as CatalogProduct[] | undefined;
+
     const [activeTab, setActiveTab] = useState<"men" | "women">(gender === "women" ? "women" : "men")
-    const { data: catalogProducts = [], isLoading: loading } = useShopCatalog(initialProducts)
+    const { data: catalogProducts = [], isLoading: loading } = useShopCatalog(resolvedInitialProducts)
     const [visibleCount, setVisibleCount] = useState(8)
     const hasHeaderContent = Boolean(title) || (showGenderTabs && !gender && !fixedCategory && layout !== "scroll")
     const showTabs = showGenderTabs && !gender && !fixedCategory && layout !== "scroll"
@@ -200,8 +223,8 @@ export function ProductGrid({
             {/* Loading State — Skeleton */}
             {loading && (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-                    {[...Array(4)].map((_, i) => (
-                        <div key={i} className="space-y-3">
+                    {[...Array(8)].map((_, i) => (
+                        <div key={i} className={`space-y-3 ${i >= 6 ? "hidden md:block" : ""}`}>
                             <div className="aspect-[3/4] bg-muted animate-pulse" />
                             <div className="space-y-2 px-1">
                                 <div className="h-3 bg-muted animate-pulse w-3/4" />
@@ -225,7 +248,7 @@ export function ProductGrid({
                     <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-6 px-6 md:-mx-12 md:px-12">
                         {displayedProducts.map((product) => (
                             <div key={product.id} className="flex-shrink-0 w-[200px] sm:w-[240px] snap-start">
-                                <ViewportPrefetchLink href={`/product/${product.id}`}>
+                                <ViewportPrefetchLink href={buildProductPath(product.slug)}>
                                     <Card className="bg-transparent border-0 rounded-none hover-lift">
                                         <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
                                             {product.stock === 0 && (
@@ -265,7 +288,7 @@ export function ProductGrid({
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                         {displayedProducts.map((product) => (
                             <div key={product.id}>
-                                <ViewportPrefetchLink href={`/product/${product.id}`}>
+                                <ViewportPrefetchLink href={buildProductPath(product.slug)}>
                                     <Card className="bg-transparent border-0 rounded-none hover-lift">
                                         <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
                                             {/* Sold Out Badge */}
@@ -330,7 +353,7 @@ export function ProductGrid({
                                 key={product.id} 
                                 className={index >= mobileLimit ? "hidden md:block" : undefined}
                             >
-                                <ViewportPrefetchLink href={`/product/${product.id}`}>
+                                <ViewportPrefetchLink href={buildProductPath(product.slug)}>
                                     <Card className="bg-transparent border-0 rounded-none hover-lift">
                                         <CardContent className="p-0 relative aspect-[3/4] overflow-hidden bg-muted/30">
                                             {/* Sold Out Badge */}

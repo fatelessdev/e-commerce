@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, use } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -317,8 +317,12 @@ export function ComboSection({
   limit?: number;
   interactive?: boolean;
   mobileLimit?: number;
-  initialCombos?: Combo[];
+  initialCombos?: Combo[] | Promise<Combo[]>;
 }) {
+  const resolvedInitialCombos = initialCombos && typeof (initialCombos as any).then === "function"
+    ? use(initialCombos as Promise<Combo[]>)
+    : initialCombos as Combo[] | undefined;
+
   const { data: combos = [], isLoading: loading } = useQuery({
     queryKey: ["combos", limit],
     queryFn: async () => {
@@ -327,8 +331,8 @@ export function ComboSection({
       const data = await response.json();
       return (data.combos || []) as Combo[];
     },
-    initialData: initialCombos,
-    enabled: initialCombos === undefined,
+    initialData: resolvedInitialCombos,
+    enabled: resolvedInitialCombos === undefined,
     staleTime: 1000 * 60 * 5,
   });
 

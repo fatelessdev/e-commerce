@@ -124,6 +124,7 @@ test("campaign email template uses email-safe width and product image constraint
     products: [
       {
         id: "p1",
+        slug: "seoul-edge-polo",
         name: "Seoul Edge Polo",
         image: "https://xilar.in/product.jpg",
         sellingPrice: "1299",
@@ -138,10 +139,10 @@ test("campaign email template uses email-safe width and product image constraint
   assert.match(html, /width="240"/);
   assert.match(html, /height="300"/);
   assert.doesNotMatch(html, /display:grid/);
-  assert.match(html, /\/about\/logo\.jpeg/);
+  assert.match(html, /\/logo\.jpeg/);
 });
 
-test("campaign email template links featured products by product id", () => {
+test("campaign email template links featured products by product slug", () => {
   process.env.BETTER_AUTH_SECRET = "template-test-secret";
   const html = buildCampaignEmailHtml({
     draft: validDraft,
@@ -149,6 +150,7 @@ test("campaign email template links featured products by product id", () => {
     products: [
       {
         id: "b72305dc-5fc9-453b-b4dc-830d628c4fd8",
+        slug: "xilar-dualform",
         name: "XILAR Dualform",
         image: "https://xilar.in/product.jpg",
         sellingPrice: "799",
@@ -158,8 +160,8 @@ test("campaign email template links featured products by product id", () => {
     appUrl: "https://xilar.in",
   });
 
-  assert.match(html, /https:\/\/xilar\.in\/product\/b72305dc-5fc9-453b-b4dc-830d628c4fd8/);
-  assert.doesNotMatch(html, /https:\/\/xilar\.in\/product\/xilar-dualform/);
+  assert.match(html, /https:\/\/xilar\.in\/product\/xilar-dualform/);
+  assert.doesNotMatch(html, /https:\/\/xilar\.in\/product\/b72305dc-5fc9-453b-b4dc-830d628c4fd8/);
 });
 
 test("campaign email template renders up to twelve selected products", () => {
@@ -169,6 +171,7 @@ test("campaign email template renders up to twelve selected products", () => {
     recipient: { userId: "u1", email: "customer@example.com", name: "Customer" },
     products: Array.from({ length: MARKETING_PRODUCT_SELECTION_LIMIT + 1 }, (_, index) => ({
       id: `p${index + 1}`,
+      slug: `product-${index + 1}`,
       name: `Product ${index + 1}`,
       image: "https://xilar.in/product.jpg",
       sellingPrice: "799",
@@ -177,8 +180,8 @@ test("campaign email template renders up to twelve selected products", () => {
     appUrl: "https://xilar.in",
   });
 
-  assert.match(html, /https:\/\/xilar\.in\/product\/p12/);
-  assert.doesNotMatch(html, /https:\/\/xilar\.in\/product\/p13/);
+  assert.match(html, /https:\/\/xilar\.in\/product\/product-12/);
+  assert.doesNotMatch(html, /https:\/\/xilar\.in\/product\/product-13/);
 });
 
 test("campaign email template normalizes Cloudinary product images to a consistent crop", () => {
@@ -189,6 +192,7 @@ test("campaign email template normalizes Cloudinary product images to a consiste
     products: [
       {
         id: "p1",
+        slug: "seoul-edge-polo",
         name: "Seoul Edge Polo",
         image: "https://res.cloudinary.com/demo/image/upload/v123/product.jpg",
         sellingPrice: "1299",

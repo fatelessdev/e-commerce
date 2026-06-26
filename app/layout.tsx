@@ -97,14 +97,14 @@ export const metadata: Metadata = {
     title: "XILAR | The Future Wear",
     description:
       "Next-gen streetwear for the bold. Premium basics, oversized fits, and urban essentials.",
-    images: ["/logo.png"],
+    images: ["/logo.jpeg"],
   },
   icons: {
     icon: [
-      { url: "/logo.png" },
-      { url: "/logo.png", sizes: "32x32", type: "image/png" },
+      { url: "/logo.jpeg" },
+      { url: "/logo.jpeg", sizes: "32x32", type: "image/jpeg" },
     ],
-    apple: [{ url: "/logo.png", sizes: "180x180", type: "image/png" }],
+    apple: [{ url: "/logo.jpeg", sizes: "180x180", type: "image/jpeg" }],
   },
   robots: {
     index: true,

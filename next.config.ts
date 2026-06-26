@@ -1,5 +1,23 @@
 import type { NextConfig } from "next";
 
+const catalogNoindexParams = ["search", "size", "minPrice", "maxPrice", "isNew", "isFeatured", "isPremium"];
+const catalogNoindexSources = ["/shop", "/shop/:path*", "/new", "/collections/:path*"];
+
+function catalogNoindexHeaders() {
+  return catalogNoindexSources.flatMap((source) =>
+    catalogNoindexParams.map((key) => ({
+      source,
+      has: [{ type: "query" as const, key }],
+      headers: [
+        {
+          key: "X-Robots-Tag",
+          value: "noindex, follow",
+        },
+      ],
+    }))
+  );
+}
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
@@ -13,6 +31,7 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   async headers() {
     return [
+      ...catalogNoindexHeaders(),
       {
         source: "/(.*)",
         headers: [
@@ -43,7 +62,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/logo.png",
+        source: "/logo.jpeg",
         headers: [
           {
             key: "Cache-Control",
