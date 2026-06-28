@@ -14,40 +14,52 @@ const PANEL_TRANSITION = {
 } as const;
 const HERO_IMAGES = [
   {
-    src: "/hero/image(6).webp",
-    eyebrow: "New season",
-    title: "Premium shirts",
+    src: "/hero/newhero.jpeg",
+    alt: "Model wearing a dark green number 9 varsity graphic tee",
+    eyebrow: "Number 9 drop",
+    title: "Varsity green tee",
+    cta: "Shop graphic tees",
     href: "/shop/men",
   },
   {
-    src: "/hero/image(10).webp",
-    eyebrow: "Summer styles",
-    title: "Dreamy dresses",
-    href: "/shop",
+    src: "/hero/newhero1.webp",
+    alt: "Model wearing a white knit polo with striped short sleeves",
+    eyebrow: "Clean collar edit",
+    title: "Striped knit polo",
+    cta: "Shop polos",
+    href: "/shop/men",
   },
   {
-    src: "/hero/image(7).webp",
-    eyebrow: "Clean fits",
-    title: "Streetwear basics",
-    href: "/collections/premium",
+    src: "/hero/newhero2.webp",
+    alt: "Model wearing a beige palm-print polo with relaxed white trousers",
+    eyebrow: "Sunlit summer fit",
+    title: "Resort polo set",
+    cta: "Shop summer fits",
+    href: "/collections/summer-26",
   },
   {
-    src: "/hero/image(8).webp",
-    eyebrow: "Fresh drops",
-    title: "New arrivals",
+    src: "/hero/newhero3.jpeg",
+    alt: "Model wearing a brown oversized tee with a back graphic under red lighting",
+    eyebrow: "Red room graphics",
+    title: "Backprint brown tee",
+    cta: "Shop backprints",
+    href: "/shop/men",
+  },
+  {
+    src: "/hero/newhero4.jpeg",
+    alt: "Model wearing a black oversized graphic tee outside a XILAR storefront",
+    eyebrow: "Storefront drop",
+    title: "Gallery black tee",
+    cta: "Shop new arrivals",
     href: "/new",
   },
   {
-    src: "/hero/image(9).webp",
-    eyebrow: "For him",
-    title: "Premium polos",
-    href: "/shop/men",
-  },
-  {
-    src: "/hero/image(11).webp",
-    eyebrow: "For him",
-    title: "Finish the fit",
-    href: "/shop/accessories",
+    src: "/hero/newhero5.jpeg",
+    alt: "Model wearing an olive tee with tonal embossed back artwork",
+    eyebrow: "Tonal streetwear",
+    title: "Embossed olive tee",
+    cta: "Shop premium tees",
+    href: "/collections/premium",
   },
 ];
 
@@ -148,7 +160,7 @@ export function Hero() {
                   <motion.div style={{ willChange: "transform" }} className="absolute inset-0">
                     <Image
                       src={slide.src}
-                      alt={slide.title}
+                      alt={slide.alt}
                       fill
                       sizes={isActive ? "(max-width: 768px) 100vw, 56vw" : "22vw"}
                       className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-[1.025]"
@@ -202,7 +214,7 @@ export function Hero() {
                             size="lg"
                             className="group/cta h-13 rounded-full bg-white px-8 text-xs font-semibold uppercase tracking-[0.2em] text-neutral-950 transition-all duration-500 hover:bg-red-accent hover:text-white"
                           >
-                            Shop now
+                            {activeSlide.cta}
                             <ArrowRight className="ml-2 h-3.5 w-3.5 transition-transform duration-500 group-hover/cta:translate-x-1" />
                           </Button>
                         </Link>
@@ -243,7 +255,7 @@ export function Hero() {
             >
               <Image
                 src={activeSlide.src}
-                alt={activeSlide.title}
+                alt={activeSlide.alt}
                 fill
                 sizes="100vw"
                 className="object-cover"
@@ -286,7 +298,7 @@ export function Hero() {
                       size="lg"
                       className="group/cta h-13 rounded-full bg-white px-8 text-xs font-semibold uppercase tracking-[0.2em] text-neutral-950 transition-all duration-500 hover:bg-red-accent hover:text-white"
                     >
-                      Shop now
+                      {activeSlide.cta}
                       <ArrowRight className="ml-2 h-3.5 w-3.5 transition-transform duration-500 group-hover/cta:translate-x-1" />
                     </Button>
                   </Link>
