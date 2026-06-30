@@ -219,12 +219,15 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
     }
 
     const currentStock = selectedVariantStock()
+    // Performance optimization: Extracting optional chaining (product?.images) to a local variable
+    // prevents React Compiler dependency mismatch warnings and ensures proper memoization.
+    const productImages = product?.images;
     const images = useMemo(() => {
-        const productImages = product?.images || []
-        return productImages.length > 0
-            ? productImages.map((image) => normalizeProductImage(image))
+        const imgs = productImages || []
+        return imgs.length > 0
+            ? imgs.map((image) => normalizeProductImage(image))
             : [normalizeProductImage()]
-    }, [product?.images])
+    }, [productImages])
 
     useEffect(() => {
         if (!product || images.length <= 1) return
