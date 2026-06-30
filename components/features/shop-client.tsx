@@ -269,6 +269,7 @@ export function ShopClient({
                     <input
                         type="text"
                         placeholder="Search products..."
+                        aria-label="Search products"
                         value={searchQuery}
                         onChange={(e) => {
                             const value = e.target.value
