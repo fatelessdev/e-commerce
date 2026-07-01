@@ -17,48 +17,48 @@ const HERO_IMAGES = [
     src: "/hero/newhero.jpeg",
     alt: "Model wearing a dark green number 9 varsity graphic tee",
     eyebrow: "Number 9 drop",
-    title: "Varsity green tee",
-    cta: "Shop graphic tees",
+    title: "Varsity tee",
+    cta: "Graphics",
     href: "/shop/men",
   },
   {
     src: "/hero/newhero1.webp",
     alt: "Model wearing a white knit polo with striped short sleeves",
     eyebrow: "Clean collar edit",
-    title: "Striped knit polo",
-    cta: "Shop polos",
+    title: "Knit polo",
+    cta: "Polos",
     href: "/shop/men",
   },
   {
     src: "/hero/newhero2.webp",
     alt: "Model wearing a beige palm-print polo with relaxed white trousers",
     eyebrow: "Sunlit summer fit",
-    title: "Resort polo set",
-    cta: "Shop summer fits",
+    title: "Resort set",
+    cta: "Summer",
     href: "/collections/summer-26",
   },
   {
     src: "/hero/newhero3.jpeg",
     alt: "Model wearing a brown oversized tee with a back graphic under red lighting",
     eyebrow: "Red room graphics",
-    title: "Backprint brown tee",
-    cta: "Shop backprints",
+    title: "Brown tee",
+    cta: "Backprints",
     href: "/shop/men",
   },
   {
     src: "/hero/newhero4.jpeg",
     alt: "Model wearing a black oversized graphic tee outside a XILAR storefront",
     eyebrow: "Storefront drop",
-    title: "Gallery black tee",
-    cta: "Shop new arrivals",
+    title: "Black tee",
+    cta: "New",
     href: "/new",
   },
   {
     src: "/hero/newhero5.jpeg",
     alt: "Model wearing an olive tee with tonal embossed back artwork",
     eyebrow: "Tonal streetwear",
-    title: "Embossed olive tee",
-    cta: "Shop premium tees",
+    title: "Olive tee",
+    cta: "Premium",
     href: "/collections/premium",
   },
 ];
@@ -204,25 +204,25 @@ export function Hero() {
                         initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 26, filter: "blur(6px)" }}
                         animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                         transition={{ duration: 0.72, delay: 0.16, ease: EASE_OUT_EXPO }}
-                        className="font-display max-w-2xl text-6xl leading-[0.86] md:text-8xl lg:text-9xl"
+                        className="font-display max-w-full whitespace-nowrap text-5xl leading-[0.9] sm:text-6xl md:text-7xl xl:text-8xl"
                       >
                         {activeSlide.title}
                       </motion.h1>
-                      <div className="mt-8 flex flex-wrap items-center gap-3">
-                        <Link href={activeSlide.href}>
+                      <div className="mt-7 flex flex-nowrap items-center gap-2.5 sm:gap-3">
+                        <Link href={activeSlide.href} className="min-w-0 flex-none">
                           <Button
                             size="lg"
-                            className="group/cta h-13 rounded-full bg-white px-8 text-xs font-semibold uppercase tracking-[0.2em] text-neutral-950 transition-all duration-500 hover:bg-red-accent hover:text-white"
+                            className="group/cta h-11 rounded-full bg-white px-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-950 transition-all duration-500 hover:bg-red-accent hover:text-white sm:h-12 sm:px-6 sm:text-xs sm:tracking-[0.18em]"
                           >
                             {activeSlide.cta}
                             <ArrowRight className="ml-2 h-3.5 w-3.5 transition-transform duration-500 group-hover/cta:translate-x-1" />
                           </Button>
                         </Link>
-                        <Link href="/shop">
+                        <Link href="/shop" className="min-w-0 flex-none">
                           <Button
                             size="lg"
                             variant="outline"
-                            className="h-13 rounded-full border-white/35 bg-transparent px-8 text-xs font-semibold uppercase tracking-[0.2em] text-white transition-all duration-500 hover:border-white/70 hover:text-red-accent"
+                            className="h-11 rounded-full border-white/35 bg-transparent px-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white transition-all duration-500 hover:border-white/70 hover:text-red-accent sm:h-12 sm:px-6 sm:text-xs sm:tracking-[0.18em]"
                           >
                             View all
                           </Button>
@@ -288,25 +288,25 @@ export function Hero() {
                   initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 24, filter: "blur(6px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                   transition={{ duration: 0.62, delay: 0.12, ease: EASE_OUT_EXPO }}
-                  className="font-display max-w-2xl text-6xl leading-[0.86]"
+                  className="font-display max-w-full whitespace-nowrap text-5xl leading-[0.9] sm:text-6xl"
                 >
                   {activeSlide.title}
                 </motion.h1>
-                <div className="mt-8 flex flex-wrap items-center gap-3">
-                  <Link href={activeSlide.href}>
+                <div className="mt-7 flex flex-nowrap items-center gap-2.5">
+                  <Link href={activeSlide.href} className="min-w-0 flex-none">
                     <Button
                       size="lg"
-                      className="group/cta h-13 rounded-full bg-white px-8 text-xs font-semibold uppercase tracking-[0.2em] text-neutral-950 transition-all duration-500 hover:bg-red-accent hover:text-white"
+                      className="group/cta h-11 rounded-full bg-white px-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-950 transition-all duration-500 hover:bg-red-accent hover:text-white sm:h-12 sm:px-6 sm:text-xs sm:tracking-[0.18em]"
                     >
                       {activeSlide.cta}
                       <ArrowRight className="ml-2 h-3.5 w-3.5 transition-transform duration-500 group-hover/cta:translate-x-1" />
                     </Button>
                   </Link>
-                  <Link href="/shop">
+                  <Link href="/shop" className="min-w-0 flex-none">
                     <Button
                       size="lg"
                       variant="outline"
-                      className="h-13 rounded-full border-white/35 bg-transparent px-8 text-xs font-semibold uppercase tracking-[0.2em] text-white transition-all duration-500 hover:border-white/70 hover:text-white"
+                      className="h-11 rounded-full border-white/35 bg-transparent px-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white transition-all duration-500 hover:border-white/70 hover:text-white sm:h-12 sm:px-6 sm:text-xs sm:tracking-[0.18em]"
                     >
                       View all
                     </Button>
