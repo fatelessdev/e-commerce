@@ -15,11 +15,12 @@ export async function uploadImage(
   options?: {
     folder?: string;
     publicId?: string;
+    mediaType?: string;
     transformation?: object;
   }
 ): Promise<{ url: string; publicId: string }> {
   const result = await cloudinary.uploader.upload(
-    typeof file === "string" ? file : `data:image/jpeg;base64,${file.toString("base64")}`,
+    typeof file === "string" ? file : `data:${options?.mediaType || "image/jpeg"};base64,${file.toString("base64")}`,
     {
       folder: options?.folder || "xilar/products",
       public_id: options?.publicId,

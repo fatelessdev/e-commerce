@@ -212,6 +212,33 @@ export const productRecommendations = pgTable("product_recommendations", {
   ),
 ]);
 
+export const productTryOnRuns = pgTable("product_try_on_runs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  productId: uuid("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  bodyImageUrl: text("body_image_url").notNull(),
+  bodyImagePublicId: text("body_image_public_id").notNull(),
+  outputImageUrl: text("output_image_url").notNull(),
+  outputImagePublicId: text("output_image_public_id").notNull(),
+  productImageUrl: text("product_image_url").notNull(),
+  productImageIndex: integer("product_image_index").notNull(),
+  tryOnMode: text("try_on_mode", { enum: ["upper", "lower", "full"] }).notNull(),
+  modelId: text("model_id").notNull(),
+  promptVersion: text("prompt_version").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  index("product_try_on_runs_product_user_created_idx").on(
+    table.productId,
+    table.userId,
+    table.createdAt,
+  ),
+  index("product_try_on_runs_user_created_idx").on(table.userId, table.createdAt),
+]);
+
 // ============================================
 // PRODUCT VARIANTS TABLE (per-size-per-color stock)
 // ============================================
@@ -494,6 +521,7 @@ export const userRelations = relations(user, ({ many }) => ({
   marketingCampaigns: many(marketingCampaigns),
   marketingRecipients: many(marketingCampaignRecipients),
   marketingSuppressions: many(marketingEmailSuppressions),
+  tryOnRuns: many(productTryOnRuns),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -516,6 +544,18 @@ export const productsRelations = relations(products, ({ many }) => ({
   variants: many(productVariants),
   combosAsA: many(combos, { relationName: "comboProductA" }),
   combosAsB: many(combos, { relationName: "comboProductB" }),
+  tryOnRuns: many(productTryOnRuns),
+}));
+
+export const productTryOnRunsRelations = relations(productTryOnRuns, ({ one }) => ({
+  product: one(products, {
+    fields: [productTryOnRuns.productId],
+    references: [products.id],
+  }),
+  user: one(user, {
+    fields: [productTryOnRuns.userId],
+    references: [user.id],
+  }),
 }));
 
 export const productVariantsRelations = relations(productVariants, ({ one }) => ({

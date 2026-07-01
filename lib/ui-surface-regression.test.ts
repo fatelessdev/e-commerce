@@ -63,6 +63,17 @@ test("public product links use slugs while product actions keep ids", () => {
   assert.doesNotMatch(`${shopClient}\n${productGrid}\n${wishlistClient}`, /\/product\/\$\{(?:product|item)\.id\}/);
 });
 
+test("product try-on is exposed from the client surface without making slug pages admin-dynamic", () => {
+  const productPage = read("app/product/[slug]/page.tsx");
+  const productClient = read("components/features/product-client.tsx");
+
+  assert.doesNotMatch(productPage, /requireAdmin|isAdmin|getServerSession/);
+  assert.match(productClient, /ProductTryOnWorkspace/);
+  assert.match(productClient, /Try it on/);
+  assert.equal(existsSync("app/api/products/[id]/try-ons/route.ts"), true);
+  assert.equal(existsSync("app/api/products/[productId]/try-ons/route.ts"), false);
+});
+
 test("old product UUID URLs are intercepted before page streaming", () => {
   const proxy = read("proxy.ts");
 
