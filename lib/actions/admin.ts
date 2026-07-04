@@ -286,6 +286,7 @@ export async function getProductsPage(options?: {
   limit?: number;
   offset?: number;
 }) {
+  await requireAdmin();
   const limit = Math.max(1, Math.min(options?.limit ?? ADMIN_PRODUCTS_PAGE_SIZE, 100));
   const offset = Math.max(0, options?.offset ?? 0);
   const rows = await getProducts({
@@ -617,6 +618,7 @@ export async function issueStoreCredit(data: IssueStoreCreditInput) {
  * Get all store credit coupons for a user
  */
 export async function getUserStoreCredits(userId: string) {
+  await requireAdmin();
   const credits = await db
     .select()
     .from(coupons)
