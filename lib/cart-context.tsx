@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from "react"
 import { generateSecureCode } from "@/lib/utils"
 
 export interface CartItem {
@@ -165,8 +165,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     const clearCart = () => setItems([])
 
-    const totalItems = items.reduce((acc, item) => acc + item.quantity, 0)
-    const totalPrice = items.reduce((acc, item) => acc + item.price * item.quantity, 0)
+    // Performance optimization: Memoizing O(N) array reductions to prevent
+    // unnecessary recalculations on every render cycle when items haven't changed
+    const totalItems = useMemo(() => items.reduce((acc, item) => acc + item.quantity, 0), [items])
+    const totalPrice = useMemo(() => items.reduce((acc, item) => acc + item.price * item.quantity, 0), [items])
 
     return (
         <CartContext.Provider
