@@ -81,8 +81,9 @@ export default function NewCouponPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Coupon Code *</label>
+              <label htmlFor="code" className="text-sm font-medium">Coupon Code *</label>
               <input
+                id="code"
                 type="text"
                 required
                 value={formData.code}
@@ -99,8 +100,9 @@ export default function NewCouponPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Discount Type *</label>
+                <label htmlFor="discountType" className="text-sm font-medium">Discount Type *</label>
                 <select
+                  id="discountType"
                   required
                   value={formData.discountType}
                   onChange={(e) =>
@@ -116,10 +118,11 @@ export default function NewCouponPage() {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">
+                <label htmlFor="discountValue" className="text-sm font-medium">
                   Discount Value *
                 </label>
                 <input
+                  id="discountValue"
                   type="number"
                   required
                   min="0"
@@ -137,8 +140,9 @@ export default function NewCouponPage() {
 
             {formData.discountType === "percentage" && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Max Discount (₹)</label>
+                <label htmlFor="maxDiscount" className="text-sm font-medium">Max Discount (₹)</label>
                 <input
+                  id="maxDiscount"
                   type="number"
                   min="0"
                   step="0.01"
@@ -156,8 +160,9 @@ export default function NewCouponPage() {
             )}
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Minimum Order Value (₹)</label>
+              <label htmlFor="minOrderValue" className="text-sm font-medium">Minimum Order Value (₹)</label>
               <input
+                id="minOrderValue"
                 type="number"
                 min="0"
                 step="0.01"
@@ -172,8 +177,9 @@ export default function NewCouponPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Valid Until</label>
+                <label htmlFor="validUntil" className="text-sm font-medium">Valid Until</label>
                 <input
+                  id="validUntil"
                   type="datetime-local"
                   value={formData.validUntil}
                   onChange={(e) =>
@@ -183,8 +189,9 @@ export default function NewCouponPage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Max Uses</label>
+                <label htmlFor="maxUses" className="text-sm font-medium">Max Uses</label>
                 <input
+                  id="maxUses"
                   type="number"
                   min="1"
                   value={formData.maxUses}
@@ -198,8 +205,9 @@ export default function NewCouponPage() {
             </div>
 
             <div className="flex flex-wrap gap-6">
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label htmlFor="isActive" className="flex items-center gap-2 cursor-pointer">
                 <input
+                  id="isActive"
                   type="checkbox"
                   checked={formData.isActive}
                   onChange={(e) =>
@@ -209,8 +217,9 @@ export default function NewCouponPage() {
                 />
                 <span className="text-sm">Active</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label htmlFor="forNewUsersOnly" className="flex items-center gap-2 cursor-pointer">
                 <input
+                  id="forNewUsersOnly"
                   type="checkbox"
                   checked={formData.forNewUsersOnly}
                   onChange={(e) =>
