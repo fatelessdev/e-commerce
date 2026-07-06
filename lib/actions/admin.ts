@@ -617,6 +617,8 @@ export async function issueStoreCredit(data: IssueStoreCreditInput) {
  * Get all store credit coupons for a user
  */
 export async function getUserStoreCredits(userId: string) {
+  await requireAdmin();
+
   const credits = await db
     .select()
     .from(coupons)
