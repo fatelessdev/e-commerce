@@ -1,0 +1,89 @@
+--- lib/cart-context.tsx
++++ lib/cart-context.tsx
+@@ -2,3 +2,3 @@
+
+-import { createContext, useContext, useState, useEffect, ReactNode } from "react"
++import { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from "react"
+ import { generateSecureCode } from "@/lib/utils"
+@@ -62,3 +62,3 @@
+
+-    const addItem = (newItem: Omit<CartItem, "quantity">) => {
++    const addItem = useCallback((newItem: Omit<CartItem, "quantity">) => {
+         setItems((prev) => {
+@@ -82,4 +82,4 @@
+         setIsOpen(true)
+-    }
++    }, [])
+
+-    const addCombo: CartContextType["addCombo"] = (combo) => {
++    const addCombo: CartContextType["addCombo"] = useCallback((combo) => {
+         const comboGroupId = `combo-${Date.now()}-${generateSecureCode("", 6).toLowerCase()}`
+@@ -96,4 +96,4 @@
+         ])
+         setIsOpen(true)
+-    }
++    }, [])
+
+-    const removeItem = (id: string, size: string, color?: string, comboGroupId?: string) => {
++    const removeItem = useCallback((id: string, size: string, color?: string, comboGroupId?: string) => {
+         setItems((prev) => {
+@@ -113,4 +113,4 @@
+             return prev.filter((i) => !(i.id === id && i.size === size && i.color === color && !i.comboGroupId))
+         })
+-    }
++    }, [])
+
+-    const updateQuantity = (id: string, size: string, quantity: number, color?: string, comboGroupId?: string) => {
++    const updateQuantity = useCallback((id: string, size: string, quantity: number, color?: string, comboGroupId?: string) => {
+         if (quantity <= 0) {
+@@ -140,25 +140,28 @@
+             )
+         })
+-    }
++    }, [removeItem])
+
+-    const clearCart = () => setItems([])
++    const clearCart = useCallback(() => setItems([]), [])
+
+-    const totalItems = items.reduce((acc, item) => acc + item.quantity, 0)
+-    const totalPrice = items.reduce((acc, item) => acc + item.price * item.quantity, 0)
++    const contextValue = useMemo(() => {
++        // Performance optimization: Memoizing context derivations (O(N) reductions)
++        // and the value object itself prevents unnecessary recalculations and
++        // redundant renders across the consumer tree on every provider render.
++        const totalItems = items.reduce((acc, item) => acc + item.quantity, 0)
++        const totalPrice = items.reduce((acc, item) => acc + item.price * item.quantity, 0)
++
++        return {
++            items,
++            addItem,
++            addCombo,
++            removeItem,
++            updateQuantity,
++            clearCart,
++            totalItems,
++            totalPrice,
++            isHydrated,
++            isOpen,
++            setIsOpen,
++        }
++    }, [items, isHydrated, isOpen, addItem, addCombo, removeItem, updateQuantity, clearCart])
+
+     return (
+-        <CartContext.Provider
+-            value={{
+-                items,
+-                addItem,
+-                addCombo,
+-                removeItem,
+-                updateQuantity,
+-                clearCart,
+-                totalItems,
+-                totalPrice,
+-                isHydrated,
+-                isOpen,
+-                setIsOpen,
+-            }}
+-        >
++        <CartContext.Provider value={contextValue}>
+             {children}
