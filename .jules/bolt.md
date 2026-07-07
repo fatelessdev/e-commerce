@@ -1,0 +1,3 @@
+## 2025-02-28 - Optimizing React Context Performance
+**Learning:** In the current setup without automatic memoization of `createContext` derivations in all places, creating un-memoized object references (like the `value` passed to `<Context.Provider>`) and deriving state inside render using `.reduce()` (like `totalItems` and `totalPrice`) forces re-evaluations across the entire consumer tree on every render, which scales poorly for large carts.
+**Action:** Always wrap context provider value objects in `useMemo`, wrap mutations inside `useCallback`, and batch O(N) derivations from context arrays inside a single `useMemo` dependency array to eliminate unnecessary client-side CPU cycles.

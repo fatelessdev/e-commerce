@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from "react"
 import { generateSecureCode } from "@/lib/utils"
 
 export interface CartItem {
@@ -74,7 +74,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
     }, [items, isHydrated])
 
-    const addItem = (newItem: Omit<CartItem, "quantity">) => {
+    const addItem = useCallback((newItem: Omit<CartItem, "quantity">) => {
         setItems((prev) => {
             const existing = prev.find((i) =>
                 !i.comboGroupId &&
@@ -95,9 +95,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
             return [...prev, { ...newItem, quantity: 1 }]
         })
         setIsOpen(true)
-    }
+    }, [])
 
-    const addCombo: CartContextType["addCombo"] = (combo) => {
+    const addCombo: CartContextType["addCombo"] = useCallback((combo) => {
         const comboGroupId = `combo-${Date.now()}-${generateSecureCode("", 6).toLowerCase()}`
         setItems((prev) => [
             ...prev,
@@ -111,9 +111,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
             })),
         ])
         setIsOpen(true)
-    }
+    }, [])
 
-    const removeItem = (id: string, size: string, color?: string, comboGroupId?: string) => {
+    const removeItem = useCallback((id: string, size: string, color?: string, comboGroupId?: string) => {
         setItems((prev) => {
             const target = prev.find((i) =>
                 i.id === id &&
@@ -130,9 +130,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
             return prev.filter((i) => !(i.id === id && i.size === size && i.color === color && !i.comboGroupId))
         })
-    }
+    }, [])
 
-    const updateQuantity = (id: string, size: string, quantity: number, color?: string, comboGroupId?: string) => {
+    const updateQuantity = useCallback((id: string, size: string, quantity: number, color?: string, comboGroupId?: string) => {
         if (quantity <= 0) {
             removeItem(id, size, color, comboGroupId)
             return
@@ -161,29 +161,47 @@ export function CartProvider({ children }: { children: ReactNode }) {
                     : i
             )
         })
-    }
+    }, [removeItem])
 
-    const clearCart = () => setItems([])
+    const clearCart = useCallback(() => setItems([]), [])
 
-    const totalItems = items.reduce((acc, item) => acc + item.quantity, 0)
-    const totalPrice = items.reduce((acc, item) => acc + item.price * item.quantity, 0)
+    // Performance optimization: Memoizing O(N) array reductions and context value to prevent
+    // re-evaluations across the entire consumer tree on every render.
+    const { totalItems, totalPrice } = useMemo(() => {
+        return {
+            totalItems: items.reduce((acc, item) => acc + item.quantity, 0),
+            totalPrice: items.reduce((acc, item) => acc + item.price * item.quantity, 0)
+        }
+    }, [items])
+
+    const contextValue = useMemo(() => ({
+        items,
+        addItem,
+        addCombo,
+        removeItem,
+        updateQuantity,
+        clearCart,
+        totalItems,
+        totalPrice,
+        isHydrated,
+        isOpen,
+        setIsOpen,
+    }), [
+        items,
+        addItem,
+        addCombo,
+        removeItem,
+        updateQuantity,
+        clearCart,
+        totalItems,
+        totalPrice,
+        isHydrated,
+        isOpen,
+        setIsOpen
+    ])
 
     return (
-        <CartContext.Provider
-            value={{
-                items,
-                addItem,
-                addCombo,
-                removeItem,
-                updateQuantity,
-                clearCart,
-                totalItems,
-                totalPrice,
-                isHydrated,
-                isOpen,
-                setIsOpen,
-            }}
-        >
+        <CartContext.Provider value={contextValue}>
             {children}
         </CartContext.Provider>
     )
