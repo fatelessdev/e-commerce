@@ -5,16 +5,16 @@ import { JsonLd, breadcrumbJsonLd } from "@/components/seo/structured-data"
 import { normalizeSiteUrl } from "@/lib/seo"
 
 export const metadata: Metadata = {
-    title: "Refund Policy — Store Credit with 5% Bonus",
+    title: "Refund Policy — XILAR Wallet",
     description:
-        "XILAR refund policy: all refunds issued as store credit with a 5% bonus. Valid 30–60 days. No cash refunds.",
+        "XILAR refund policy: approved refunds are credited to your XILAR wallet. No cash withdrawals or transfers.",
     alternates: {
         canonical: "/policies/refunds",
     },
     openGraph: {
         title: "Refund Policy | XILAR",
         description:
-            "All refunds issued as store credit with a 5% bonus. Valid 30–60 days. No cash refunds.",
+            "Approved refunds are credited to your XILAR wallet. No cash withdrawals or transfers.",
         url: "/policies/refunds",
     },
 }
@@ -40,7 +40,7 @@ export default function RefundPolicyPage() {
                     <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium">Policy</p>
                 </div>
                 <h1 className="font-display text-4xl md:text-6xl">Refund policy</h1>
-                <p className="text-sm text-muted-foreground mt-2">Store credit system</p>
+                <p className="text-sm text-muted-foreground mt-2">Account-bound wallet refunds</p>
             </div>
 
             <div className="p-6 md:px-12 max-w-3xl space-y-8">
@@ -49,10 +49,10 @@ export default function RefundPolicyPage() {
                     <h2 className="text-sm font-semibold uppercase tracking-[0.1em]">No cash refunds</h2>
                     <div className="p-4 bg-secondary/10 border border-border/60">
                         <p className="font-medium text-sm">
-                            All refunds for defective items are processed as <strong>store credit (coupons)</strong>.
+                            All approved refunds are processed as <strong>XILAR wallet credit</strong>.
                         </p>
                         <p className="text-xs text-muted-foreground mt-2">
-                            We do not offer cash refunds, bank transfers, or payment reversals. Store credit can be used on any future purchase.
+                            We do not offer cash withdrawals, bank transfers, or wallet transfers. Wallet credit can be used on XILAR purchases and try-ons.
                         </p>
                     </div>
                 </section>
@@ -67,13 +67,13 @@ export default function RefundPolicyPage() {
                             We value your trust. Defective returns receive:
                         </p>
                         <div className="mt-4 text-center">
-                            <div className="text-3xl font-black tracking-tight">Product value + 5%</div>
+                            <div className="text-3xl font-black tracking-tight">Approved refund value</div>
                             <p className="text-xs text-muted-foreground mt-2">
-                                As store credit
+                                To your wallet
                             </p>
                         </div>
                         <p className="text-xs mt-4 text-muted-foreground tabular-nums">
-                            Example: If you paid ₹1,999 for a defective item, you&apos;ll receive ₹2,099 as store credit.
+                            Example: If a ₹1,999 refund is approved, ₹1,999 is credited to your wallet.
                         </p>
                     </div>
                 </section>
@@ -85,7 +85,7 @@ export default function RefundPolicyPage() {
                     </h2>
                     <div className="p-4 bg-secondary/10 border border-border/60">
                         <p className="font-medium text-sm">
-                            Store credit coupons are valid for <strong>30–60 days</strong>.
+                            Wallet refunds <strong>do not expire</strong>.
                         </p>
                         <ul className="text-xs text-muted-foreground mt-3 space-y-1">
                             <li className="flex items-start gap-2"><span className="text-red-accent mt-0.5">·</span> Standard defects: 30 days validity</li>
@@ -110,7 +110,7 @@ export default function RefundPolicyPage() {
                             <span className="w-7 h-7 bg-red-accent text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">2</span>
                             <div>
                                 <p className="font-medium text-sm">Credit issued</p>
-                                <p className="text-xs text-muted-foreground">You&apos;ll receive a unique coupon code via email within 24–48 hours</p>
+                                <p className="text-xs text-muted-foreground">Your approved amount is credited directly to your XILAR wallet</p>
                             </div>
                         </div>
                         <div className="flex gap-4 p-4 border border-border/60">
@@ -132,7 +132,7 @@ export default function RefundPolicyPage() {
                         <ul className="space-y-2 text-xs">
                             <li className="flex items-start gap-2">
                                 <span className="text-red-accent mt-0.5">·</span>
-                                <span>Store credit is <strong>non-transferable</strong> and linked to your account</span>
+                                <span>Wallet credit is <strong>non-transferable</strong>, account-bound, and cannot be withdrawn</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-red-accent mt-0.5">·</span>
@@ -153,11 +153,9 @@ export default function RefundPolicyPage() {
                 {/* Why Store Credit */}
                 <section className="space-y-3">
                     <div className="p-4 bg-secondary/10 border border-border/60">
-                        <p className="font-medium text-sm">Why store credit instead of cash?</p>
+                        <p className="font-medium text-sm">Why wallet credit instead of cash?</p>
                         <p className="text-xs text-muted-foreground mt-2">
-                            Store credit allows us to keep prices affordable for everyone. Processing cash refunds involves 
-                            payment gateway fees, bank charges, and administrative overhead. By offering store credit with 
-                            a bonus, you actually get more value while we maintain competitive pricing.
+                            Wallet credit keeps refunds secure, immediate, and tied to the account that placed the order. It can only be used within XILAR and is never transferable or withdrawable.
                         </p>
                     </div>
                 </section>

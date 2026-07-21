@@ -3,6 +3,7 @@
 import { and, desc, eq } from "drizzle-orm";
 import { db, productTryOnRuns } from "@/lib/db";
 import type { TryOnBodyMode } from "@/lib/try-on";
+import { getAuthenticatedImageUrl } from "@/lib/cloudinary";
 
 export type ProductTryOnRun = {
   id: string;
@@ -23,8 +24,8 @@ function serializeTryOnRun(row: typeof productTryOnRuns.$inferSelect): ProductTr
     id: row.id,
     productId: row.productId,
     userId: row.userId,
-    bodyImageUrl: row.bodyImageUrl,
-    outputImageUrl: row.outputImageUrl,
+    bodyImageUrl: getAuthenticatedImageUrl(row.bodyImagePublicId),
+    outputImageUrl: getAuthenticatedImageUrl(row.outputImagePublicId),
     productImageUrl: row.productImageUrl,
     productImageIndex: row.productImageIndex,
     tryOnMode: row.tryOnMode,

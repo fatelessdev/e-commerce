@@ -187,6 +187,7 @@ export function ProductTryOnWorkspace({
       formData.append("bodyImage", file);
       formData.append("productImageIndex", String(productImageIndex));
       formData.append("bodyMode", bodyMode);
+      formData.append("requestId", crypto.randomUUID());
 
       const res = await fetch(`/api/products/${product.id}/try-ons`, {
         method: "POST",

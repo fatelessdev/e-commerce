@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Package, Heart, LogOut, Shield, Loader2 } from "lucide-react"
+import { Package, Heart, LogOut, Shield, Loader2, Wallet } from "lucide-react"
 import Link from "next/link"
 import { useState, Suspense } from "react"
 import { useSession, signIn, signUp, signOut } from "@/lib/auth-client"
@@ -267,6 +267,11 @@ function AccountContent() {
                             <h3 className="font-medium text-sm">Wishlist</h3>
                             <p className="text-xs text-muted-foreground mt-0.5">Your saved items</p>
                         </div>
+                    </Link>
+
+                    <Link href="/account/wallet" className="flex items-center gap-4 p-5 border border-border/60 hover:border-foreground/20 transition-all duration-300">
+                        <Wallet className="h-5 w-5 text-muted-foreground" />
+                        <div><h3 className="font-medium text-sm">Wallet</h3><p className="text-xs text-muted-foreground mt-0.5">Add funds, refunds, and XILAR-only spending</p></div>
                     </Link>
 
                     <button

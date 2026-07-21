@@ -7,6 +7,7 @@ import { eq, desc, sql, and, isNull, inArray, or, gt, lt, lte } from "drizzle-or
 import { getCustomerCodCancellationFailure } from "@/lib/order-cancellation";
 import { calculateCouponDiscount } from "@/lib/coupon-validation";
 import type { CheckoutQuote } from "@/lib/checkout/pricing";
+import { consumeWalletReservation } from "@/lib/wallet";
 
 // ============================================
 // ORDER TYPES
@@ -49,6 +50,9 @@ export interface CreateOrderInput {
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
   razorpaySignature?: string;
+  walletReservationReferenceId?: string;
+  walletPaidPaise?: number;
+  externalPaidPaise?: number;
 }
 
 export type CreateOrderFromQuoteInput = {
@@ -59,6 +63,9 @@ export type CreateOrderFromQuoteInput = {
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
   razorpaySignature?: string;
+  walletReservationReferenceId?: string;
+  walletPaidPaise?: number;
+  externalPaidPaise?: number;
 };
 
 type OrderMutationClient = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -363,6 +370,8 @@ export async function createOrder(input: CreateOrderInput) {
           razorpayOrderId: input.razorpayOrderId || null,
           razorpayPaymentId: input.razorpayPaymentId || null,
           razorpaySignature: input.razorpaySignature || null,
+          walletPaidPaise: input.walletPaidPaise ?? 0,
+          externalPaidPaise: input.externalPaidPaise ?? 0,
         })
         .returning();
 
@@ -380,6 +389,11 @@ export async function createOrder(input: CreateOrderInput) {
         });
 
         await decrementOrderItemStock(tx, item);
+      }
+
+      if ((input.walletPaidPaise ?? 0) > 0) {
+        if (!input.walletReservationReferenceId) throw new Error("Missing wallet payment reservation");
+        await consumeWalletReservation(tx, { referenceType: "checkout_payment", referenceId: input.walletReservationReferenceId, ledgerType: "order_payment", note: `Order ${createdOrder.id.slice(0, 8).toUpperCase()}` });
       }
 
       await tx
@@ -448,6 +462,9 @@ export async function createOrderFromQuote(input: CreateOrderFromQuoteInput) {
     razorpayOrderId: input.razorpayOrderId,
     razorpayPaymentId: input.razorpayPaymentId,
     razorpaySignature: input.razorpaySignature,
+    walletReservationReferenceId: input.walletReservationReferenceId,
+    walletPaidPaise: input.walletPaidPaise,
+    externalPaidPaise: input.externalPaidPaise,
   });
 }
 

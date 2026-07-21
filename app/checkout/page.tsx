@@ -64,6 +64,7 @@ export default function CheckoutPage() {
     const [showBargainNudge, setShowBargainNudge] = useState(false)
     const [triggerBargainOpen, setTriggerBargainOpen] = useState(false)
     const [bargainNudgeDismissed, setBargainNudgeDismissed] = useState(false)
+    const [walletAmount, setWalletAmount] = useState("")
     
     const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
         name: "",
@@ -262,9 +263,8 @@ export default function CheckoutPage() {
                 return
             }
 
-            // Online payment flow — Razorpay Checkout
-            // Step 1: Create Razorpay order on server (amount computed server-side)
-                const rzpOrderRes = await fetch("/api/razorpay", {
+            // Server-owned wallet reservation + optional Razorpay remainder.
+                const rzpOrderRes = await fetch("/api/checkout/wallet-payment", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -275,51 +275,48 @@ export default function CheckoutPage() {
                             comboGroupId: item.comboGroupId,
                         })),
                         couponCode: appliedCoupon?.code,
-                        receipt: `order_${Date.now()}`,
+                        shippingAddress,
+                        paymentMethod,
+                        walletAmountPaise: Math.max(0, Math.round(Number(walletAmount || 0) * 100)),
                     })
                 })
                 const rzpOrderData = await rzpOrderRes.json()
 
-                if (!rzpOrderData.success) {
-                    setOrderError("Failed to initiate payment. Please try again.")
+                if (!rzpOrderRes.ok) {
+                    setOrderError(rzpOrderData.error || "Failed to initiate payment. Please try again.")
                     setIsPlacingOrder(false)
                     return
                 }
 
+                const settle = async (response: Record<string, string> = {}) => {
+                    const verifyRes = await fetch("/api/checkout/wallet-payment/verify", {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ paymentId: rzpOrderData.paymentId, ...response }),
+                    })
+                    const verifyResult = await verifyRes.json()
+                    if (verifyResult.success) {
+                        setOrderId(verifyResult.orderId); setOrderPlaced(true); clearCart(); sessionStorage.removeItem(CHECKOUT_STORAGE_KEY)
+                    } else setOrderError(verifyResult.error || "Payment verification failed.")
+                    setIsPlacingOrder(false)
+                }
+
+                if (!rzpOrderData.razorpay) { await settle(); return }
+
                 // Step 2: Open Razorpay Checkout modal
                 const options = {
                     key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-                    amount: rzpOrderData.order.amount,
-                    currency: rzpOrderData.order.currency,
+                    amount: rzpOrderData.razorpay.amount,
+                    currency: rzpOrderData.razorpay.currency,
                     name: "XILAR",
                     description: "Order Payment",
-                    order_id: rzpOrderData.order.id,
+                    order_id: rzpOrderData.razorpay.id,
                     handler: async (response: {
                         razorpay_order_id: string
                         razorpay_payment_id: string
                         razorpay_signature: string
                     }) => {
-                        // Step 3: Verify payment + create order
                         try {
-                            const verifyRes = await fetch("/api/razorpay/verify", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    razorpay_order_id: response.razorpay_order_id,
-                                    razorpay_payment_id: response.razorpay_payment_id,
-                                    razorpay_signature: response.razorpay_signature,
-                                    orderData,
-                                })
-                            })
-                            const verifyResult = await verifyRes.json()
-                            if (verifyResult.success) {
-                                setOrderId(verifyResult.orderId)
-                                setOrderPlaced(true)
-                                clearCart()
-                                sessionStorage.removeItem(CHECKOUT_STORAGE_KEY)
-                            } else {
-                                setOrderError(verifyResult.error || "Payment verification failed.")
-                            }
+                            await settle(response)
                         } catch {
                             setOrderError("Payment verification failed. Please contact support.")
                         }
@@ -647,6 +644,14 @@ export default function CheckoutPage() {
                                 <p className="text-sm text-muted-foreground p-3 bg-secondary/30 border border-border">
                                     A convenience fee of ₹{COD_FEE} will be added for Cash on Delivery orders.
                                 </p>
+                            )}
+
+                            {paymentMethod !== "cod" && (
+                                <div className="space-y-1.5 border border-border/60 p-4">
+                                    <label htmlFor="checkout-wallet-amount" className="text-[10px] font-semibold uppercase tracking-[0.15em]">Use wallet balance (optional)</label>
+                                    <input id="checkout-wallet-amount" value={walletAmount} onChange={(event) => setWalletAmount(event.target.value)} inputMode="decimal" placeholder="₹0.00" className="h-10 w-full border bg-secondary/20 px-3 text-sm" />
+                                    <p className="text-xs text-muted-foreground">We reserve this amount securely and charge Razorpay only for the remaining balance.</p>
+                                </div>
                             )}
 
                             {/* Coupon Code Input */}

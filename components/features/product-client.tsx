@@ -295,7 +295,7 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
     const inWishlist = Boolean(wishlistState?.saved)
     const hasRelatedContent = (product.relatedCombos?.length || 0) > 0 || (product.relatedProducts?.length || 0) > 0
     const shouldUseComboRelated = hasRelatedContent
-    const canUseTryOn = (session?.user as { role?: string } | undefined)?.role === "admin"
+    const canUseTryOn = Boolean(session?.user)
     const tryOnAvailable = getRequiredTryOnMode(product.category) !== "unsupported" && (product.images?.length ?? 0) > 0
     const mockStats = getMockProductStats(product.slug || product.id)
     const realRemainingStock = currentStock ?? product.stock

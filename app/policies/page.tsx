@@ -7,7 +7,7 @@ import { normalizeSiteUrl } from "@/lib/seo"
 export const metadata: Metadata = {
     title: "Store Policies — Exchange, Returns, Refunds & Shipping",
     description:
-        "Read XILAR policies on exchanges (48hr window), returns (defects only), refunds (store credit + 5% bonus), and shipping (free above ₹999).",
+        "Read XILAR policies on exchanges, returns, wallet refunds, and shipping.",
     alternates: {
         canonical: "/policies",
     },
@@ -37,7 +37,7 @@ export default function PoliciesPage() {
         },
         {
             title: "Refund Policy",
-            description: "All refunds processed as store credit with bonus.",
+            description: "Approved refunds are credited to your XILAR wallet.",
             href: "/policies/refunds",
             icon: CreditCard,
         },
@@ -69,7 +69,7 @@ export default function PoliciesPage() {
                     },
                     {
                         question: "How does XILAR handle refunds?",
-                        answer: "All refunds are issued as store credit (not cash) with a 5% bonus on top of the refund amount. Store credits are valid for 30-60 days.",
+                        answer: "Approved refunds are credited at their exact value to your account-bound XILAR wallet. Wallet credit does not expire and cannot be withdrawn or transferred.",
                     },
                     {
                         question: "What are XILAR's shipping charges?",
@@ -124,7 +124,7 @@ export default function PoliciesPage() {
                         </li>
                         <li className="flex items-start gap-2">
                             <span className="text-red-accent mt-0.5">·</span>
-                            <span><strong className="text-foreground">Refunds:</strong> <span className="text-muted-foreground">Issued as store credit (not cash) with +5% bonus.</span></span>
+                            <span><strong className="text-foreground">Refunds:</strong> <span className="text-muted-foreground">Issued to your XILAR wallet at the approved amount.</span></span>
                         </li>
                         <li className="flex items-start gap-2">
                             <span className="text-red-accent mt-0.5">·</span>

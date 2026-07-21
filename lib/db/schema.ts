@@ -190,6 +190,9 @@ export const productSearchIndexState = pgTable("product_search_index_state", {
 }, (table) => [
   index("product_search_index_state_status_idx").on(table.status),
 ]);
+export const walletEntryTypeEnum = pgEnum("wallet_entry_type", ["top_up", "order_payment", "generation", "refund", "reversal"]);
+export const walletTopUpStatusEnum = pgEnum("wallet_top_up_status", ["created", "paid", "failed"]);
+export const walletReservationStatusEnum = pgEnum("wallet_reservation_status", ["held", "consumed", "released", "expired"]);
 
 export const productRecommendations = pgTable("product_recommendations", {
   sourceProductId: uuid("source_product_id")
@@ -321,6 +324,8 @@ export const orders = pgTable("orders", {
   razorpayOrderId: text("razorpay_order_id"),
   razorpayPaymentId: text("razorpay_payment_id"),
   razorpaySignature: text("razorpay_signature"),
+  walletPaidPaise: integer("wallet_paid_paise").notNull().default(0),
+  externalPaidPaise: integer("external_paid_paise").notNull().default(0),
   
   // COD fields
   codFee: decimal("cod_fee", { precision: 10, scale: 2 }),
@@ -438,6 +443,103 @@ export const marketingCampaigns = pgTable("marketing_campaigns", {
   index("marketing_campaigns_status_idx").on(table.status),
   index("marketing_campaigns_created_at_idx").on(table.createdAt),
 ]);
+
+// ============================================
+// CLOSED-LOOP WALLET
+// All stored-value arithmetic uses integer paise. The ledger is immutable;
+// account balances are a transactional projection for efficient reads.
+// ============================================
+
+export const walletAccounts = pgTable("wallet_accounts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull().unique().references(() => user.id, { onDelete: "cascade" }),
+  availablePaise: integer("available_paise").notNull().default(0),
+  heldPaise: integer("held_paise").notNull().default(0),
+  isFrozen: boolean("is_frozen").notNull().default(false),
+  freezeReason: text("freeze_reason"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const walletLedgerEntries = pgTable("wallet_ledger_entries", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  walletAccountId: uuid("wallet_account_id").notNull().references(() => walletAccounts.id, { onDelete: "restrict" }),
+  type: walletEntryTypeEnum("type").notNull(),
+  amountPaise: integer("amount_paise").notNull(),
+  balanceAfterPaise: integer("balance_after_paise").notNull(),
+  referenceType: text("reference_type").notNull(),
+  referenceId: text("reference_id").notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("wallet_ledger_reference_unique").on(table.referenceType, table.referenceId),
+  index("wallet_ledger_account_created_idx").on(table.walletAccountId, table.createdAt),
+]);
+
+export const walletTopUps = pgTable("wallet_top_ups", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  amountPaise: integer("amount_paise").notNull(),
+  idempotencyKey: text("idempotency_key").notNull(),
+  razorpayOrderId: text("razorpay_order_id").notNull().unique(),
+  razorpayPaymentId: text("razorpay_payment_id").unique(),
+  status: walletTopUpStatusEnum("status").notNull().default("created"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  settledAt: timestamp("settled_at"),
+}, (table) => [
+  uniqueIndex("wallet_top_up_user_idempotency_unique").on(table.userId, table.idempotencyKey),
+  index("wallet_top_up_user_created_idx").on(table.userId, table.createdAt),
+]);
+
+export const walletReservations = pgTable("wallet_reservations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  walletAccountId: uuid("wallet_account_id").notNull().references(() => walletAccounts.id, { onDelete: "restrict" }),
+  amountPaise: integer("amount_paise").notNull(),
+  referenceType: text("reference_type").notNull(),
+  referenceId: text("reference_id").notNull(),
+  status: walletReservationStatusEnum("status").notNull().default("held"),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("wallet_reservation_reference_unique").on(table.referenceType, table.referenceId),
+  index("wallet_reservation_expiry_idx").on(table.status, table.expiresAt),
+]);
+
+export const walletCheckoutPayments = pgTable("wallet_checkout_payments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  quote: json("quote").notNull(),
+  shippingAddress: json("shipping_address").notNull(),
+  paymentMethod: text("payment_method").notNull(),
+  walletPaidPaise: integer("wallet_paid_paise").notNull().default(0),
+  externalPaidPaise: integer("external_paid_paise").notNull().default(0),
+  razorpayOrderId: text("razorpay_order_id").unique(),
+  razorpayPaymentId: text("razorpay_payment_id").unique(),
+  status: text("status").notNull().default("created"),
+  orderId: uuid("order_id").references(() => orders.id, { onDelete: "restrict" }),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [index("wallet_checkout_payment_user_idx").on(table.userId, table.createdAt)]);
+
+export const walletRefunds = pgTable("wallet_refunds", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "restrict" }),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "restrict" }),
+  adminUserId: text("admin_user_id").notNull().references(() => user.id, { onDelete: "restrict" }),
+  amountPaise: integer("amount_paise").notNull(),
+  reason: text("reason").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [index("wallet_refund_order_idx").on(table.orderId)]);
+
+export const walletWebhookEvents = pgTable("wallet_webhook_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  providerEventId: text("provider_event_id").notNull().unique(),
+  payloadHash: text("payload_hash").notNull(),
+  eventType: text("event_type").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
 
 export const marketingCampaignRecipients = pgTable("marketing_campaign_recipients", {
   id: uuid("id").defaultRandom().primaryKey(),

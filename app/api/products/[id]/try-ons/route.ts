@@ -8,6 +8,7 @@ import { getProductDetails } from "@/lib/product-detail";
 import { normalizeProductImage } from "@/lib/image";
 import { openrouter } from "@/lib/openrouter";
 import { requireTryOnAccess } from "@/lib/try-on-access";
+import { debitWalletForGeneration, reverseGenerationCharge, WALLET_LIMITS } from "@/lib/wallet";
 import {
   TRY_ON_PROMPT_VERSION,
   buildTryOnPrompt,
@@ -27,10 +28,6 @@ function forbiddenOrUnauthorized(error: unknown) {
 
   if (/unauthorized|auth/i.test(message)) {
     return NextResponse.json({ error: "Sign in to use try-on." }, { status: 401 });
-  }
-
-  if (/forbidden|admin-only/i.test(message)) {
-    return NextResponse.json({ error: "Try-on testing is currently admin-only." }, { status: 403 });
   }
 
   return null;
@@ -86,10 +83,12 @@ export async function POST(
     const file = formData.get("bodyImage");
     const productImageIndexValue = formData.get("productImageIndex");
     const bodyModeValue = formData.get("bodyMode");
+    const requestId = formData.get("requestId");
 
     if (!(file instanceof File)) {
       return badRequest("Upload a body photo to generate a try-on preview.");
     }
+    if (typeof requestId !== "string" || !/^[a-f0-9-]{36}$/i.test(requestId)) return badRequest("Invalid generation request.");
 
     const fileValidation = validateTryOnImageFile(file);
     if (!fileValidation.ok) {
@@ -142,6 +141,9 @@ export async function POST(
       requiredMode,
     });
 
+    await debitWalletForGeneration(session.user.id, requestId);
+    let charged = true;
+    try {
     const { image } = await generateImage({
       model: openrouter.imageModel(modelId),
       prompt: {
@@ -164,6 +166,7 @@ export async function POST(
           kind: "body",
         }),
         mediaType: file.type,
+        deliveryType: "authenticated",
       }),
       uploadImage(outputBuffer, {
         folder: "xilar/try-ons/output",
@@ -174,6 +177,7 @@ export async function POST(
           kind: "output",
         }),
         mediaType: image.mediaType || "image/png",
+        deliveryType: "authenticated",
       }),
     ]);
 
@@ -192,6 +196,10 @@ export async function POST(
     });
 
     return NextResponse.json({ run }, { status: 201 });
+    } catch (generationError) {
+      if (charged) await reverseGenerationCharge(session.user.id, requestId).catch(() => undefined);
+      throw generationError;
+    }
   } catch (error) {
     const accessResponse = forbiddenOrUnauthorized(error);
     if (accessResponse) return accessResponse;

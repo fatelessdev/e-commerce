@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { OrderStatusSelect } from "../status-select";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { RefundPanel } from "../refund-panel";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,7 @@ export default async function AdminOrderDetailPage({
     state?: string;
     pincode: string;
   } | null;
+  const refundedPaise = order.refunds.reduce((sum, refund) => sum + refund.amountPaise, 0);
 
   return (
     <div className="space-y-6">
@@ -198,6 +200,9 @@ export default async function AdminOrderDetailPage({
               )}
             </div>
           </div>
+
+          {/* Bargain Info (if applicable) */}
+          <RefundPanel orderId={order.id} total={order.total} refundedPaise={refundedPaise} eligible={order.paymentStatus === "paid"} />
 
           {/* Bargain Info (if applicable) */}
           {(order.bargainDiscount || order.bargainScore) && (

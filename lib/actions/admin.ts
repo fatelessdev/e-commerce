@@ -1,11 +1,11 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { products, productVariants, coupons, orders, orderItems } from "@/lib/db/schema";
+import { products, productVariants, coupons, orders, orderItems, walletRefunds, walletTopUps, walletReservations, walletLedgerEntries } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth-server";
+import { creditWallet, rupeesToPaise } from "@/lib/wallet";
 import { revalidatePath } from "next/cache";
-import { eq, desc, sql, and, gte, like } from "drizzle-orm";
-import { generateSecureCode } from "@/lib/utils";
+import { eq, desc, sql, and, gte, lte } from "drizzle-orm";
 import { ADMIN_PRODUCTS_PAGE_SIZE } from "@/lib/admin-products-pagination";
 import { buildProductSearchText } from "@/lib/product-search";
 import { getPublicProductMutationPaths } from "@/lib/public-cache";
@@ -461,7 +461,8 @@ export async function getOrderById(id: string) {
     .from(orderItems)
     .where(eq(orderItems.orderId, id));
 
-  return { ...order, items };
+  const refunds = await db.select().from(walletRefunds).where(eq(walletRefunds.orderId, id)).orderBy(desc(walletRefunds.createdAt));
+  return { ...order, items, refunds };
 }
 
 export async function updateOrderStatus(
@@ -472,7 +473,7 @@ export async function updateOrderStatus(
 
   const [order] = await db
     .update(orders)
-    .set({ status, updatedAt: new Date() })
+    .set({ status, ...(status === "delivered" ? { paymentStatus: "paid" } : {}), updatedAt: new Date() })
     .where(eq(orders.id, id))
     .returning();
 
@@ -556,78 +557,40 @@ export async function getDashboardStats(timeframe: "7d" | "30d" | "all" = "30d")
 }
 
 // ============================================
-// STORE CREDIT / REFUND ACTIONS
+// WALLET REFUNDS
 // ============================================
 
-export interface IssueStoreCreditInput {
-  userId: string;
-  orderId?: string;
+export interface IssueWalletRefundInput {
+  orderId: string;
   refundAmount: number;
   reason: string;
-  validityDays?: number; // Default 30, max 60
 }
 
-/**
- * Issues store credit as a coupon for refund purposes
- * Automatically adds 5% bonus as per refund policy
- */
-export async function issueStoreCredit(data: IssueStoreCreditInput) {
+/** Credits an approved paid-order refund to the account-bound wallet. */
+export async function issueWalletRefund(data: IssueWalletRefundInput) {
+  const admin = await requireAdmin();
+  const amountPaise = rupeesToPaise(data.refundAmount);
+  if (!Number.isInteger(amountPaise) || amountPaise <= 0 || !data.reason.trim()) throw new Error("Enter a valid refund amount and reason.");
+  return db.transaction(async (tx) => {
+    // Lock the order row so concurrent partial refunds re-evaluate the cumulative ceiling.
+    const [order] = await tx.update(orders).set({ updatedAt: new Date() }).where(eq(orders.id, data.orderId)).returning();
+    if (!order?.userId || order.paymentStatus !== "paid") throw new Error("Only paid orders can be refunded to the wallet.");
+    const [row] = await tx.select({ refundedPaise: sql<number>`COALESCE(SUM(${walletRefunds.amountPaise}), 0)` }).from(walletRefunds).where(eq(walletRefunds.orderId, order.id));
+    const paidPaise = rupeesToPaise(Number(order.total));
+    if (Number(row?.refundedPaise ?? 0) + amountPaise > paidPaise) throw new Error("Refund exceeds the remaining paid order total.");
+    const [refund] = await tx.insert(walletRefunds).values({ orderId: order.id, userId: order.userId, adminUserId: admin.user.id, amountPaise, reason: data.reason.trim().slice(0, 500) }).returning();
+    await creditWallet(tx, { userId: order.userId, amountPaise, type: "refund", referenceType: "order_refund", referenceId: refund.id, note: `Refund for order ${order.id.slice(0, 8).toUpperCase()}` });
+    return { success: true, refund };
+  });
+}
+
+export async function getWalletReconciliation() {
   await requireAdmin();
-
-  // Calculate credit with 5% bonus
-  const bonusMultiplier = 1.05;
-  const creditAmount = Math.round(data.refundAmount * bonusMultiplier);
-  
-  // Generate unique store credit code
-  const code = generateSecureCode("CREDIT-", 8);
-
-  // Set validity (30-60 days)
-  const validityDays = Math.min(Math.max(data.validityDays || 30, 30), 60);
-  const validUntil = new Date();
-  validUntil.setDate(validUntil.getDate() + validityDays);
-
-  const [coupon] = await db
-    .insert(coupons)
-    .values({
-      code,
-      discountType: "fixed",
-      discountValue: creditAmount.toString(),
-      maxUses: 1,
-      usedCount: 0,
-      userId: data.userId,
-      forNewUsersOnly: false,
-      isBargainGenerated: false,
-      validFrom: new Date(),
-      validUntil,
-      isActive: true,
-    })
-    .returning();
-
-  return {
-    success: true,
-    coupon,
-    originalAmount: data.refundAmount,
-    bonusAmount: creditAmount - data.refundAmount,
-    totalCredit: creditAmount,
-    validUntil,
-  };
-}
-
-/**
- * Get all store credit coupons for a user
- */
-export async function getUserStoreCredits(userId: string) {
-  const credits = await db
-    .select()
-    .from(coupons)
-    .where(
-      and(
-        eq(coupons.userId, userId),
-        eq(coupons.isActive, true),
-        like(coupons.code, "CREDIT-%")
-      )
-    )
-    .orderBy(desc(coupons.createdAt));
-
-  return credits;
+  const now = new Date();
+  const [pendingTopUps, expiredReservations, recentReversals] = await Promise.all([
+    db.select().from(walletTopUps).where(eq(walletTopUps.status, "created")).orderBy(desc(walletTopUps.createdAt)).limit(50),
+    db.select().from(walletReservations).where(and(eq(walletReservations.status, "held"), lte(walletReservations.expiresAt, now))).orderBy(desc(walletReservations.expiresAt)).limit(50),
+    db.select().from(walletLedgerEntries).where(eq(walletLedgerEntries.type, "reversal")).orderBy(desc(walletLedgerEntries.createdAt)).limit(50),
+  ]);
+  return { pendingTopUps, expiredReservations, recentReversals };
 }

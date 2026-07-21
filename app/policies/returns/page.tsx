@@ -164,7 +164,7 @@ export default function ReturnPolicyPage() {
                             <span className="w-7 h-7 bg-red-accent text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">4</span>
                             <div>
                                 <p className="font-medium text-sm">Refund processed</p>
-                                <p className="text-xs text-muted-foreground">If approved, you&apos;ll receive store credit (full value + 5% bonus). See our Refund Policy.</p>
+                                <p className="text-xs text-muted-foreground">If approved, you&apos;ll receive the approved amount in your XILAR wallet. See our Refund Policy.</p>
                             </div>
                         </div>
                     </div>

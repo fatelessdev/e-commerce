@@ -17,6 +17,7 @@ export async function uploadImage(
     publicId?: string;
     mediaType?: string;
     transformation?: object;
+    deliveryType?: "upload" | "authenticated";
   }
 ): Promise<{ url: string; publicId: string }> {
   const result = await cloudinary.uploader.upload(
@@ -26,6 +27,7 @@ export async function uploadImage(
       public_id: options?.publicId,
       transformation: options?.transformation,
       resource_type: "image",
+      type: options?.deliveryType || "upload",
     }
   );
 
@@ -35,9 +37,18 @@ export async function uploadImage(
   };
 }
 
+export function getAuthenticatedImageUrl(publicId: string) {
+  return cloudinary.url(publicId, {
+    type: "authenticated",
+    sign_url: true,
+    expires_at: Math.floor(Date.now() / 1000) + 10 * 60,
+    secure: true,
+  });
+}
+
 // Delete image from Cloudinary
-export async function deleteImage(publicId: string): Promise<boolean> {
-  const result = await cloudinary.uploader.destroy(publicId);
+export async function deleteImage(publicId: string, deliveryType: "upload" | "authenticated" = "upload"): Promise<boolean> {
+  const result = await cloudinary.uploader.destroy(publicId, { type: deliveryType });
   return result.result === "ok";
 }
 

@@ -38,8 +38,8 @@ export async function DELETE(
     }
 
     await Promise.all([
-      deleteImage(run.bodyImagePublicId),
-      deleteImage(run.outputImagePublicId),
+      deleteImage(run.bodyImagePublicId, "authenticated"),
+      deleteImage(run.outputImagePublicId, "authenticated"),
     ]);
 
     await deleteOwnedProductTryOnRun({

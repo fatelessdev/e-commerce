@@ -105,7 +105,7 @@ export default function ExchangePolicyPage() {
                             Only <strong>one</strong> exchange attempt per order.
                         </p>
                         <p className="text-xs text-muted-foreground mt-2">
-                            If the size/color you want is unavailable, we&apos;ll issue store credit instead.
+                            If the size/color you want is unavailable, we&apos;ll issue XILAR wallet credit instead.
                         </p>
                     </div>
                 </section>
