@@ -119,7 +119,7 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
             )}
 
             {isOpen && (
-                <div className="w-80 sm:w-96 bg-background border border-foreground/20 shadow-[12px_12px_0px_0px_rgba(0,0,0,0.15)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,0.08)] rounded-none overflow-hidden flex flex-col h-[31.25rem] animate-in slide-in-from-bottom-5 fade-in duration-300 border-t-2 border-t-red-accent">
+                <div className="w-80 sm:w-96 bg-background border border-foreground/20 shadow-[12px_12px_0px_0px_rgba(0,0,0,0.15)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,0.08)] rounded-none overflow-hidden flex flex-col h-[31.25rem] animate-in slide-in-from-bottom-5 fade-in duration-300">
                     {/* Header */}
                     <div className="p-4 bg-background border-b border-foreground/10 flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
@@ -167,9 +167,9 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
                             <div className="flex justify-start">
                                 <div className="bg-card border border-foreground/10 rounded-none p-3.5 text-xs">
                                     <div className="flex gap-1.5 items-center">
-                                        <span className="w-1.5 h-1.5 bg-red-accent rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                        <span className="w-1.5 h-1.5 bg-red-accent rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                        <span className="w-1.5 h-1.5 bg-red-accent rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                        <span className="xilar-thinking-dot h-1.5 w-1.5 rounded-full bg-red-accent" style={{ animationDelay: '0ms' }} />
+                                        <span className="xilar-thinking-dot h-1.5 w-1.5 rounded-full bg-red-accent" style={{ animationDelay: '150ms' }} />
+                                        <span className="xilar-thinking-dot h-1.5 w-1.5 rounded-full bg-red-accent" style={{ animationDelay: '300ms' }} />
                                     </div>
                                 </div>
                             </div>

@@ -30,6 +30,8 @@ export function DirectionalMarquee({ items = DEFAULT_ITEMS }: { items?: string[]
   const lastScrollRef = useRef(0);
   const shouldReduceMotion = useReducedMotion();
   const isIntersectingRef = useRef(false);
+  const scrollRafRef = useRef<number | null>(null);
+  const scrollDirectionRef = useRef<"down" | "up">("down");
 
   useEffect(() => {
     if (shouldReduceMotion || !rootRef.current) return;
@@ -48,13 +50,24 @@ export function DirectionalMarquee({ items = DEFAULT_ITEMS }: { items?: string[]
     });
 
     const onScroll = () => {
-      const isScrollingDown = window.scrollY > lastScrollRef.current;
-      gsap.to(tweenRef.current, { timeScale: isScrollingDown ? 1 : -1, duration: 0.6 });
-      arrows.forEach((arrow) => {
-        arrow.dataset.active = isScrollingDown ? "false" : "true";
-        arrow.style.transform = isScrollingDown ? "rotate(90deg)" : "rotate(-90deg)";
+      if (!isIntersectingRef.current || scrollRafRef.current !== null) return;
+
+      scrollRafRef.current = window.requestAnimationFrame(() => {
+        scrollRafRef.current = null;
+        const nextDirection = window.scrollY > lastScrollRef.current ? "down" : "up";
+
+        if (nextDirection !== scrollDirectionRef.current) {
+          scrollDirectionRef.current = nextDirection;
+          const isScrollingDown = nextDirection === "down";
+          gsap.to(tweenRef.current, { timeScale: isScrollingDown ? 1 : -1, duration: 0.45, overwrite: "auto" });
+          arrows.forEach((arrow) => {
+            arrow.dataset.active = isScrollingDown ? "false" : "true";
+            arrow.style.transform = isScrollingDown ? "rotate(90deg)" : "rotate(-90deg)";
+          });
+        }
+
+        lastScrollRef.current = window.scrollY;
       });
-      lastScrollRef.current = window.scrollY;
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -74,6 +87,10 @@ export function DirectionalMarquee({ items = DEFAULT_ITEMS }: { items?: string[]
 
     return () => {
       window.removeEventListener("scroll", onScroll);
+      if (scrollRafRef.current !== null) {
+        window.cancelAnimationFrame(scrollRafRef.current);
+        scrollRafRef.current = null;
+      }
       observer.disconnect();
       tweenRef.current?.kill();
       tweenRef.current = null;

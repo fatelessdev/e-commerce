@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const catalogNoindexParams = ["search", "size", "minPrice", "maxPrice", "isNew", "isFeatured", "isPremium"];
 const catalogNoindexSources = ["/shop", "/shop/:path*", "/new", "/collections/:path*"];
+const staticMediaSources = ["/hero/:path*", "/clothes/:path*", "/logo.jpeg", "/logo.png"];
 
 function catalogNoindexHeaders() {
   return catalogNoindexSources.flatMap((source) =>
@@ -21,6 +22,7 @@ function catalogNoindexHeaders() {
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
+    minimumCacheTTL: 60 * 60 * 24 * 30,
     remotePatterns: [
       {
         protocol: "https",
@@ -61,15 +63,15 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      {
-        source: "/logo.jpeg",
+      ...staticMediaSources.map((source) => ({
+        source,
         headers: [
           {
             key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
+            value: "public, max-age=604800, stale-while-revalidate=2592000",
           },
         ],
-      },
+      })),
     ];
   },
 };

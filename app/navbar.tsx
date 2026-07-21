@@ -570,6 +570,8 @@ export function Navbar() {
   const headerRef = useRef<HTMLElement>(null);
   const announcementRef = useRef<HTMLDivElement>(null);
   const [isAnnouncementInViewport, setIsAnnouncementInViewport] = useState(true);
+  const headerHiddenRef = useRef(false);
+  const headerScrollRafRef = useRef<number | null>(null);
 
   useGSAP(() => {
     const mainContainer = document.getElementById("main-content-container");
@@ -693,37 +695,38 @@ export function Navbar() {
     if (!header || showMobileMenu || shouldReduceMotion) return;
 
     let lastScrollY = window.scrollY;
+    const setHeaderHidden = (hidden: boolean) => {
+      if (headerHiddenRef.current === hidden) return;
+      headerHiddenRef.current = hidden;
+
+      gsap.to(header, {
+        y: hidden ? -header.offsetHeight : 0,
+        duration: 0.38,
+        ease: "power4.out",
+        overwrite: "auto",
+      });
+    };
 
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const headerHeight = header.offsetHeight;
+      if (headerScrollRafRef.current !== null) return;
 
-      if (scrollY <= 50) {
-        gsap.to(header, {
-          y: 0,
-          duration: 0.8,
-          ease: "power4.out",
-        });
-      } else if (scrollY < lastScrollY) {
-        // Scrolling UP -> Reveal Navbar
-        gsap.to(header, {
-          y: 0,
-          duration: 0.8,
-          ease: "power4.out",
-        });
-      } else if (scrollY > lastScrollY) {
-        // Scrolling DOWN -> Hide Navbar
-        gsap.to(header, {
-          y: -headerHeight,
-          duration: 0.8,
-          ease: "power4.out",
-        });
-      }
-      lastScrollY = scrollY;
+      headerScrollRafRef.current = window.requestAnimationFrame(() => {
+        headerScrollRafRef.current = null;
+        const scrollY = window.scrollY;
+        setHeaderHidden(scrollY > 50 && scrollY > lastScrollY);
+        lastScrollY = scrollY;
+      });
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    handleScroll();
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (headerScrollRafRef.current !== null) {
+        window.cancelAnimationFrame(headerScrollRafRef.current);
+        headerScrollRafRef.current = null;
+      }
+    };
   }, [showMobileMenu, shouldReduceMotion]);
 
   useEffect(() => {

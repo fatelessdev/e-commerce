@@ -102,7 +102,7 @@ async function HomeMerchandisingSections() {
     getActiveCombosWithProducts(4),
   ]);
   const galleryBandItems = products.flatMap((product) =>
-    product.images.slice(0, 1).map((image) => ({
+    product.images.map((image) => ({
       src: image,
       alt: product.name,
     })),

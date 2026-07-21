@@ -256,6 +256,22 @@ video {
   font-weight: 500;
 }
 
+@keyframes xilar-thinking-pulse {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    opacity: 1;
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+.xilar-thinking-dot {
+  animation: xilar-thinking-pulse 1s var(--ease-out-expo) infinite;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -273,7 +289,7 @@ video {
     transform: none;
   }
 
-  .animate-bounce {
+  .xilar-thinking-dot {
     animation: none;
   }
 }

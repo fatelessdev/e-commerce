@@ -39,6 +39,19 @@ function stableShuffle(items: GalleryBandItem[]) {
   return [...items].sort((a, b) => stableHash(`${a.src}-${a.alt}`) - stableHash(`${b.src}-${b.alt}`));
 }
 
+function uniqueBySrc(items: GalleryBandItem[]) {
+  const seen = new Set<string>();
+  const unique: GalleryBandItem[] = [];
+
+  items.forEach((item) => {
+    if (seen.has(item.src)) return;
+    seen.add(item.src);
+    unique.push(item);
+  });
+
+  return unique;
+}
+
 export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
   const rootRef = useRef<HTMLElement>(null);
   const shouldReduceMotion = useReducedMotion();
@@ -47,12 +60,9 @@ export function Dec2024GalleryBand({ items }: { items?: GalleryBandItem[] }) {
     const clean = (items || [])
       .filter((item) => item.src)
       .map((item) => ({ ...item, src: normalizeProductImage(item.src) }));
-    const source = clean.length > 0 ? clean : FALLBACK_IMAGES;
-    const repeated: GalleryBandItem[] = [];
-    while (repeated.length < 32) {
-      repeated.push(...source);
-    }
-    return repeated.slice(0, 32);
+    const uniqueProductImages = uniqueBySrc(clean);
+    const uniqueFallbackImages = uniqueBySrc(FALLBACK_IMAGES);
+    return uniqueBySrc([...uniqueProductImages, ...uniqueFallbackImages]).slice(0, 32);
   }, [items]);
 
   const displayItems = useMemo(() => stableShuffle(resolvedItems), [resolvedItems]);

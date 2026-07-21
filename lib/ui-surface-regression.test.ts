@@ -25,6 +25,26 @@ test("home streams the hero before data-dependent merchandising sections", () =>
   assert.match(page, /function HomeSectionsFallback\(\)/);
 });
 
+test("home merchandising keeps one complete catalog for section density", () => {
+  const page = read("app/page.tsx");
+
+  assert.match(page, /const \[\{ products \}, combos\] = await Promise\.all\(\[/);
+  assert.match(page, /getCatalogProducts\(\)/);
+  assert.match(page, /product\.images\.map/);
+  assert.match(page, /initialProducts={products}/);
+  assert.doesNotMatch(page, /getCatalogProducts\(\{ isNew: true, limit: 8 \}\)/);
+  assert.doesNotMatch(page, /getCatalogProducts\(\{ isPremium: true, limit: 8 \}\)/);
+  assert.doesNotMatch(page, /getCatalogProducts\(\{ category: "accessory", limit: 8 \}\)/);
+});
+
+test("gallery band dedupes product images instead of repeating carousel tiles", () => {
+  const galleryBand = read("components/features/dec2024-gallery-band.tsx");
+
+  assert.match(galleryBand, /function uniqueBySrc/);
+  assert.match(galleryBand, /uniqueBySrc\(\[...uniqueProductImages, ...uniqueFallbackImages\]\)\.slice\(0, 32\)/);
+  assert.doesNotMatch(galleryBand, /while \(repeated\.length < 32\)/);
+});
+
 test("root route suspense reserves the first viewport instead of exposing the footer", () => {
   const layout = read("app/layout.tsx");
 
@@ -186,4 +206,13 @@ test("google analytics tag is installed once at the root layout", () => {
   assert.match(layout, /https:\/\/www\.googletagmanager\.com\/gtag\/js\?id=\$\{GOOGLE_TAG_ID\}/);
   assert.match(layout, /gtag\('config', '\$\{GOOGLE_TAG_ID\}'\)/);
   assert.equal(tagIdMatches.length, 1);
+});
+
+test("public media has explicit cache policy for repeat visits", () => {
+  const nextConfig = read("next.config.ts");
+
+  assert.match(nextConfig, /minimumCacheTTL: 60 \* 60 \* 24 \* 30/);
+  assert.match(nextConfig, /"\/hero\/:path\*"/);
+  assert.match(nextConfig, /"\/clothes\/:path\*"/);
+  assert.match(nextConfig, /stale-while-revalidate=2592000/);
 });
