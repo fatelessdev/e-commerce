@@ -9,7 +9,6 @@ import { FooterGate } from "@/components/layout/footer-gate";
 import { CartProvider } from "@/lib/cart-context";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { QueryProvider } from "@/components/ui/query-provider";
-import { Analytics } from "@vercel/analytics/next"
 
 const CartDrawer = dynamic(() =>
   import("@/components/features/cart-drawer").then((mod) => mod.CartDrawer),
@@ -187,7 +186,6 @@ export default function RootLayout({
             `,
           }}
         />
-        <Analytics />
         <ThemeProvider>
           <QueryProvider>
             <CartProvider>

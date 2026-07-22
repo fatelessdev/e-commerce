@@ -141,7 +141,19 @@ export async function POST(
       requiredMode,
     });
 
-    await debitWalletForGeneration(session.user.id, requestId);
+    try {
+      await debitWalletForGeneration(session.user.id, requestId);
+    } catch (walletError) {
+      const message = walletError instanceof Error ? walletError.message : "Wallet payment is unavailable.";
+      if (/insufficient|frozen|balance/i.test(message)) {
+        return NextResponse.json({
+          error: "You need at least ₹7 in your XILAR Wallet to generate a try-on.",
+          code: "WALLET_INSUFFICIENT",
+          walletUrl: "/account/wallet",
+        }, { status: 402 });
+      }
+      throw walletError;
+    }
     let charged = true;
     try {
     const { image } = await generateImage({

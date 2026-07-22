@@ -106,6 +106,7 @@ export function ProductTryOnWorkspace({
   const [generating, setGenerating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [walletRequired, setWalletRequired] = useState(false);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -181,6 +182,7 @@ export function ProductTryOnWorkspace({
     if (!file || isUnsupported) return;
     setGenerating(true);
     setError(null);
+    setWalletRequired(false);
 
     try {
       const formData = new FormData();
@@ -193,10 +195,15 @@ export function ProductTryOnWorkspace({
         method: "POST",
         body: formData,
       });
-      const payload = await readJsonResponse<{ error?: string; run?: TryOnRun }>(
+      const payload = await readJsonResponse<{ error?: string; code?: string; run?: TryOnRun }>(
         res,
         "Could not generate preview.",
       );
+
+      if (payload.code === "WALLET_INSUFFICIENT") {
+        setWalletRequired(true);
+        return;
+      }
 
       if (!res.ok || !payload.run) {
         throw new Error(payload.error || "Could not generate preview.");
@@ -537,6 +544,19 @@ export function ProductTryOnWorkspace({
             </div>
           </div>
         </div>
+        {walletRequired && (
+          <div className="fixed inset-0 z-20 flex items-center justify-center bg-background/85 p-6 backdrop-blur-sm">
+            <div className="w-full max-w-sm border border-red-accent/40 bg-background p-6 shadow-[10px_10px_0_rgba(0,0,0,0.18)]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-red-accent">Wallet required</p>
+              <h3 className="mt-3 font-display text-3xl leading-none">Add ₹7 to try it on.</h3>
+              <p className="mt-3 text-sm text-muted-foreground">Virtual try-ons are paid from your XILAR Wallet. Add funds securely, then return here to generate.</p>
+              <div className="mt-6 flex gap-3">
+                <Button variant="outline" className="rounded-none" onClick={() => setWalletRequired(false)}>Not now</Button>
+                <Button className="rounded-none" onClick={() => window.location.assign("/account/wallet")}>Open wallet</Button>
+              </div>
+            </div>
+          </div>
+        )}
       </motion.div>
     </AnimatePresence>
   );
