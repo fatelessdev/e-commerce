@@ -295,7 +295,6 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
     const inWishlist = Boolean(wishlistState?.saved)
     const hasRelatedContent = (product.relatedCombos?.length || 0) > 0 || (product.relatedProducts?.length || 0) > 0
     const shouldUseComboRelated = hasRelatedContent
-    const canUseTryOn = Boolean(session?.user)
     const tryOnAvailable = getRequiredTryOnMode(product.category) !== "unsupported" && (product.images?.length ?? 0) > 0
     const mockStats = getMockProductStats(product.slug || product.id)
     const realRemainingStock = currentStock ?? product.stock
@@ -462,11 +461,18 @@ export function ProductClient({ id, initialProduct }: { id: string; initialProdu
                             />
                         )}
 
-                        {canUseTryOn && tryOnAvailable && (
+                        {tryOnAvailable && (
                             <button
                                 type="button"
                                 className="absolute right-4 top-4 z-30 flex h-11 items-center gap-2 border border-white/70 bg-black/45 px-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-white backdrop-blur-sm transition-colors duration-300 hover:bg-white hover:text-black"
-                                onClick={() => setTryOnOpen(true)}
+                                onClick={() => {
+                                    if (!session?.user) {
+                                        router.push(`/account?redirect=${encodeURIComponent(window.location.pathname)}`)
+                                        return
+                                    }
+
+                                    setTryOnOpen(true)
+                                }}
                             >
                                 <Sparkles className="h-3.5 w-3.5" />
                                 <span>Try it on</span>
