@@ -375,8 +375,8 @@ export async function createOrder(input: CreateOrderInput) {
         })
         .returning();
 
-      for (const item of input.items) {
-        await tx.insert(orderItems).values({
+      if (input.items.length > 0) {
+        const orderItemsData = input.items.map(item => ({
           orderId: createdOrder.id,
           productId: item.productId,
           productName: item.productName,
@@ -386,9 +386,13 @@ export async function createOrder(input: CreateOrderInput) {
           quantity: item.quantity,
           unitPrice: item.unitPrice.toString(),
           totalPrice: item.totalPrice.toString(),
-        });
+        }));
 
-        await decrementOrderItemStock(tx, item);
+        await tx.insert(orderItems).values(orderItemsData);
+
+        for (const item of input.items) {
+          await decrementOrderItemStock(tx, item);
+        }
       }
 
       if ((input.walletPaidPaise ?? 0) > 0) {
