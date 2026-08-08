@@ -385,11 +385,18 @@ export async function sendMarketingCampaign(input: CampaignDraftInput) {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to send batch";
       failedCount += chunk.length;
-      for (const recipient of chunk) {
+
+      if (chunk.length > 0) {
+        // Performance optimization: Batch update failed status to prevent N+1 queries
         await db
           .update(marketingCampaignRecipients)
           .set({ status: "failed", error: message })
-          .where(eq(marketingCampaignRecipients.id, recipient.id));
+          .where(
+            inArray(
+              marketingCampaignRecipients.id,
+              chunk.map((r) => r.id)
+            )
+          );
       }
     }
   }

@@ -375,19 +375,24 @@ export async function createOrder(input: CreateOrderInput) {
         })
         .returning();
 
-      for (const item of input.items) {
-        await tx.insert(orderItems).values({
-          orderId: createdOrder.id,
-          productId: item.productId,
-          productName: item.productName,
-          productImage: item.productImage,
-          size: item.size,
-          color: item.color,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice.toString(),
-          totalPrice: item.totalPrice.toString(),
-        });
+      if (input.items.length > 0) {
+        // Performance optimization: Batch insert order items to prevent N+1 insert latency
+        await tx.insert(orderItems).values(
+          input.items.map((item) => ({
+            orderId: createdOrder.id,
+            productId: item.productId,
+            productName: item.productName,
+            productImage: item.productImage,
+            size: item.size,
+            color: item.color,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice.toString(),
+            totalPrice: item.totalPrice.toString(),
+          }))
+        );
+      }
 
+      for (const item of input.items) {
         await decrementOrderItemStock(tx, item);
       }
 
