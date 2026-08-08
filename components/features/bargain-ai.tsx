@@ -195,6 +195,7 @@ export function ProductAssistant({ productContext }: ProductAssistantProps) {
                         <input
                             className="flex-1 bg-background border border-foreground/10 focus:border-foreground focus:outline-none text-[11px] px-3 py-2 tracking-wide placeholder:text-muted-foreground/30 uppercase rounded-none"
                             placeholder="TYPE YOUR MESSAGE..."
+                            aria-label="Type your message"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             disabled={isLoading}
