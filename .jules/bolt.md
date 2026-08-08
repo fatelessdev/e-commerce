@@ -1,0 +1,3 @@
+## 2024-11-20 - React Compiler Optimization with Optional Chaining
+**Learning:** The React Compiler does not automatically optimize manual memoization (`useMemo`, `useCallback`) when the dependency arrays contain optional chaining (e.g., `[product?.images]`). This causes dependency mismatch warnings and prevents compiler optimization, leading to potentially unnecessary computations and re-renders.
+**Action:** Extract the optionally chained property into a local variable before the hook (e.g., `const productImages = product?.images;`) and use that local variable in the dependency array (e.g., `[productImages]`).
