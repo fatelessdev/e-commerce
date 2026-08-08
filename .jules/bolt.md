@@ -1,0 +1,3 @@
+## 2024-03-XX - Missing memoization in React Context Providers
+**Learning:** Found an O(N) un-memoized calculation inside a React Context Provider's render function (`lib/cart-context.tsx`). While `totalItems` and `totalPrice` are mathematically O(N) operations via `.reduce()`, leaving them un-memoized inside a Context Provider causes them to re-evaluate on every component re-render where the Provider is mounted, even if the `items` array hasn't changed.
+**Action:** When creating Context values derived from state arrays, wrap the derivations in `useMemo` with the state array as the dependency to prevent unnecessary recalculations across the entire consumer tree.
