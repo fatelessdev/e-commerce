@@ -211,8 +211,9 @@ export default function NewProductPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Product Name *</label>
+                <label htmlFor="product-name" className="text-sm font-medium">Product Name *</label>
                 <input
+                  id="product-name"
                   type="text"
                   required
                   value={formData.name}
@@ -222,8 +223,9 @@ export default function NewProductPage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Slug *</label>
+                <label htmlFor="product-slug" className="text-sm font-medium">Slug *</label>
                 <input
+                  id="product-slug"
                   type="text"
                   required
                   value={formData.slug}
@@ -235,8 +237,9 @@ export default function NewProductPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Description</label>
+              <label htmlFor="product-description" className="text-sm font-medium">Description</label>
               <textarea
+                id="product-description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="w-full px-3 py-2 border rounded-lg bg-background min-h-[100px]"
