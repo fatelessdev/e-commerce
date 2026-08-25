@@ -1,3 +1,5 @@
+
+
 # XILAR E-Commerce
 
 XILAR is a Next.js storefront for apparel with a dark editorial frontend, SEO-focused public routing, admin catalog tools, Razorpay checkout, COD orders, account-backed wishlist support, coupon/store-credit support, and a checkout bargain AI that can issue short-lived coupons.
@@ -51,6 +53,7 @@ npm run lint
 npm run build
 npm run db:generate
 npm run db:push
+npm run db:migrate
 npm run db:studio
 ```
 
